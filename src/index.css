@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+:root {
+  --surface: #ffffff;
+  --surface-low: #f3f3f4;
+  --surface-lowest: #ffffff;
+  --surface-high: #e7e7e9;
+  --surface-highest: #dedee1;
+  --foreground: #000000;
+  --secondary: #5e5e5e;
+  --outline: #777777;
+  --ghost-border: rgb(0 0 0 / 0.15);
+  --primary: #000000;
+  --primary-container: #3b3b3b;
+  --on-primary: #e2e2e2;
+  --radius: 0.5rem;
+
+  color-scheme: light;
+  font-family: "Inter", "Helvetica Neue", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--surface);
+  color: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(0, 0, 0, 0.05), transparent 22%),
+    radial-gradient(circle at 82% 22%, rgba(0, 0, 0, 0.08), transparent 18%),
+    linear-gradient(180deg, #fafafa 0%, #f3f3f4 42%, #ffffff 100%);
+}
+
+body,
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgb(0 0 0 / 0.18);
+  color: var(--foreground);
+}
