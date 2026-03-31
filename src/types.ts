@@ -1,23 +1,29 @@
-export type CategoryId =
-  | 'all'
-  | 'hero'
-  | 'cta'
-  | 'pricing'
-  | 'testimonials'
-  | 'features'
-  | 'faq'
-  | 'footer'
+export type CatalogVisibility = 'public' | 'private'
 
-export type ComponentCategory = Exclude<CategoryId, 'all'>
+export type CatalogPreviewKind = 'image' | 'video'
 
-export type Badge = 'New' | 'Popular' | null
-
-export type ComponentItem = {
-  id: string
-  title: string
-  brief: string
-  category: ComponentCategory
-  image: string
-  badge: Badge
-  prompt: string
+export type CatalogManifestReferenceLookup = {
+  motionSitesTitle?: string
+  preferredSource?: 'lovable_templates' | 'motion_videos'
+  keywords?: string[]
 }
+
+export type CatalogManifestItem = {
+  slug: string
+  title: string
+  typeLabel: string
+  sortOrder: number
+  visibility: CatalogVisibility
+  referenceLookup: CatalogManifestReferenceLookup
+}
+
+export type CatalogCardItem = {
+  slug: string
+  title: string
+  typeLabel: string
+  previewUrl: string | null
+  previewKind: CatalogPreviewKind
+  isPublic: boolean
+}
+
+export type CatalogCopyState = 'idle' | 'pending' | 'copied' | 'error'

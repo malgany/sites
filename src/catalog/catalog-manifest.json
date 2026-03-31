@@ -1,0 +1,612 @@
+[
+  {
+    "slug": "aethera-hero",
+    "title": "Aethera Studio",
+    "typeLabel": "Studio",
+    "sortOrder": 1,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Aethera Studio"
+    }
+  },
+  {
+    "slug": "10",
+    "title": "AI Automation Hero",
+    "typeLabel": "Automation",
+    "sortOrder": 2,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "AI Automation Hero"
+    }
+  },
+  {
+    "slug": "ai-designer-agency",
+    "title": "AI Designer Agency",
+    "typeLabel": "Agency",
+    "sortOrder": 3,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "AI Designer Agency"
+    }
+  },
+  {
+    "slug": "akor-security-landing",
+    "title": "AKOR Security",
+    "typeLabel": "Security",
+    "sortOrder": 4,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "AKOR Security"
+    }
+  },
+  {
+    "slug": "apex-saas-hero",
+    "title": "Apex SaaS",
+    "typeLabel": "SaaS",
+    "sortOrder": 5,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Apex SaaS"
+    }
+  },
+  {
+    "slug": "asme-hero",
+    "title": "Asme",
+    "typeLabel": "Brand",
+    "sortOrder": 6,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Asme"
+    }
+  },
+  {
+    "slug": "automation-machines-hero",
+    "title": "Automation Machines",
+    "typeLabel": "Automation",
+    "sortOrder": 7,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Automation Machines"
+    }
+  },
+  {
+    "slug": "bionova-hero",
+    "title": "Bionova Biotech",
+    "typeLabel": "Biotech",
+    "sortOrder": 8,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Bionova Biotech"
+    }
+  },
+  {
+    "slug": "bloom-ai-hero",
+    "title": "Bloom AI",
+    "typeLabel": "AI",
+    "sortOrder": 9,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Bloom AI"
+    }
+  },
+  {
+    "slug": "6",
+    "title": "Bold Portfolio Hero",
+    "typeLabel": "Portfolio",
+    "sortOrder": 10,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Bold Portfolio Hero"
+    }
+  },
+  {
+    "slug": "21",
+    "title": "Buzzentic Agency",
+    "typeLabel": "Agency",
+    "sortOrder": 11,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Buzzentic Agency"
+    }
+  },
+  {
+    "slug": "3",
+    "title": "ClearInvoice SaaS Hero",
+    "typeLabel": "SaaS",
+    "sortOrder": 12,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "ClearInvoice SaaS Hero"
+    }
+  },
+  {
+    "slug": "clubx-hero",
+    "title": "ClubX Investors",
+    "typeLabel": "Investors",
+    "sortOrder": 13,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "ClubX Investors"
+    }
+  },
+  {
+    "slug": "codenest-hero",
+    "title": "CodeNest Coding Platform",
+    "typeLabel": "Platform",
+    "sortOrder": 14,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "CodeNest Coding Platform"
+    }
+  },
+  {
+    "slug": "15",
+    "title": "Dark Portfolio Hero",
+    "typeLabel": "Portfolio",
+    "sortOrder": 15,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Dark Portfolio Hero"
+    }
+  },
+  {
+    "slug": "datacore-booking-hero",
+    "title": "Datacore Booking",
+    "typeLabel": "Booking",
+    "sortOrder": 16,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Datacore Booking"
+    }
+  },
+  {
+    "slug": "4",
+    "title": "Datacore SaaS Hero",
+    "typeLabel": "SaaS",
+    "sortOrder": 17,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Datacore SaaS Hero"
+    }
+  },
+  {
+    "slug": "designpro-hero",
+    "title": "DesignPro Academy",
+    "typeLabel": "Education",
+    "sortOrder": 18,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "DesignPro Academy"
+    }
+  },
+  {
+    "slug": "digitwist-hero",
+    "title": "Digitwist AI Builder",
+    "typeLabel": "Builder",
+    "sortOrder": 19,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Digitwist AI Builder"
+    }
+  },
+  {
+    "slug": "ecommerce-website-landing",
+    "title": "E-commerce Website",
+    "typeLabel": "E-commerce",
+    "sortOrder": 20,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "E-commerce Website"
+    }
+  },
+  {
+    "slug": "evr-ventures-hero",
+    "title": "EVR Ventures",
+    "typeLabel": "Ventures",
+    "sortOrder": 21,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "EVR Ventures"
+    }
+  },
+  {
+    "slug": "finlytic-hero",
+    "title": "Finlytic AI Agent",
+    "typeLabel": "AI Agent",
+    "sortOrder": 22,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Finlytic AI Agent"
+    }
+  },
+  {
+    "slug": "13",
+    "title": "Framelix 3D Studios",
+    "typeLabel": "3D Studio",
+    "sortOrder": 23,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Framelix 3D Studios"
+    }
+  },
+  {
+    "slug": "5",
+    "title": "Glassmorphism Agency Hero",
+    "typeLabel": "Agency",
+    "sortOrder": 24,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Glassmorphism Agency Hero"
+    }
+  },
+  {
+    "slug": "grow-ai-hero",
+    "title": "Grow AI Talent Platform",
+    "typeLabel": "Talent Platform",
+    "sortOrder": 25,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Grow AI Talent Platform"
+    }
+  },
+  {
+    "slug": "16",
+    "title": "HR SaaS Hero",
+    "typeLabel": "HR SaaS",
+    "sortOrder": 26,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "HR SaaS Hero"
+    }
+  },
+  {
+    "slug": "deck-investor",
+    "title": "Investor Deck",
+    "typeLabel": "Pitch Deck",
+    "sortOrder": 27,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Investor Deck"
+    }
+  },
+  {
+    "slug": "liquid-glass-agency",
+    "title": "Liquid Glass Agency",
+    "typeLabel": "Agency",
+    "sortOrder": 28,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Liquid Glass Agency"
+    }
+  },
+  {
+    "slug": "18",
+    "title": "Loader Animation",
+    "typeLabel": "Animation",
+    "sortOrder": 29,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Loader Animation"
+    }
+  },
+  {
+    "slug": "14",
+    "title": "Logoisum Video Agency Hero",
+    "typeLabel": "Video Agency",
+    "sortOrder": 30,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Logoisum Video Agency Hero"
+    }
+  },
+  {
+    "slug": "mindloop-hero",
+    "title": "Mindloop",
+    "typeLabel": "SaaS",
+    "sortOrder": 31,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Mindloop"
+    }
+  },
+  {
+    "slug": "mindloop-landing",
+    "title": "Mindloop Landing",
+    "typeLabel": "Landing Page",
+    "sortOrder": 32,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Mindloop Landing"
+    }
+  },
+  {
+    "slug": "neovision-landing",
+    "title": "NeoVision",
+    "typeLabel": "Landing Page",
+    "sortOrder": 33,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "NeoVision"
+    }
+  },
+  {
+    "slug": "neuralyn-hero",
+    "title": "Neuralyn",
+    "typeLabel": "AI",
+    "sortOrder": 34,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Neuralyn"
+    }
+  },
+  {
+    "slug": "8",
+    "title": "New Era Automotive Hero",
+    "typeLabel": "Automotive",
+    "sortOrder": 35,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "New Era Automotive Hero"
+    }
+  },
+  {
+    "slug": "1",
+    "title": "New Era Bold Hero",
+    "typeLabel": "Hero",
+    "sortOrder": 36,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "New Era Bold Hero"
+    }
+  },
+  {
+    "slug": "nexora-hero",
+    "title": "Nexora Automation",
+    "typeLabel": "Automation",
+    "sortOrder": 37,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Nexora Automation"
+    }
+  },
+  {
+    "slug": "nexus-hero",
+    "title": "Nexus IT Solutions",
+    "typeLabel": "IT Services",
+    "sortOrder": 38,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Nexus IT Solutions"
+    }
+  },
+  {
+    "slug": "nickel-hero",
+    "title": "Nickel Payments",
+    "typeLabel": "Payments",
+    "sortOrder": 39,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Nickel Payments"
+    }
+  },
+  {
+    "slug": "nova-space-landing",
+    "title": "NOVA Space Systems",
+    "typeLabel": "Space",
+    "sortOrder": 40,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "NOVA Space Systems"
+    }
+  },
+  {
+    "slug": "orbit-engineers",
+    "title": "Orbit Engineers",
+    "typeLabel": "Engineering",
+    "sortOrder": 41,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Orbit Engineers"
+    }
+  },
+  {
+    "slug": "orbit-web3-hero",
+    "title": "Orbit Web3",
+    "typeLabel": "Web3",
+    "sortOrder": 42,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Orbit Web3"
+    }
+  },
+  {
+    "slug": "planet-orbit-hero",
+    "title": "Planet Orbit",
+    "typeLabel": "Space",
+    "sortOrder": 43,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Planet Orbit"
+    }
+  },
+  {
+    "slug": "portfolio-cosmic-hero",
+    "title": "Portfolio Cosmic",
+    "typeLabel": "Portfolio",
+    "sortOrder": 44,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Portfolio Cosmic"
+    }
+  },
+  {
+    "slug": "power-ai-hero",
+    "title": "Power AI",
+    "typeLabel": "AI",
+    "sortOrder": 45,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Power AI"
+    }
+  },
+  {
+    "slug": "price-calculator",
+    "title": "Price Calculator",
+    "typeLabel": "Calculator",
+    "sortOrder": 46,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Price Calculator"
+    }
+  },
+  {
+    "slug": "railroad-ai-hero",
+    "title": "Railroad.ai",
+    "typeLabel": "AI",
+    "sortOrder": 47,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Railroad.ai"
+    }
+  },
+  {
+    "slug": "skyelite-hero",
+    "title": "SkyElite Private Jets",
+    "typeLabel": "Luxury",
+    "sortOrder": 48,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "SkyElite Private Jets"
+    }
+  },
+  {
+    "slug": "20",
+    "title": "Space Voyage",
+    "typeLabel": "Space",
+    "sortOrder": 49,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Space Voyage"
+    }
+  },
+  {
+    "slug": "7",
+    "title": "Synapse Dark Hero",
+    "typeLabel": "Hero",
+    "sortOrder": 50,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Synapse Dark Hero"
+    }
+  },
+  {
+    "slug": "12",
+    "title": "Targo Logistics Hero",
+    "typeLabel": "Logistics",
+    "sortOrder": 51,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Targo Logistics Hero"
+    }
+  },
+  {
+    "slug": "taskly-hero",
+    "title": "Taskly",
+    "typeLabel": "Productivity",
+    "sortOrder": 52,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Taskly"
+    }
+  },
+  {
+    "slug": "2",
+    "title": "Taskora SaaS Hero",
+    "typeLabel": "SaaS",
+    "sortOrder": 53,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Taskora SaaS Hero"
+    }
+  },
+  {
+    "slug": "terra-hero",
+    "title": "Terra Geo Map",
+    "typeLabel": "Map",
+    "sortOrder": 54,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Terra Geo Map"
+    }
+  },
+  {
+    "slug": "transform-data-hero",
+    "title": "Transform Data",
+    "typeLabel": "Data",
+    "sortOrder": 55,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Transform Data"
+    }
+  },
+  {
+    "slug": "velorah-hero",
+    "title": "Velorah",
+    "typeLabel": "SaaS",
+    "sortOrder": 56,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Velorah"
+    }
+  },
+  {
+    "slug": "19",
+    "title": "Viktor Portfolio",
+    "typeLabel": "Portfolio",
+    "sortOrder": 57,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Viktor Portfolio"
+    }
+  },
+  {
+    "slug": "0",
+    "title": "Wealth Video Hero",
+    "typeLabel": "Finance",
+    "sortOrder": 58,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Wealth Video Hero"
+    }
+  },
+  {
+    "slug": "9",
+    "title": "Web3 EOS Hero",
+    "typeLabel": "Web3",
+    "sortOrder": 59,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Web3 EOS Hero"
+    }
+  },
+  {
+    "slug": "11",
+    "title": "Weblex Dark Hero",
+    "typeLabel": "Agency",
+    "sortOrder": 60,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Weblex Dark Hero"
+    }
+  },
+  {
+    "slug": "xportfolio-hero",
+    "title": "xPortfolio Hero",
+    "typeLabel": "Portfolio",
+    "sortOrder": 61,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "xPortfolio Hero"
+    }
+  }
+]

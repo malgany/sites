@@ -8,11 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "sync:catalog": "node scripts/sync-catalog-to-supabase.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:previews": "node scripts/generate-previews.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "@tailwindcss/vite": "^4.2.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

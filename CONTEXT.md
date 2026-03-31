@@ -2,74 +2,103 @@
 
 ## Overview
 - Project name: `sites`
-- Purpose: single-page component showcase inspired by `motionsites.ai`
-- Output: a gallery of 21 React + Tailwind section prompts with local preview images and instant copy-to-clipboard behavior
-- Language: English UI and English prompts
+- Purpose: public prompt catalog inspired by `motionsites.ai`
+- Output: a Supabase-backed gallery of website prompts with remote preview media and copy-on-demand Markdown
+- Language: English UI and English prompt content
 
 ## Stack
 - Vite
 - React 19
 - TypeScript
 - Tailwind CSS v4 via `@tailwindcss/vite`
+- Supabase JS
 - Vitest + React Testing Library
 
 ## Product Direction
 - Visual reference was derived from direct inspection of `motionsites.ai`
-- The site uses a dark premium palette, near-white text, muted gray secondary text, rounded surfaces, and saturated blue accents
-- This implementation adapts that style to a component prompt gallery rather than cloning the original content model
+- The UI keeps a premium editorial layout with soft surfaces, near-black type, muted gray metadata, and compact high-contrast actions
+- The current implementation keeps the browsing feel but replaces the static prompt seed with a real public catalog pipeline
+
+## Architecture Decision
+- Public catalog reads happen directly in the browser with `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
+- The listing view fetches only card metadata
+- Full Markdown is fetched on demand per card via `getCatalogContent(slug)`
+- `SUPABASE_SERVICE_ROLE_KEY` is reserved for the sync/import script only
+- Future private content should keep the same UI but move the content fetch path behind authenticated server-side logic or Edge Functions
 
 ## Main Behavior
 - Top section with title, subtitle, and summary stats
-- Search input with placeholder `Search components or categories`
-- Category tabs:
-  - `All`
-  - `Hero`
-  - `CTA`
-  - `Pricing`
-  - `Testimonials`
-  - `Features`
-  - `FAQ`
-  - `Footer`
-- Responsive grid:
+- Search input with placeholder `Search prompts or types`
+- Responsive masonry-style grid:
   - mobile: 1 column
   - tablet: 2 columns
   - desktop: 4 columns
 - Each card includes:
-  - static local preview image
+  - remote preview image or looped video
   - title
-  - category
-  - optional badge (`Popular` or `New`)
-  - `Copy prompt` button
+  - configured `typeLabel`
+  - public/private status label
+  - `Copy markdown` button
 - Copy behavior:
+  - fetches the raw Markdown for the selected slug from Supabase
   - tries `navigator.clipboard.writeText`
   - falls back to `document.execCommand('copy')`
   - shows `Copied` for 2 seconds on success
   - shows `Copy failed` on failure
 
+## Content Model
+- Manifest source of truth: `src/catalog/catalog-manifest.json`
+- Manifest fields:
+  - `slug`
+  - `title`
+  - `typeLabel`
+  - `sortOrder`
+  - `visibility`
+  - `referenceLookup`
+- Supabase table: `public.catalog_prompts`
+- Table fields:
+  - `slug`
+  - `title`
+  - `type_label`
+  - `content_markdown`
+  - `preview_url`
+  - `preview_kind`
+  - `source_file_name`
+  - `source_hash`
+  - `sort_order`
+  - `is_public`
+  - `required_plan`
+  - `published_at`
+  - timestamps
+
 ## Source Structure
 - `src/App.tsx`
-  - page composition and local UI state
-- `src/components/CategoryTabs.tsx`
-  - tab/filter navigation
+  - page composition, remote catalog loading, and copy state
 - `src/components/ComponentCard.tsx`
-  - individual gallery card UI
-- `src/data/components.ts`
-  - typed catalog of categories, badges, prompts, and local preview paths
-- `src/lib/filterComponents.ts`
-  - pure helper for category + query filtering
+  - gallery card UI with image/video preview handling
+- `src/catalog/catalog-manifest.json`
+  - canonical `slug`, `title`, `typeLabel`, visibility, and MotionSites lookup map
+- `src/catalog/manifest.ts`
+  - manifest validation and typed export
+- `src/catalog/client.ts`
+  - browser Supabase client bootstrap
+- `src/catalog/repository.ts`
+  - public Supabase read layer for cards and Markdown content
+- `src/lib/filterCatalog.ts`
+  - pure helper for title/type filtering
 - `src/lib/copyTextToClipboard.ts`
   - clipboard helper with fallback
-- `src/index.css`
-  - Tailwind import and project design tokens
-- `scripts/generate-previews.mjs`
-  - local generator for the 21 `.webp` preview images
-- `public/previews`
-  - generated static preview assets used by the cards
+- `scripts/sync-catalog-to-supabase.mjs`
+  - sync/import pipeline from Markdown files into Supabase
+- `scripts/lib/catalog-sync-utils.mjs`
+  - file resolution, URL extraction, hashing, and asset helper logic
+- `supabase/bootstrap/catalog_public_catalog.sql`
+  - table, RLS, and public bucket bootstrap
 
 ## Type Model
-- `CategoryId = 'all' | 'hero' | 'cta' | 'pricing' | 'testimonials' | 'features' | 'faq' | 'footer'`
-- `Badge = 'New' | 'Popular' | null`
-- `ComponentItem = { id, title, category, image, badge, prompt }`
+- `CatalogManifestItem = { slug, title, typeLabel, sortOrder, visibility, referenceLookup }`
+- `CatalogCardItem = { slug, title, typeLabel, previewUrl, previewKind, isPublic }`
+- `CatalogCopyState = 'idle' | 'pending' | 'copied' | 'error'`
 
 ## Commands
 - Install deps: `npm install`
@@ -77,19 +106,27 @@
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Tests: `npm run test`
-- Regenerate preview assets: `npm run generate:previews`
+- Sync Markdown + previews to Supabase: `npm run sync:catalog`
+- Regenerate old local preview assets: `npm run generate:previews`
 
 ## Test Coverage
 - `src/App.test.tsx`
-  - initial render
-  - category filtering
+  - loading state
+  - Supabase-backed render
   - search behavior
   - empty state
   - copy success state
   - copy error state
-  - keyboard tab activation
-- `src/lib/filterComponents.test.ts`
-  - pure filter logic
+  - catalog load error state
+- `src/catalog/repository.test.ts`
+  - public list query mapping
+  - on-demand Markdown query
+- `src/lib/filterCatalog.test.ts`
+  - pure search logic
+- `src/catalogSyncUtils.test.mjs`
+  - latest Markdown resolution by slug
+  - media URL extraction
+  - preview kind inference and stable hashing
 - `src/lib/copyTextToClipboard.test.ts`
   - clipboard primary path
   - fallback path
@@ -97,4 +134,4 @@
 
 ## Repository Notes
 - `dist/`, `node_modules/`, local logs, env files, caches, and `.agents/` are ignored by Git
-- The repository was initialized after implementation hygiene was added
+- The repo still contains the older local preview generator, but runtime catalog data now comes from Supabase

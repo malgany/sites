@@ -1,19 +1,23 @@
 import { useDeferredValue, useEffect, useState } from 'react'
-import { CategoryTabs } from './components/CategoryTabs'
 import { ComponentCard } from './components/ComponentCard'
-import { categoryLabels, categoryOptions, componentItems } from './data/components'
+import { getCatalogContent, listPublicCatalog } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
-import { filterComponents } from './lib/filterComponents'
-import type { CategoryId, ComponentItem } from './types'
+import { filterCatalog } from './lib/filterCatalog'
+import type { CatalogCardItem } from './types'
 
 const ERROR_PREFIX = 'error:'
+const PENDING_PREFIX = 'pending:'
 
-function getCopyState(copiedId: string | null, itemId: string) {
-  if (copiedId === itemId) {
+function getCopyState(copiedId: string | null, itemSlug: string) {
+  if (copiedId === itemSlug) {
     return 'copied'
   }
 
-  if (copiedId === `${ERROR_PREFIX}${itemId}`) {
+  if (copiedId === `${PENDING_PREFIX}${itemSlug}`) {
+    return 'pending'
+  }
+
+  if (copiedId === `${ERROR_PREFIX}${itemSlug}`) {
     return 'error'
   }
 
@@ -25,30 +29,57 @@ function getLiveMessage(copiedId: string | null) {
     return ''
   }
 
-  return copiedId.startsWith(ERROR_PREFIX) ? 'Copy failed' : 'Prompt copied'
+  if (copiedId.startsWith(PENDING_PREFIX)) {
+    return 'Copying markdown'
+  }
+
+  return copiedId.startsWith(ERROR_PREFIX) ? 'Copy failed' : 'Markdown copied'
 }
 
 function App() {
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('all')
+  const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>([])
+  const [catalogStatus, setCatalogStatus] = useState<
+    'loading' | 'ready' | 'error'
+  >('loading')
+  const [catalogError, setCatalogError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const totalCategories = categoryOptions.length - 1
-  const activeCategoryLabel =
-    activeCategory === 'all' ? 'All Sections' : categoryLabels[activeCategory]
-  const popularCount = componentItems.filter(
-    (item) => item.badge === 'Popular',
-  ).length
-  const newCount = componentItems.filter((item) => item.badge === 'New').length
-
   const deferredQuery = useDeferredValue(query)
-  const filteredItems = filterComponents(
-    componentItems,
-    activeCategory,
-    deferredQuery,
-  )
 
   useEffect(() => {
-    if (!copiedId) {
+    let isCancelled = false
+
+    async function loadCatalog() {
+      try {
+        const items = await listPublicCatalog()
+
+        if (isCancelled) {
+          return
+        }
+
+        setCatalogItems(items)
+        setCatalogStatus('ready')
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+
+        setCatalogStatus('error')
+        setCatalogError(
+          error instanceof Error ? error.message : 'Could not load catalog.',
+        )
+      }
+    }
+
+    void loadCatalog()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!copiedId || copiedId.startsWith(PENDING_PREFIX)) {
       return undefined
     }
 
@@ -59,10 +90,21 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [copiedId])
 
-  async function handleCopy(item: ComponentItem) {
-    const didCopy = await copyTextToClipboard(item.prompt)
-    setCopiedId(didCopy ? item.id : `${ERROR_PREFIX}${item.id}`)
+  async function handleCopy(item: CatalogCardItem) {
+    setCopiedId(`${PENDING_PREFIX}${item.slug}`)
+
+    try {
+      const content = await getCatalogContent(item.slug)
+      const didCopy = await copyTextToClipboard(content)
+      setCopiedId(didCopy ? item.slug : `${ERROR_PREFIX}${item.slug}`)
+    } catch {
+      setCopiedId(`${ERROR_PREFIX}${item.slug}`)
+    }
   }
+
+  const filteredItems = filterCatalog(catalogItems, deferredQuery)
+  const totalTypes = new Set(catalogItems.map((item) => item.typeLabel)).size
+  const publicCount = catalogItems.filter((item) => item.isPublic).length
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--foreground)]">
@@ -72,13 +114,13 @@ function App() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1380px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <div className="sticky top-4 z-20">
-          <div className="mx-auto flex items-center justify-between gap-4 rounded-[8px] border border-black/8 bg-white/72 px-4 py-3 backdrop-blur-[18px] shadow-[0_24px_48px_rgba(0,0,0,0.06)]">
+          <div className="mx-auto flex items-center justify-between gap-4 rounded-[8px] border border-black/8 bg-white/72 px-4 py-3 shadow-[0_24px_48px_rgba(0,0,0,0.06)] backdrop-blur-[18px]">
             <div>
               <p className="text-[0.68rem] font-semibold tracking-[0.22em] text-[var(--secondary)] uppercase">
-                The Digital Curator
+                Public Prompt Catalog
               </p>
               <p className="mt-1 text-sm font-medium tracking-[-0.02em] text-[var(--foreground)]">
-                Prompt archive for React sections
+                Supabase-backed archive for reusable website prompts
               </p>
             </div>
 
@@ -87,7 +129,7 @@ function App() {
                 href="#library-panel"
                 className="rounded-[6px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3 text-sm font-medium text-[var(--on-primary)] transition hover:brightness-110"
               >
-                Browse collection
+                Browse catalog
               </a>
               <a
                 href="#component-grid-panel"
@@ -103,28 +145,28 @@ function App() {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)] lg:items-end">
             <div>
               <p className="text-[0.72rem] font-semibold tracking-[0.24em] text-[var(--secondary)] uppercase">
-                High-End Editorial System
+                Direct Browser Read
               </p>
               <h1 className="mt-4 max-w-[11ch] text-[clamp(3.5rem,9vw,7rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
-                Component Prompt Gallery
+                Prompt Archive
               </h1>
 
               <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
                 <p className="max-w-[30rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
-                  Browse a curated archive of React + Tailwind prompt blocks
-                  arranged like an editorial collection: oversized type, tonal
-                  sections, compact metadata, and quick copy actions designed to
-                  keep the browsing flow sharp.
+                  Browse the public catalog stored in Supabase, scan by title or
+                  type, and copy the raw Markdown only when a card is clicked.
+                  The grid stays lightweight while the full prompt body remains
+                  fetched on demand.
                 </p>
 
                 <div className="space-y-4">
                   <p className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                    Curator note
+                    Catalog mode
                   </p>
                   <p className="text-[0.92rem] leading-6 text-[var(--foreground)]">
-                    This layout favors breathing room over chrome. Sections are
-                    separated by surface shifts, the header is intentionally
-                    offset, and actions stay high contrast.
+                    Public content reads directly from Supabase in the browser.
+                    Premium or protected items can move to an authenticated
+                    fetch path later without changing this UI.
                   </p>
                 </div>
               </div>
@@ -141,25 +183,25 @@ function App() {
                     Total prompts
                   </p>
                   <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {componentItems.length}
+                    {catalogItems.length}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Categories
+                    Type labels
                   </p>
                   <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {totalCategories}
+                    {totalTypes}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Featured picks
+                    Public items
                   </p>
                   <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {popularCount + newCount}
+                    {publicCount}
                   </p>
                 </div>
               </div>
@@ -174,22 +216,21 @@ function App() {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-end">
             <div>
               <p className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                Sections
+                Search
               </p>
-              <h2 className="mt-3 max-w-[12ch] text-[2rem] leading-[0.95] font-bold tracking-[-0.05em] text-[var(--foreground)]">
-                Filter the archive by intent and browse at editorial scale.
+              <h2 className="mt-3 max-w-[14ch] text-[2rem] leading-[0.95] font-bold tracking-[-0.05em] text-[var(--foreground)]">
+                Search public prompts by title or type.
               </h2>
-              <div className="mt-6">
-                <CategoryTabs
-                  activeCategory={activeCategory}
-                  onChange={setActiveCategory}
-                />
-              </div>
+              <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
+                Each card keeps the preview, title, and configured type label on
+                the surface. The raw Markdown stays in Supabase until the copy
+                action requests it.
+              </p>
             </div>
 
             <label className="block">
               <span className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                Search components or categories
+                Search prompts or types
               </span>
 
               <div className="mt-6 flex items-center gap-3 border-b border-[var(--outline)] pb-3 text-[var(--secondary)] transition focus-within:border-b-2 focus-within:border-[var(--primary)] focus-within:pb-[11px] focus-within:text-[var(--foreground)]">
@@ -208,7 +249,8 @@ function App() {
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search components or categories"
+                  placeholder="Search prompts or types"
+                  aria-label="Search prompts or types"
                   className="w-full border-none bg-transparent p-0 text-[0.95rem] text-[var(--foreground)] outline-none placeholder:text-[var(--secondary)]"
                 />
               </div>
@@ -218,8 +260,6 @@ function App() {
 
         <section
           id="component-grid-panel"
-          role="tabpanel"
-          aria-labelledby={`tab-${activeCategory}`}
           className="mt-6 rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:px-6 sm:py-8"
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
@@ -229,7 +269,7 @@ function App() {
                   Active view
                 </p>
                 <h2 className="mt-3 text-[1.8rem] leading-none font-semibold tracking-[-0.05em] text-[var(--foreground)]">
-                  {activeCategoryLabel}
+                  {query.trim() ? 'Search results' : 'All public prompts'}
                 </h2>
                 <p className="mt-2 text-[0.92rem] text-[var(--secondary)]">
                   {filteredItems.length} result{filteredItems.length === 1 ? '' : 's'}
@@ -245,29 +285,49 @@ function App() {
             </div>
 
             <p className="max-w-[18rem] text-[0.92rem] leading-6 text-[var(--secondary)]">
-              Cards sit on a lowered surface so the previews lift by tonal
-              contrast instead of heavy shadows.
+              The browser loads only the card metadata up front. Each copy action
+              pulls the raw Markdown for the selected prompt on demand.
             </p>
           </div>
 
-          {filteredItems.length ? (
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {catalogStatus === 'loading' ? (
+            <div className="mt-8 rounded-[1.5rem] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-6 py-12 text-center">
+              <p className="text-lg font-semibold tracking-[-0.03em] text-[var(--foreground)]">
+                Loading public catalog
+              </p>
+              <p className="mt-2 text-sm text-[var(--secondary)]">
+                Reading the card list from Supabase.
+              </p>
+            </div>
+          ) : catalogStatus === 'error' ? (
+            <div className="mt-8 rounded-[1.5rem] border border-[#f2b7b7] bg-[#fff0f0] px-6 py-12 text-center">
+              <p className="text-lg font-semibold tracking-[-0.03em] text-[#8f1d1d]">
+                Public catalog unavailable
+              </p>
+              <p className="mt-2 text-sm text-[#8f1d1d]/80">
+                {catalogError ?? 'Check the Supabase environment variables and table.'}
+              </p>
+            </div>
+          ) : filteredItems.length ? (
+            <div className="mt-8 columns-1 gap-5 md:columns-2 lg:columns-3 xl:columns-4">
               {filteredItems.map((item) => (
-                <ComponentCard
-                  key={item.id}
-                  item={item}
-                  copyState={getCopyState(copiedId, item.id)}
-                  onCopy={handleCopy}
-                />
+                <div key={item.slug} className="mb-5 break-inside-avoid">
+                  <ComponentCard
+                    item={item}
+                    copyState={getCopyState(copiedId, item.slug)}
+                    onCopy={handleCopy}
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="mt-8 rounded-[var(--radius)] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-6 py-12 text-center">
+            <div className="mt-8 rounded-[1.5rem] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-6 py-12 text-center">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[var(--foreground)]">
-                No components found
+                No prompts found
               </p>
               <p className="mt-2 text-sm text-[var(--secondary)]">
-                Try a different search term or switch back to All.
+                Try a different search term or wait until more Markdown files
+                are synced.
               </p>
             </div>
           )}
