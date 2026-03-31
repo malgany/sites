@@ -309,9 +309,9 @@ function App() {
               </p>
             </div>
           ) : filteredItems.length ? (
-            <div className="mt-8 columns-1 gap-5 md:columns-2 lg:columns-3 xl:columns-4">
+            <div className="mx-auto mt-8 max-w-[1136px] columns-1 gap-3 sm:columns-2 lg:columns-4">
               {filteredItems.map((item) => (
-                <div key={item.slug} className="mb-5 break-inside-avoid">
+                <div key={item.slug} className="mb-3 break-inside-avoid">
                   <ComponentCard
                     item={item}
                     copyState={getCopyState(copiedId, item.slug)}

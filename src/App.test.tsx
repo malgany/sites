@@ -64,6 +64,11 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Prompt Archive' }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(3)
+    expect(screen.getByText('Studio')).toBeInTheDocument()
+    expect(screen.queryByText('Public prompt')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
+    ).toHaveClass('truncate')
   })
 
   it('filters cards by title and type label', async () => {
@@ -113,7 +118,7 @@ describe('App', () => {
     vi.useFakeTimers()
 
     const button = within(screen.getAllByRole('article')[0]).getByRole('button', {
-      name: /copy markdown/i,
+      name: /copy/i,
     })
 
     await act(async () => {
@@ -130,7 +135,7 @@ describe('App', () => {
       await vi.advanceTimersByTimeAsync(2000)
     })
 
-    expect(button).toHaveTextContent('Copy markdown')
+    expect(button).toHaveTextContent('Copy')
   })
 
   it('shows an error state when the markdown fetch fails', async () => {
@@ -141,7 +146,7 @@ describe('App', () => {
     await screen.findByRole('heading', { name: 'Aethera Studio', level: 2 })
 
     const button = within(screen.getAllByRole('article')[1]).getByRole('button', {
-      name: /copy markdown/i,
+      name: /copy/i,
     })
 
     fireEvent.click(button)

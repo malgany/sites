@@ -1,5 +1,10 @@
-import { useState } from 'react'
-import type { CatalogCardItem, CatalogCopyState } from '../types'
+import { useEffect, useState } from 'react'
+import { getCatalogCardLayout } from '../lib/catalogCardLayout'
+import type {
+  CatalogCardItem,
+  CatalogCardLayout,
+  CatalogCopyState,
+} from '../types'
 
 type ComponentCardProps = {
   item: CatalogCardItem
@@ -23,12 +28,16 @@ function CopyIcon() {
   )
 }
 
-function PreviewMedia({ item }: Pick<ComponentCardProps, 'item'>) {
+type PreviewMediaProps = Pick<ComponentCardProps, 'item'> & {
+  onMediaReady: (layout: CatalogCardLayout) => void
+}
+
+function PreviewMedia({ item, onMediaReady }: PreviewMediaProps) {
   const [hasMediaError, setHasMediaError] = useState(false)
 
   if (!item.previewUrl || hasMediaError) {
     return (
-      <div className="flex aspect-[4/5] items-end bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
+      <div className="absolute inset-0 flex items-end bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
         <div>
           <p className="text-[0.68rem] font-semibold tracking-[0.18em] uppercase text-white/70">
             Preview pending
@@ -45,11 +54,19 @@ function PreviewMedia({ item }: Pick<ComponentCardProps, 'item'>) {
     return (
       <video
         src={item.previewUrl}
-        className="aspect-[4/5] size-full object-cover object-top"
+        className="absolute inset-0 size-full object-cover object-top"
         autoPlay
         muted
         loop
         playsInline
+        onLoadedMetadata={(event) => {
+          onMediaReady(
+            getCatalogCardLayout(
+              event.currentTarget.videoWidth,
+              event.currentTarget.videoHeight,
+            ),
+          )
+        }}
         onError={() => setHasMediaError(true)}
       />
     )
@@ -59,8 +76,16 @@ function PreviewMedia({ item }: Pick<ComponentCardProps, 'item'>) {
     <img
       src={item.previewUrl}
       alt={`${item.title} preview`}
-      className="aspect-[4/5] size-full object-cover object-top"
+      className="absolute inset-0 size-full object-cover object-top"
       loading="lazy"
+      onLoad={(event) => {
+        onMediaReady(
+          getCatalogCardLayout(
+            event.currentTarget.naturalWidth,
+            event.currentTarget.naturalHeight,
+          ),
+        )
+      }}
       onError={() => setHasMediaError(true)}
     />
   )
@@ -71,6 +96,12 @@ export function ComponentCard({
   copyState,
   onCopy,
 }: ComponentCardProps) {
+  const [layout, setLayout] = useState<CatalogCardLayout>('compact')
+
+  useEffect(() => {
+    setLayout('compact')
+  }, [item.previewKind, item.previewUrl, item.slug])
+
   const buttonLabel =
     copyState === 'copied'
       ? 'Copied'
@@ -78,31 +109,34 @@ export function ComponentCard({
         ? 'Copy failed'
         : copyState === 'pending'
           ? 'Copying'
-          : 'Copy markdown'
+          : 'Copy'
 
   return (
     <article
-      className="group flex flex-col overflow-hidden rounded-[1.75rem] border border-black/8 bg-[var(--surface-lowest)] shadow-[0_18px_40px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(0,0,0,0.08)]"
+      className="group flex flex-col overflow-hidden rounded-[1.5rem] border border-black/8 bg-[var(--surface-lowest)] shadow-[0_18px_40px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(0,0,0,0.08)]"
       role="article"
     >
-      <div className="relative overflow-hidden bg-[var(--surface-high)]">
+      <div
+        className={[
+          'relative overflow-hidden bg-[var(--surface-high)]',
+          layout === 'feature' ? 'aspect-[11/20]' : 'aspect-[4/3]',
+        ].join(' ')}
+      >
         <PreviewMedia
           key={`${item.previewKind}:${item.previewUrl ?? 'none'}`}
           item={item}
+          onMediaReady={setLayout}
         />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(0,0,0,0.08)_100%)]" />
-        <div className="absolute left-3 top-3 inline-flex items-center rounded-full border border-white/70 bg-white/84 px-3 py-1 text-[0.66rem] font-semibold tracking-[0.18em] text-[var(--foreground)] uppercase shadow-[0_10px_24px_rgba(0,0,0,0.08)] backdrop-blur-md">
-          {item.typeLabel}
-        </div>
       </div>
 
-      <div className="flex items-end justify-between gap-3 px-4 py-4 sm:px-5 sm:py-5">
+      <div className="flex items-end justify-between gap-3 px-3 py-4">
         <div className="min-w-0">
-          <h2 className="text-[1.18rem] leading-[1.05] font-semibold tracking-[-0.05em] text-[var(--foreground)]">
+          <h2 className="truncate text-[1.18rem] leading-[1.05] font-semibold tracking-[-0.05em] text-[var(--foreground)]">
             {item.title}
           </h2>
           <p className="mt-2 text-[0.74rem] font-medium tracking-[0.14em] text-[var(--secondary)] uppercase">
-            {item.isPublic ? 'Public prompt' : 'Private prompt'}
+            {item.typeLabel}
           </p>
         </div>
 

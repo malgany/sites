@@ -1,7 +1,19 @@
 import { getBrowserSupabaseClient } from './client'
+import rawLocalPreviewOverrides from './local-preview-overrides.json'
 import type { CatalogCardItem, CatalogPreviewKind } from '../types'
 
 export const CATALOG_TABLE = 'catalog_prompts'
+
+type LocalPreviewOverride = {
+  previewKind: CatalogPreviewKind
+  previewUrl: string
+  sourceUrl?: string
+}
+
+const localPreviewOverrides = rawLocalPreviewOverrides as Record<
+  string,
+  LocalPreviewOverride
+>
 
 type CatalogListRow = {
   slug: string
@@ -18,12 +30,15 @@ type CatalogContentRow = {
 }
 
 function mapCatalogRowToCardItem(row: CatalogListRow): CatalogCardItem {
+  const localPreviewOverride = localPreviewOverrides[row.slug]
+
   return {
     slug: row.slug,
     title: row.title,
     typeLabel: row.type_label,
-    previewUrl: row.preview_url,
-    previewKind: row.preview_kind ?? 'image',
+    previewUrl: localPreviewOverride?.previewUrl ?? row.preview_url,
+    previewKind:
+      localPreviewOverride?.previewKind ?? row.preview_kind ?? 'image',
     isPublic: row.is_public,
   }
 }

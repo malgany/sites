@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "download:motionsites-previews": "node scripts/download-motionsites-previews.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "sync:catalog": "node scripts/sync-catalog-to-supabase.mjs",

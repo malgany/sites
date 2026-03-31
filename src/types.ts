@@ -26,4 +26,6 @@ export type CatalogCardItem = {
   isPublic: boolean
 }
 
+export type CatalogCardLayout = 'compact' | 'feature'
+
 export type CatalogCopyState = 'idle' | 'pending' | 'copied' | 'error'
