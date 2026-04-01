@@ -155,8 +155,6 @@ function App() {
 
   const filteredItems = filterCatalog(catalogItems, deferredQuery)
   const visibleItems = filteredItems.slice(0, visibleCount)
-  const totalTypes = new Set(catalogItems.map((item) => item.typeLabel)).size
-  const publicCount = catalogItems.filter((item) => item.isPublic).length
   const hasCatalogItems = catalogItems.length > 0
 
   useEffect(() => {
@@ -224,204 +222,47 @@ function App() {
       <div className="pointer-events-none absolute right-[-10rem] top-[32rem] h-[18rem] w-[18rem] rounded-full bg-black/5 blur-3xl" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1380px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <div className="sticky top-4 z-20">
-          <div className="mx-auto flex items-center justify-between gap-4 rounded-[8px] border border-black/8 bg-white/72 px-4 py-3 shadow-[0_24px_48px_rgba(0,0,0,0.06)] backdrop-blur-[18px]">
-            <div>
-              <p className="text-[0.68rem] font-semibold tracking-[0.22em] text-[var(--secondary)] uppercase">
-                Public Prompt Catalog
-              </p>
-              <p className="mt-1 text-sm font-medium tracking-[-0.02em] text-[var(--foreground)]">
-                Local-first archive with background Supabase refresh
-              </p>
-            </div>
+        <header className="pb-8 pt-8 sm:pt-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <h1 className="max-w-[11ch] text-[clamp(4.5rem,10vw,8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
+            Prompt Archive
+          </h1>
 
-            <div className="hidden items-center gap-3 sm:flex">
-              <a
-                href="#library-panel"
-                className="rounded-[6px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3 text-sm font-medium text-[var(--on-primary)] transition hover:brightness-110"
+          <label className="block w-full lg:max-w-[20rem] xl:max-w-[24rem] pb-2">
+            <span className="sr-only">Search prompts or types</span>
+            <div className="flex items-center gap-3 border-b border-[var(--outline)] pb-3 text-[var(--secondary)] transition focus-within:border-b-2 focus-within:border-[var(--primary)] focus-within:pb-[11px] focus-within:text-[var(--foreground)]">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
               >
-                Browse catalog
-              </a>
-              <a
-                href="#component-grid-panel"
-                className="rounded-[6px] bg-[var(--surface-high)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-highest)]"
-              >
-                Jump to grid
-              </a>
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search prompts or types"
+                aria-label="Search prompts or types"
+                className="w-full border-none bg-transparent p-0 text-[0.95rem] text-[var(--foreground)] outline-none placeholder:text-[var(--secondary)]"
+              />
             </div>
-          </div>
-        </div>
-
-        <header className="pb-10 pt-10 sm:pt-16">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)] lg:items-end">
-            <div>
-              <p className="text-[0.72rem] font-semibold tracking-[0.24em] text-[var(--secondary)] uppercase">
-                Local-first catalog
-              </p>
-              <h1 className="mt-4 max-w-[11ch] text-[clamp(3.5rem,9vw,7rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
-                Prompt Archive
-              </h1>
-
-              <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
-                <p className="max-w-[30rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
-                  The grid renders from a local manifest first, so titles, types,
-                  and posters appear without waiting for Supabase. Raw Markdown
-                  stays fetched on demand only when a card is copied.
-                </p>
-
-                <div className="space-y-4">
-                  <p className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                    Catalog mode
-                  </p>
-                  <p className="text-[0.92rem] leading-6 text-[var(--foreground)]">
-                    Posters and labels ship with the app. Supabase refreshes
-                    preview metadata in the background, while heavy motion assets
-                    stay deferred until the card is visible or interacted with.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <aside className="rounded-[8px] bg-[var(--surface-low)] p-6">
-              <p className="text-[0.72rem] font-semibold tracking-[0.18em] text-[var(--secondary)] uppercase">
-                Archive status
-              </p>
-
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
-                <div>
-                  <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Total prompts
-                  </p>
-                  <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {catalogItems.length}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Type labels
-                  </p>
-                  <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {totalTypes}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Public items
-                  </p>
-                  <p className="mt-2 text-[2.2rem] leading-none font-semibold tracking-[-0.06em]">
-                    {publicCount}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
-                    Sync status
-                  </p>
-                  <p className="mt-2 text-[0.92rem] leading-6 text-[var(--foreground)]">
-                    {catalogRefreshState === 'refreshing'
-                      ? 'Refreshing Supabase metadata.'
-                      : catalogRefreshState === 'error'
-                        ? 'Using the local manifest only.'
-                        : 'Local manifest ready.'}
-                  </p>
-                </div>
-              </div>
-
-              {catalogError ? (
-                <p className="mt-6 text-sm leading-6 text-[var(--secondary)]">
-                  {catalogRefreshState === 'error'
-                    ? 'Background metadata sync is unavailable. Browsing still uses the local catalog.'
-                    : catalogError}
-                </p>
-              ) : null}
-            </aside>
-          </div>
+          </label>
         </header>
-
-        <section
-          id="library-panel"
-          className="rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:px-6 sm:py-8"
-        >
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-end">
-            <div>
-              <p className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                Search
-              </p>
-              <h2 className="mt-3 max-w-[14ch] text-[2rem] leading-[0.95] font-bold tracking-[-0.05em] text-[var(--foreground)]">
-                Search public prompts by title or type.
-              </h2>
-              <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
-                Each card starts with lightweight poster imagery. Animated
-                previews stay paused until the card scrolls into view or receives
-                hover or focus, while Markdown remains in Supabase until copy
-                time.
-              </p>
-            </div>
-
-            <label className="block">
-              <span className="text-[0.72rem] font-semibold tracking-[0.2em] text-[var(--secondary)] uppercase">
-                Search prompts or types
-              </span>
-
-              <div className="mt-6 flex items-center gap-3 border-b border-[var(--outline)] pb-3 text-[var(--secondary)] transition focus-within:border-b-2 focus-within:border-[var(--primary)] focus-within:pb-[11px] focus-within:text-[var(--foreground)]">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="size-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search prompts or types"
-                  aria-label="Search prompts or types"
-                  className="w-full border-none bg-transparent p-0 text-[0.95rem] text-[var(--foreground)] outline-none placeholder:text-[var(--secondary)]"
-                />
-              </div>
-            </label>
-          </div>
-        </section>
 
         <section
           id="component-grid-panel"
           className="mt-6 rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:px-6 sm:py-8"
         >
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-              <div>
-                <p className="text-[0.72rem] font-semibold tracking-[0.18em] text-[var(--secondary)] uppercase">
-                  Active view
-                </p>
-                <h2 className="mt-3 text-[1.8rem] leading-none font-semibold tracking-[-0.05em] text-[var(--foreground)]">
-                  {query.trim() ? 'Search results' : 'All public prompts'}
-                </h2>
-                <p className="mt-2 text-[0.92rem] text-[var(--secondary)]">
-                  {filteredItems.length} result{filteredItems.length === 1 ? '' : 's'}
-                  {filteredItems.length > visibleItems.length
-                    ? ` · showing ${visibleItems.length}`
-                    : ''}
-                </p>
-              </div>
-
-              <p
-                aria-live="polite"
-                className="min-h-5 text-sm text-[var(--secondary)] sm:text-right"
-              >
-                {getLiveMessage(copiedId)}
-              </p>
-            </div>
-
-            <p className="max-w-[18rem] text-[0.92rem] leading-6 text-[var(--secondary)]">
-              The first paint comes from local data. Supabase refreshes in the
-              background, and heavy motion media stays deferred behind posters.
+          <div className="flex justify-end">
+            <p
+              aria-live="polite"
+              className="min-h-5 text-sm text-[var(--secondary)]"
+            >
+              {getLiveMessage(copiedId)}
             </p>
           </div>
 
