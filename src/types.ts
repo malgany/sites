@@ -3,6 +3,7 @@ export type CatalogVisibility = 'public' | 'private'
 export type CatalogPreviewKind = 'image' | 'video'
 
 export type CatalogManifestReferenceLookup = {
+  motionSitesSlug?: string
   motionSitesTitle?: string
   preferredSource?: 'lovable_templates' | 'motion_videos'
   keywords?: string[]

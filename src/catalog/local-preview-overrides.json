@@ -368,5 +368,25 @@
     "previewWidth": 800,
     "previewHeight": 608,
     "sourceUrl": "https://motionsites.ai/assets/hero-xportfolio-preview-D4A8maiC.gif"
+  },
+  "stellar-ai-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/stellar-ai-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/stellar-ai-hero.gif",
+    "posterUrl": "/motionsites-posters/stellar-ai-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 708,
+    "sourceUrl": "https://motionsites.ai/assets/hero-stellar-ai-preview-D3HL6bw1.gif"
+  },
+  "vortex-studio-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/vortex-studio-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/vortex-studio-hero.gif",
+    "posterUrl": "/motionsites-posters/vortex-studio-hero.webp",
+    "previewWidth": 604,
+    "previewHeight": 476,
+    "sourceUrl": "https://motionsites.ai/assets/hero-vortex-studio-preview-BQyvwopD.gif"
   }
 }

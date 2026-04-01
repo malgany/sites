@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "compare:motionsites-catalog": "node scripts/compare-motionsites-catalog.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "download:motionsites-previews": "node scripts/download-motionsites-previews.mjs",

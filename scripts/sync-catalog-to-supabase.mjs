@@ -1,53 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
-import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { promises as fs } from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import manifest from '../src/catalog/catalog-manifest.json' with { type: 'json' }
+import { createSourceHash, getAssetExtension, inferPreviewKindFromUrl, normalizeLookupValue, slugToStorageBasename } from './lib/catalog-sync-utils.mjs'
 import {
-  createSourceHash,
-  extractMediaUrls,
-  getAssetExtension,
-  inferPreviewKindFromUrl,
-  normalizeLookupValue,
-  resolveLatestSourceFile,
-  slugToStorageBasename,
-} from './lib/catalog-sync-utils.mjs'
+  createMotionSitesPublicClient,
+  DEFAULT_MOTIONSITES_SITE_URL,
+  fetchMotionSitesPromptMap,
+  fetchMotionSitesSiteCatalog,
+} from './lib/motionsites-site-catalog.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
-const manifestPath = path.join(repoRoot, 'src', 'catalog', 'catalog-manifest.json')
-const defaultSourceDir = 'E:\\Projects\\hackzin\\output'
-const defaultMotionSitesUrl = 'https://xgdzyqfalbibzelpdpvr.supabase.co'
-const defaultMotionSitesAnonKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnZHp5cWZhbGJpYnplbHBkcHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MzUwMDYsImV4cCI6MjA4NzQxMTAwNn0.u8lH5Y14xx2WxrNEBp8ngkJlijIYHJASq_gOzTaINZY'
 
 await loadEnvFiles([
   path.join(repoRoot, '.env'),
   path.join(repoRoot, '.env.local'),
 ])
 
-const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
-const sourceDir = process.env.CATALOG_SOURCE_DIR?.trim() || defaultSourceDir
 const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim()
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
 const previewBucket =
   process.env.SUPABASE_PREVIEW_BUCKET?.trim() || 'catalog-previews'
-const motionSitesUrl =
-  process.env.MOTIONSITES_SUPABASE_URL?.trim() || defaultMotionSitesUrl
-const motionSitesAnonKey =
-  process.env.MOTIONSITES_SUPABASE_ANON_KEY?.trim() || defaultMotionSitesAnonKey
+const motionSitesSiteUrl =
+  process.env.MOTIONSITES_SITE_URL?.trim() || DEFAULT_MOTIONSITES_SITE_URL
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error(
     'Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for sync:catalog.',
   )
-}
-
-if (!existsSync(sourceDir)) {
-  throw new Error(`Markdown source directory not found: ${sourceDir}`)
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -57,36 +41,53 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   },
 })
 
-const motionSitesCatalog = await fetchMotionSitesCatalog({
-  anonKey: motionSitesAnonKey,
-  supabaseUrl: motionSitesUrl,
+const snapshot = await fetchMotionSitesSiteCatalog({
+  siteUrl: motionSitesSiteUrl,
 })
+const motionSitesClient = createMotionSitesPublicClient(snapshot)
+const promptMap = await fetchMotionSitesPromptMap({
+  client: motionSitesClient,
+  promptIds: manifest.map(
+    (item) => item.referenceLookup?.motionSitesSlug?.trim() || item.slug,
+  ),
+})
+const motionSitesCatalog = snapshot.items
 
 const summary = {
-  fallbackPreviewCount: 0,
-  missingPreviewCount: 0,
-  motionSitesPreviewCount: 0,
-  skippedMissingMarkdown: [],
+  deactivated: [],
+  missingPreview: [],
+  skippedMissingSite: [],
+  skippedUnavailablePrompt: [],
   syncedCount: 0,
 }
 
 for (const item of manifest) {
-  const sourceFile = await resolveLatestSourceFile(sourceDir, item.slug)
+  const siteEntry = findMotionSitesMatch(item, motionSitesCatalog)
 
-  if (!sourceFile) {
-    summary.skippedMissingMarkdown.push(item.slug)
+  if (!siteEntry) {
+    summary.skippedMissingSite.push(item.slug)
+    await deactivateCatalogPrompt({
+      slug: item.slug,
+      supabase,
+    })
     continue
   }
 
-  const contentMarkdown = await fs.readFile(sourceFile.absolutePath, 'utf8')
-  const previewAsset = await resolvePreviewAsset({
-    contentMarkdown,
-    item,
-    motionSitesCatalog,
-  })
+  const promptDetails = promptMap.get(siteEntry.id)
 
+  if (!promptDetails?.promptText) {
+    summary.skippedUnavailablePrompt.push(item.slug)
+    await deactivateCatalogPrompt({
+      slug: item.slug,
+      supabase,
+    })
+    summary.deactivated.push(item.slug)
+    continue
+  }
+
+  const previewAsset = await resolvePreviewAsset(siteEntry)
   let previewUrl = null
-  let previewKind = 'image'
+  let previewKind = siteEntry.previewKind
 
   if (previewAsset) {
     const uploadResult = await uploadPreviewAsset({
@@ -98,14 +99,8 @@ for (const item of manifest) {
 
     previewUrl = uploadResult.publicUrl
     previewKind = uploadResult.previewKind
-
-    if (previewAsset.source === 'motionsites') {
-      summary.motionSitesPreviewCount += 1
-    } else {
-      summary.fallbackPreviewCount += 1
-    }
   } else {
-    summary.missingPreviewCount += 1
+    summary.missingPreview.push(item.slug)
   }
 
   const { error } = await supabase.from('catalog_prompts').upsert(
@@ -113,15 +108,15 @@ for (const item of manifest) {
       slug: item.slug,
       title: item.title,
       type_label: item.typeLabel,
-      content_markdown: contentMarkdown,
+      content_markdown: promptDetails.promptText,
       is_public: item.visibility === 'public',
       preview_kind: previewKind,
       preview_url: previewUrl,
       published_at: item.visibility === 'public' ? new Date().toISOString() : null,
       required_plan: item.visibility === 'public' ? null : 'private',
       sort_order: item.sortOrder,
-      source_file_name: sourceFile.name,
-      source_hash: createSourceHash(contentMarkdown),
+      source_file_name: `motionsites:${siteEntry.id}`,
+      source_hash: createSourceHash(promptDetails.promptText),
     },
     {
       onConflict: 'slug',
@@ -137,12 +132,12 @@ for (const item of manifest) {
 
 console.log(`Synced ${summary.syncedCount} catalog items to Supabase.`)
 console.log(
-  `MotionSites previews: ${summary.motionSitesPreviewCount}. Fallback previews: ${summary.fallbackPreviewCount}. Missing previews: ${summary.missingPreviewCount}.`,
+  `Skipped unavailable prompts: ${summary.skippedUnavailablePrompt.length}. Missing site matches: ${summary.skippedMissingSite.length}. Missing previews: ${summary.missingPreview.length}.`,
 )
 
-if (summary.skippedMissingMarkdown.length) {
+if (summary.deactivated.length) {
   console.log(
-    `Skipped ${summary.skippedMissingMarkdown.length} manifest entries without Markdown: ${summary.skippedMissingMarkdown.join(', ')}`,
+    `Deactivated ${summary.deactivated.length} unavailable catalog rows: ${summary.deactivated.join(', ')}`,
   )
 }
 
@@ -177,93 +172,13 @@ async function loadEnvFiles(filePaths) {
   }
 }
 
-async function fetchMotionSitesCatalog({ supabaseUrl, anonKey }) {
-  try {
-    const client = createClient(supabaseUrl, anonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-
-    const [templatesResult, videosResult] = await Promise.all([
-      client
-        .from('lovable_templates')
-        .select('title, image_url, remix_link, is_premium'),
-      client
-        .from('motion_videos')
-        .select('title, video_url, thumbnail_url, is_premium'),
-    ])
-
-    if (templatesResult.error || videosResult.error) {
-      throw templatesResult.error ?? videosResult.error
-    }
-
-    const templateEntries = (templatesResult.data ?? [])
-      .filter((entry) => entry.image_url)
-      .map((entry) => ({
-        assetUrl: entry.image_url,
-        fallbackUrl: null,
-        previewKind: inferPreviewKindFromUrl(entry.image_url),
-        searchText: normalizeLookupValue(
-          `${entry.title ?? ''} ${entry.remix_link ?? ''}`,
-        ),
-        source: 'lovable_templates',
-        title: entry.title ?? '',
-      }))
-
-    const videoEntries = (videosResult.data ?? [])
-      .filter((entry) => entry.video_url || entry.thumbnail_url)
-      .map((entry) => ({
-        assetUrl: entry.video_url ?? entry.thumbnail_url,
-        fallbackUrl: entry.video_url ? entry.thumbnail_url : null,
-        previewKind: entry.video_url ? 'video' : 'image',
-        searchText: normalizeLookupValue(
-          `${entry.title ?? ''} ${entry.video_url ?? ''} ${entry.thumbnail_url ?? ''}`,
-        ),
-        source: 'motion_videos',
-        title: entry.title ?? '',
-      }))
-
-    return [...templateEntries, ...videoEntries]
-  } catch (error) {
-    console.warn(
-      `MotionSites preview lookup unavailable. Falling back to Markdown media extraction. ${error instanceof Error ? error.message : ''}`.trim(),
-    )
-    return []
-  }
-}
-
-async function resolvePreviewAsset({ item, motionSitesCatalog, contentMarkdown }) {
-  const motionSitesMatch = findMotionSitesMatch(item, motionSitesCatalog)
-
-  if (motionSitesMatch) {
-    const downloadedAsset = await tryDownloadRemoteAsset({
-      fallbackUrl: motionSitesMatch.fallbackUrl,
-      previewKind: motionSitesMatch.previewKind,
-      source: 'motionsites',
-      url: motionSitesMatch.assetUrl,
-    })
-
-    if (downloadedAsset) {
-      return downloadedAsset
-    }
-  }
-
-  const mediaUrls = extractMediaUrls(contentMarkdown)
-
-  for (const mediaUrl of mediaUrls) {
-    const fallbackAsset = await buildFallbackPreviewFromMarkdownMedia(
-      item.slug,
-      mediaUrl,
-    )
-
-    if (fallbackAsset) {
-      return fallbackAsset
-    }
-  }
-
-  return null
+async function resolvePreviewAsset(siteEntry) {
+  return tryDownloadRemoteAsset({
+    fallbackUrl: siteEntry.posterUrl,
+    previewKind: siteEntry.previewKind,
+    source: 'motionsites',
+    url: siteEntry.previewUrl,
+  })
 }
 
 function findMotionSitesMatch(item, catalogEntries) {
@@ -271,8 +186,20 @@ function findMotionSitesMatch(item, catalogEntries) {
     return null
   }
 
+  const slugCandidates = [
+    item.referenceLookup?.motionSitesSlug?.trim(),
+    item.slug,
+  ].filter(Boolean)
+
+  for (const slugCandidate of slugCandidates) {
+    const directMatch = catalogEntries.find((entry) => entry.id === slugCandidate)
+
+    if (directMatch) {
+      return directMatch
+    }
+  }
+
   const referenceTitle = item.referenceLookup?.motionSitesTitle || item.title
-  const preferredSource = item.referenceLookup?.preferredSource
   const explicitKeywords = item.referenceLookup?.keywords ?? []
   const normalizedReferenceTitle = normalizeLookupValue(referenceTitle)
   const lookupTokens = Array.from(
@@ -291,14 +218,6 @@ function findMotionSitesMatch(item, catalogEntries) {
 
   for (const entry of catalogEntries) {
     let score = 0
-
-    if (entry.previewKind === 'video') {
-      score += 1
-    }
-
-    if (preferredSource && entry.source === preferredSource) {
-      score += 10
-    }
 
     if (normalizeLookupValue(entry.title) === normalizedReferenceTitle) {
       score += 100
@@ -367,82 +286,6 @@ async function fetchBinaryAsset(url) {
   }
 }
 
-async function buildFallbackPreviewFromMarkdownMedia(slug, mediaUrl) {
-  if (inferPreviewKindFromUrl(mediaUrl) === 'image') {
-    const imageAsset = await fetchBinaryAsset(mediaUrl)
-
-    if (!imageAsset) {
-      return null
-    }
-
-    return {
-      ...imageAsset,
-      previewKind: 'image',
-      source: 'fallback',
-    }
-  }
-
-  const tempDir = await fs.mkdtemp(
-    path.join(os.tmpdir(), `catalog-preview-${slugToStorageBasename(slug)}-`),
-  )
-  const outputPath = path.join(
-    tempDir,
-    `${slugToStorageBasename(slug) || 'preview'}.jpg`,
-  )
-
-  try {
-    await runCommand('ffmpeg', [
-      '-hide_banner',
-      '-loglevel',
-      'error',
-      '-y',
-      '-i',
-      mediaUrl,
-      '-frames:v',
-      '1',
-      outputPath,
-    ])
-
-    const buffer = await fs.readFile(outputPath)
-
-    return {
-      buffer,
-      contentType: 'image/jpeg',
-      extension: 'jpg',
-      previewKind: 'image',
-      source: 'fallback',
-    }
-  } catch {
-    return null
-  } finally {
-    await fs.rm(tempDir, { force: true, recursive: true })
-  }
-}
-
-function runCommand(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-    })
-
-    let stderr = ''
-
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString()
-    })
-
-    child.on('error', reject)
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(undefined)
-        return
-      }
-
-      reject(new Error(stderr || `${command} exited with code ${code}`))
-    })
-  })
-}
-
 async function uploadPreviewAsset({ supabase, bucket, slug, asset }) {
   const objectPath = `cards/${slugToStorageBasename(slug) || 'preview'}.${asset.extension}`
   const { error } = await supabase.storage.from(bucket).upload(objectPath, asset.buffer, {
@@ -462,5 +305,20 @@ async function uploadPreviewAsset({ supabase, bucket, slug, asset }) {
   return {
     previewKind: asset.previewKind,
     publicUrl,
+  }
+}
+
+async function deactivateCatalogPrompt({ supabase, slug }) {
+  const { error } = await supabase
+    .from('catalog_prompts')
+    .update({
+      is_public: false,
+      published_at: null,
+      required_plan: 'private',
+    })
+    .eq('slug', slug)
+
+  if (error) {
+    throw new Error(`Could not deactivate catalog prompt "${slug}": ${error.message}`)
   }
 }

@@ -608,5 +608,25 @@
     "referenceLookup": {
       "motionSitesTitle": "xPortfolio Hero"
     }
+  },
+  {
+    "slug": "stellar-ai-hero",
+    "title": "Stellar AI",
+    "typeLabel": "Hero Section",
+    "sortOrder": 62,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "Stellar AI"
+    }
+  },
+  {
+    "slug": "vortex-studio-hero",
+    "title": "AI Designer Portfolio",
+    "typeLabel": "Landing Page",
+    "sortOrder": 63,
+    "visibility": "public",
+    "referenceLookup": {
+      "motionSitesTitle": "AI Designer Portfolio"
+    }
   }
 ]

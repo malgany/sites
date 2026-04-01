@@ -3,7 +3,7 @@
 ## Overview
 - Project name: `sites`
 - Purpose: public prompt catalog inspired by `motionsites.ai`
-- Output: a Supabase-backed gallery of website prompts with remote preview media and copy-on-demand Markdown
+- Output: a Supabase-backed gallery of website prompts with remote preview media and copy-on-demand Markdown mirrored from `motionsites.ai`
 - Language: English UI and English prompt content
 
 ## Stack
@@ -17,13 +17,14 @@
 ## Product Direction
 - Visual reference was derived from direct inspection of `motionsites.ai`
 - The UI keeps a premium editorial layout with soft surfaces, near-black type, muted gray metadata, and compact high-contrast actions
-- The current implementation keeps the browsing feel but replaces the static prompt seed with a real public catalog pipeline
+- The current implementation keeps the browsing feel but mirrors the publicly-available MotionSites prompts directly from the live site
 
 ## Architecture Decision
 - Public catalog reads happen directly in the browser with `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`
 - The listing view fetches only card metadata
 - Full Markdown is fetched on demand per card via `getCatalogContent(slug)`
 - `SUPABASE_SERVICE_ROLE_KEY` is reserved for the sync/import script only
+- Prompt content and preview metadata are pulled from the live `motionsites.ai` site bundle and `get-prompt` Edge Function
 - Future private content should keep the same UI but move the content fetch path behind authenticated server-side logic or Edge Functions
 
 ## Main Behavior
@@ -38,7 +39,7 @@
   - title
   - configured `typeLabel`
   - public/private status label
-  - `Copy markdown` button
+  - `Copy` button
 - Copy behavior:
   - fetches the raw Markdown for the selected slug from Supabase
   - tries `navigator.clipboard.writeText`
@@ -89,9 +90,13 @@
 - `src/lib/copyTextToClipboard.ts`
   - clipboard helper with fallback
 - `scripts/sync-catalog-to-supabase.mjs`
-  - sync/import pipeline from Markdown files into Supabase
+  - sync/import pipeline from the live MotionSites site into Supabase
+- `scripts/compare-motionsites-catalog.mjs`
+  - compares the live MotionSites site catalog and prompt availability against the local manifest
 - `scripts/lib/catalog-sync-utils.mjs`
   - file resolution, URL extraction, hashing, and asset helper logic
+- `scripts/lib/motionsites-site-catalog.mjs`
+  - extracts the live MotionSites catalog, public Supabase config, and prompt availability helpers from the current site bundle
 - `supabase/bootstrap/catalog_public_catalog.sql`
   - table, RLS, and public bucket bootstrap
 
@@ -106,7 +111,8 @@
 - Build: `npm run build`
 - Lint: `npm run lint`
 - Tests: `npm run test`
-- Sync Markdown + previews to Supabase: `npm run sync:catalog`
+- Sync live MotionSites prompts + previews to Supabase: `npm run sync:catalog`
+- Compare the local catalog against the live MotionSites site: `npm run compare:motionsites-catalog`
 - Regenerate old local preview assets: `npm run generate:previews`
 
 ## Test Coverage
@@ -127,6 +133,10 @@
   - latest Markdown resolution by slug
   - media URL extraction
   - preview kind inference and stable hashing
+- `src/motionsitesSiteCatalog.test.mjs`
+  - MotionSites bundle path parsing
+  - card metadata parsing
+  - public Supabase config extraction
 - `src/lib/copyTextToClipboard.test.ts`
   - clipboard primary path
   - fallback path
@@ -134,4 +144,4 @@
 
 ## Repository Notes
 - `dist/`, `node_modules/`, local logs, env files, caches, and `.agents/` are ignored by Git
-- The repo still contains the older local preview generator, but runtime catalog data now comes from Supabase
+- The repo no longer needs a local Markdown prompt source to populate Supabase; prompt text now comes from MotionSites when it is publicly available

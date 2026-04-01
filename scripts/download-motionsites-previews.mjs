@@ -2,12 +2,16 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import manifest from '../src/catalog/catalog-manifest.json' with { type: 'json' }
-import { resolveLatestSourceFile } from './lib/catalog-sync-utils.mjs'
+import {
+  createMotionSitesPublicClient,
+  DEFAULT_MOTIONSITES_SITE_URL,
+  fetchMotionSitesPromptMap,
+  fetchMotionSitesSiteCatalog,
+} from './lib/motionsites-site-catalog.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
-const sourceDir = process.env.CATALOG_SOURCE_DIR?.trim() || 'E:\\Projects\\hackzin\\output'
 const outputDir = path.join(repoRoot, 'public', 'motionsites-previews')
 const overridesPath = path.join(
   repoRoot,
@@ -15,6 +19,8 @@ const overridesPath = path.join(
   'catalog',
   'local-preview-overrides.json',
 )
+const motionSitesSiteUrl =
+  process.env.MOTIONSITES_SITE_URL?.trim() || DEFAULT_MOTIONSITES_SITE_URL
 
 await fs.mkdir(outputDir, { recursive: true })
 
@@ -28,46 +34,43 @@ try {
   }
 }
 
-const activeManifestItems = []
-
-for (const item of manifest) {
-  const sourceFile = await resolveLatestSourceFile(sourceDir, item.slug)
-
-  if (!sourceFile) {
-    continue
-  }
-
-  activeManifestItems.push(item)
-}
-
-const html = await fetchText('https://motionsites.ai/')
-const bundlePathMatch = html.match(/src="(\/assets\/index-[^"]+\.js)"/)
-
-if (!bundlePathMatch) {
-  throw new Error('Could not find the MotionSites client bundle path.')
-}
-
-const bundleUrl = new URL(bundlePathMatch[1], 'https://motionsites.ai').toString()
-const bundle = await fetchText(bundleUrl)
-const assetPaths = buildAssetPathMap(bundle)
-const cardMap = buildCardAssetMap(bundle, assetPaths)
+const snapshot = await fetchMotionSitesSiteCatalog({
+  siteUrl: motionSitesSiteUrl,
+})
+const motionSitesClient = createMotionSitesPublicClient(snapshot)
+const promptMap = await fetchMotionSitesPromptMap({
+  client: motionSitesClient,
+  promptIds: manifest.map(
+    (item) => item.referenceLookup?.motionSitesSlug?.trim() || item.slug,
+  ),
+})
+const cardMap = new Map(snapshot.items.map((card) => [card.id, card]))
 
 const localPreviewOverrides = {}
 const summary = {
   downloaded: 0,
   missingCardAsset: [],
   missingDownloadedAsset: [],
+  skippedUnavailablePrompt: [],
 }
 
-for (const item of activeManifestItems) {
-  const cardAsset = cardMap.get(item.slug)
+for (const item of manifest) {
+  const lookupSlug = item.referenceLookup?.motionSitesSlug?.trim() || item.slug
+  const promptDetails = promptMap.get(lookupSlug)
+
+  if (!promptDetails?.promptText) {
+    summary.skippedUnavailablePrompt.push(item.slug)
+    continue
+  }
+
+  const cardAsset = cardMap.get(lookupSlug)
 
   if (!cardAsset) {
     summary.missingCardAsset.push(item.slug)
     continue
   }
 
-  const response = await fetch(cardAsset.sourceUrl)
+  const response = await fetch(cardAsset.previewUrl)
 
   if (!response.ok) {
     summary.missingDownloadedAsset.push(item.slug)
@@ -75,7 +78,7 @@ for (const item of activeManifestItems) {
   }
 
   const arrayBuffer = await response.arrayBuffer()
-  const extension = path.extname(new URL(cardAsset.sourceUrl).pathname) || '.gif'
+  const extension = path.extname(new URL(cardAsset.previewUrl).pathname) || '.gif'
   const localFileName = `${item.slug}${extension}`
   const absolutePath = path.join(outputDir, localFileName)
   await fs.writeFile(absolutePath, Buffer.from(arrayBuffer))
@@ -87,10 +90,10 @@ for (const item of activeManifestItems) {
     previewUrl: `/motionsites-previews/${localFileName}`,
     animatedPreviewKind: 'image',
     animatedPreviewUrl: `/motionsites-previews/${localFileName}`,
-    posterUrl: existingOverride.posterUrl ?? null,
+    posterUrl: existingOverride.posterUrl ?? cardAsset.posterUrl ?? null,
     previewWidth: existingOverride.previewWidth ?? null,
     previewHeight: existingOverride.previewHeight ?? null,
-    sourceUrl: cardAsset.sourceUrl,
+    sourceUrl: cardAsset.previewUrl,
   }
 
   summary.downloaded += 1
@@ -104,55 +107,16 @@ await fs.writeFile(
 console.log(
   JSON.stringify(
     {
-      bundleUrl,
+      bundleUrl: snapshot.bundleUrl,
       downloaded: summary.downloaded,
       missingCardAsset: summary.missingCardAsset,
       missingDownloadedAsset: summary.missingDownloadedAsset,
+      motionSitesSiteUrl: snapshot.siteUrl,
+      siteItemCount: snapshot.items.length,
+      skippedUnavailablePrompt: summary.skippedUnavailablePrompt,
+      skippedUnavailablePromptCount: summary.skippedUnavailablePrompt.length,
     },
     null,
     2,
   ),
 )
-
-function buildAssetPathMap(bundle) {
-  const assetMap = new Map()
-  const assetRegex = /([A-Za-z$_][A-Za-z0-9$_]*)="(\/assets\/[^"]+\.(?:gif|png|jpe?g|webp|avif))"/g
-
-  for (const match of bundle.matchAll(assetRegex)) {
-    const [, variableName, assetPath] = match
-    assetMap.set(variableName, assetPath)
-  }
-
-  return assetMap
-}
-
-function buildCardAssetMap(bundle, assetPaths) {
-  const cardMap = new Map()
-  const cardRegex = /\{id:"([^"]+)",title:"([^"]+)",image:([A-Za-z$_][A-Za-z0-9$_]*)/g
-
-  for (const match of bundle.matchAll(cardRegex)) {
-    const [, id, title, assetVariable] = match
-    const assetPath = assetPaths.get(assetVariable)
-
-    if (!assetPath) {
-      continue
-    }
-
-    cardMap.set(id, {
-      sourceUrl: new URL(assetPath, 'https://motionsites.ai').toString(),
-      title,
-    })
-  }
-
-  return cardMap
-}
-
-async function fetchText(url) {
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`)
-  }
-
-  return response.text()
-}
