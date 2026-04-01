@@ -526,7 +526,7 @@ function App() {
                     aria-label="Scroll type filters left"
                     onClick={() => handleTypeFiltersScroll('left')}
                     disabled={!canScrollTypeFiltersLeft}
-                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35"
+                    className="hidden size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35 sm:inline-flex"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -578,7 +578,7 @@ function App() {
                     aria-label="Scroll type filters right"
                     onClick={() => handleTypeFiltersScroll('right')}
                     disabled={!canScrollTypeFiltersRight}
-                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35"
+                    className="hidden size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35 sm:inline-flex"
                   >
                     <svg
                       viewBox="0 0 24 24"
