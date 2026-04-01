@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import {
@@ -103,6 +104,84 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Nexora Automation', level: 2 }),
     ).toBeInTheDocument()
+  })
+
+  it('shows All as the default selected type filter', () => {
+    render(<App />)
+
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Studio' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
+  it('filters cards by selected types and combines multiple types', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Studio' }))
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('article')).toHaveLength(1)
+    })
+
+    expect(
+      screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Calculator' }))
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('article')).toHaveLength(2)
+    })
+
+    expect(
+      screen.getByRole('heading', { name: 'Price Calculator', level: 2 }),
+    ).toBeInTheDocument()
+  })
+
+  it('clicking All clears both the selected types and the text search', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    const searchbox = screen.getByRole('searchbox', {
+      name: 'Search prompts or types',
+    })
+
+    fireEvent.change(searchbox, {
+      target: { value: 'automation' },
+    })
+    await user.click(screen.getByRole('button', { name: 'Calculator' }))
+
+    await waitFor(() => {
+      expect(screen.queryAllByRole('article')).toHaveLength(0)
+    })
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('article')).toHaveLength(3)
+    })
+
+    expect(searchbox).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Calculator' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
   })
 
   it('shows the empty state when the query has no matches', async () => {

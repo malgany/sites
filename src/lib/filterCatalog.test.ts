@@ -49,4 +49,19 @@ describe('filterCatalog', () => {
   it('matches the type label case-insensitively', () => {
     expect(filterCatalog(items, 'AUTOMATION')).toEqual([items[1]])
   })
+
+  it('filters by one selected type', () => {
+    expect(filterCatalog(items, '', ['Calculator'])).toEqual([items[2]])
+  })
+
+  it('filters by multiple selected types', () => {
+    expect(filterCatalog(items, '', ['Studio', 'Calculator'])).toEqual([
+      items[0],
+      items[2],
+    ])
+  })
+
+  it('combines the text query with the selected types', () => {
+    expect(filterCatalog(items, 'a', ['Automation'])).toEqual([items[1]])
+  })
 })
