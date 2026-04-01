@@ -13,6 +13,10 @@ import {
   refreshCatalogMetadata,
 } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
+import {
+  distributeCatalogItemsAcrossColumns,
+  getCatalogGridColumnCount,
+} from './lib/distributeCatalogColumns'
 import { filterCatalog } from './lib/filterCatalog'
 import type { CatalogCardItem } from './types'
 
@@ -93,6 +97,11 @@ function App() {
   const [canScrollTypeFiltersLeft, setCanScrollTypeFiltersLeft] = useState(false)
   const [canScrollTypeFiltersRight, setCanScrollTypeFiltersRight] = useState(false)
   const [isDraggingTypeFilters, setIsDraggingTypeFilters] = useState(false)
+  const [gridColumnCount, setGridColumnCount] = useState(() =>
+    getCatalogGridColumnCount(
+      typeof window === 'undefined' ? Number.NaN : window.innerWidth,
+    ),
+  )
   const [visibleCount, setVisibleCount] = useState(() =>
     initialCatalogRef.current?.length
       ? Math.min(INITIAL_RENDER_COUNT, initialCatalogRef.current.length)
@@ -180,6 +189,47 @@ function App() {
 
     return () => window.clearTimeout(timer)
   }, [copiedId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    const syncGridColumnCount = () => {
+      setGridColumnCount(getCatalogGridColumnCount(window.innerWidth))
+    }
+
+    syncGridColumnCount()
+    window.addEventListener('resize', syncGridColumnCount)
+
+    return () => {
+      window.removeEventListener('resize', syncGridColumnCount)
+    }
+  }, [])
+
+  function handleTypeFiltersPointerEnd(pointerId: number) {
+    const dragState = typeFilterDragStateRef.current
+
+    if (!dragState.active || dragState.pointerId !== pointerId) {
+      return
+    }
+
+    if (dragState.moved) {
+      suppressTypeFilterClickRef.current = true
+      window.setTimeout(() => {
+        suppressTypeFilterClickRef.current = false
+      }, 0)
+    }
+
+    typeFilterDragStateRef.current = {
+      active: false,
+      moved: false,
+      pointerId: null,
+      startX: 0,
+      startScrollLeft: 0,
+    }
+    setIsDraggingTypeFilters(false)
+  }
 
   useEffect(() => {
     function handleWindowPointerMove(event: PointerEvent) {
@@ -313,30 +363,6 @@ function App() {
     setIsDraggingTypeFilters(true)
   }
 
-  function handleTypeFiltersPointerEnd(pointerId: number) {
-    const dragState = typeFilterDragStateRef.current
-
-    if (!dragState.active || dragState.pointerId !== pointerId) {
-      return
-    }
-
-    if (dragState.moved) {
-      suppressTypeFilterClickRef.current = true
-      window.setTimeout(() => {
-        suppressTypeFilterClickRef.current = false
-      }, 0)
-    }
-
-    typeFilterDragStateRef.current = {
-      active: false,
-      moved: false,
-      pointerId: null,
-      startX: 0,
-      startScrollLeft: 0,
-    }
-    setIsDraggingTypeFilters(false)
-  }
-
   function handleTypeFiltersClickCapture(
     event: ReactPointerEvent<HTMLDivElement>,
   ) {
@@ -350,6 +376,10 @@ function App() {
 
   const filteredItems = filterCatalog(catalogItems, deferredQuery, selectedTypes)
   const visibleItems = filteredItems.slice(0, visibleCount)
+  const columnizedVisibleItems = distributeCatalogItemsAcrossColumns(
+    visibleItems,
+    gridColumnCount,
+  )
   const hasCatalogItems = catalogItems.length > 0
   const catalogStatusMessage = getCatalogStatusMessage(
     catalogRefreshState,
@@ -628,14 +658,20 @@ function App() {
             </div>
           ) : filteredItems.length ? (
             <>
-              <div className="mx-auto mt-8 max-w-[1136px] columns-1 gap-3 sm:columns-2 lg:columns-4">
-                {visibleItems.map((item) => (
-                  <div key={item.slug} className="mb-3 break-inside-avoid">
-                    <ComponentCard
-                      item={item}
-                      copyState={getCopyState(copiedId, item.slug)}
-                      onCopy={handleCopy}
-                    />
+              <div className="mx-auto mt-8 grid max-w-[1136px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {columnizedVisibleItems.map((columnItems, columnIndex) => (
+                  <div
+                    key={`catalog-column:${gridColumnCount}:${columnIndex}`}
+                    className="flex flex-col gap-3"
+                  >
+                    {columnItems.map((item) => (
+                      <ComponentCard
+                        key={item.slug}
+                        item={item}
+                        copyState={getCopyState(copiedId, item.slug)}
+                        onCopy={handleCopy}
+                      />
+                    ))}
                   </div>
                 ))}
               </div>

@@ -133,10 +133,12 @@ function PreviewMedia({
 }: PreviewMediaProps) {
   const [hasAnimatedMediaError, setHasAnimatedMediaError] = useState(false)
   const [hasPosterError, setHasPosterError] = useState(false)
+  const [hasAnimatedMediaLoaded, setHasAnimatedMediaLoaded] = useState(false)
 
   useEffect(() => {
     setHasAnimatedMediaError(false)
     setHasPosterError(false)
+    setHasAnimatedMediaLoaded(false)
   }, [item.animatedPreviewUrl, item.posterUrl, item.slug])
 
   const width = item.previewWidth ?? undefined
@@ -147,52 +149,108 @@ function PreviewMedia({
     Boolean(item.animatedPreviewUrl) &&
     !hasAnimatedMediaError
 
+  const posterClassName = [
+    'absolute inset-0 size-full object-cover object-top transition-opacity duration-200',
+    hasAnimatedPreview && hasAnimatedMediaLoaded ? 'opacity-0' : 'opacity-100',
+  ].join(' ')
+
+  const animatedMediaClassName = [
+    'absolute inset-0 size-full object-cover object-top transition-opacity duration-200',
+    hasAnimatedMediaLoaded ? 'opacity-100' : 'opacity-0',
+  ].join(' ')
+
   if (hasAnimatedPreview) {
     if (item.animatedPreviewKind === 'video') {
       return (
-        <video
+        <>
+          {hasPoster ? (
+            <img
+              src={item.posterUrl ?? undefined}
+              alt={`${item.title} preview`}
+              width={width}
+              height={height}
+              className={posterClassName}
+              loading="eager"
+              decoding="async"
+              onLoad={(event) => {
+                onMediaReady(
+                  getCatalogCardLayout(
+                    event.currentTarget.naturalWidth,
+                    event.currentTarget.naturalHeight,
+                  ),
+                )
+              }}
+              onError={() => setHasPosterError(true)}
+            />
+          ) : null}
+          <video
+            src={item.animatedPreviewUrl ?? undefined}
+            poster={item.posterUrl ?? undefined}
+            width={width}
+            height={height}
+            className={animatedMediaClassName}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            onLoadedData={(event) => {
+              setHasAnimatedMediaLoaded(true)
+              onMediaReady(
+                getCatalogCardLayout(
+                  event.currentTarget.videoWidth,
+                  event.currentTarget.videoHeight,
+                ),
+              )
+            }}
+            onError={() => setHasAnimatedMediaError(true)}
+          />
+        </>
+      )
+    }
+
+    return (
+      <>
+        {hasPoster ? (
+          <img
+            src={item.posterUrl ?? undefined}
+            alt={`${item.title} preview`}
+            width={width}
+            height={height}
+            className={posterClassName}
+            loading="eager"
+            decoding="async"
+            onLoad={(event) => {
+              onMediaReady(
+                getCatalogCardLayout(
+                  event.currentTarget.naturalWidth,
+                  event.currentTarget.naturalHeight,
+                ),
+              )
+            }}
+            onError={() => setHasPosterError(true)}
+          />
+        ) : null}
+        <img
           src={item.animatedPreviewUrl ?? undefined}
-          poster={item.posterUrl ?? undefined}
+          alt={`${item.title} preview`}
           width={width}
           height={height}
-          className="absolute inset-0 size-full object-cover object-top"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          onLoadedMetadata={(event) => {
+          className={animatedMediaClassName}
+          loading="lazy"
+          decoding="async"
+          onLoad={(event) => {
+            setHasAnimatedMediaLoaded(true)
             onMediaReady(
               getCatalogCardLayout(
-                event.currentTarget.videoWidth,
-                event.currentTarget.videoHeight,
+                event.currentTarget.naturalWidth,
+                event.currentTarget.naturalHeight,
               ),
             )
           }}
           onError={() => setHasAnimatedMediaError(true)}
         />
-      )
-    }
-
-    return (
-      <img
-        src={item.animatedPreviewUrl ?? undefined}
-        alt={`${item.title} preview`}
-        width={width}
-        height={height}
-        className="absolute inset-0 size-full object-cover object-top"
-        loading="lazy"
-        decoding="async"
-        onLoad={(event) => {
-          onMediaReady(
-            getCatalogCardLayout(
-              event.currentTarget.naturalWidth,
-              event.currentTarget.naturalHeight,
-            ),
-          )
-        }}
-        onError={() => setHasAnimatedMediaError(true)}
-      />
+      </>
     )
   }
 
@@ -204,7 +262,7 @@ function PreviewMedia({
         width={width}
         height={height}
         className="absolute inset-0 size-full object-cover object-top"
-        loading="lazy"
+        loading="eager"
         decoding="async"
         onLoad={(event) => {
           onMediaReady(
@@ -317,7 +375,7 @@ export function ComponentCard({
   return (
     <article
       ref={articleRef}
-      className="group flex flex-col overflow-hidden rounded-[1.5rem] border border-black/8 bg-[var(--surface-lowest)] shadow-[0_18px_40px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(0,0,0,0.08)]"
+      className="catalog-card group flex flex-col overflow-hidden rounded-[1.5rem] border border-black/8 bg-[var(--surface-lowest)] shadow-[0_18px_40px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(0,0,0,0.08)]"
       role="article"
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
@@ -327,11 +385,10 @@ export function ComponentCard({
       <div
         className={[
           'relative overflow-hidden bg-[var(--surface-high)]',
-          layout === 'feature' ? 'aspect-[11/20]' : 'aspect-[4/3]',
+          layout === 'feature' ? 'catalog-card__media--feature' : 'aspect-[4/3]',
         ].join(' ')}
       >
         <PreviewMedia
-          key={`${item.slug}:${shouldLoadAnimation ? 'animated' : 'poster'}`}
           item={item}
           onMediaReady={setLayout}
           shouldLoadAnimation={shouldLoadAnimation}
@@ -339,7 +396,7 @@ export function ComponentCard({
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(0,0,0,0.08)_100%)]" />
       </div>
 
-      <div className="flex items-end justify-between gap-3 px-3 py-4">
+      <div className="catalog-card__body flex items-end justify-between gap-3 px-3 py-4">
         <div className="min-w-0">
           <h2 className="truncate text-[1.18rem] leading-[1.05] font-semibold tracking-[-0.05em] text-[var(--foreground)]">
             {item.title}
