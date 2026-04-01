@@ -181,6 +181,49 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [copiedId])
 
+  useEffect(() => {
+    function handleWindowPointerMove(event: PointerEvent) {
+      const scroller = typeFiltersScrollRef.current
+      const dragState = typeFilterDragStateRef.current
+
+      if (
+        !scroller ||
+        !dragState.active ||
+        dragState.pointerId !== event.pointerId
+      ) {
+        return
+      }
+
+      const delta = event.clientX - dragState.startX
+
+      if (Math.abs(delta) > 6) {
+        dragState.moved = true
+      }
+
+      if (dragState.moved) {
+        event.preventDefault()
+      }
+
+      scroller.scrollLeft = dragState.startScrollLeft - delta
+    }
+
+    function handleWindowPointerEnd(event: PointerEvent) {
+      handleTypeFiltersPointerEnd(event.pointerId)
+    }
+
+    window.addEventListener('pointermove', handleWindowPointerMove, {
+      passive: false,
+    })
+    window.addEventListener('pointerup', handleWindowPointerEnd)
+    window.addEventListener('pointercancel', handleWindowPointerEnd)
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove)
+      window.removeEventListener('pointerup', handleWindowPointerEnd)
+      window.removeEventListener('pointercancel', handleWindowPointerEnd)
+    }
+  }, [])
+
   async function handleCopy(item: CatalogCardItem) {
     setCopiedId(`${PENDING_PREFIX}${item.slug}`)
 
@@ -268,34 +311,9 @@ function App() {
     }
 
     setIsDraggingTypeFilters(true)
-    scroller.setPointerCapture?.(event.pointerId)
-  }
-
-  function handleTypeFiltersPointerMove(
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) {
-    const scroller = typeFiltersScrollRef.current
-    const dragState = typeFilterDragStateRef.current
-
-    if (
-      !scroller ||
-      !dragState.active ||
-      dragState.pointerId !== event.pointerId
-    ) {
-      return
-    }
-
-    const delta = event.clientX - dragState.startX
-
-    if (Math.abs(delta) > 6) {
-      dragState.moved = true
-    }
-
-    scroller.scrollLeft = dragState.startScrollLeft - delta
   }
 
   function handleTypeFiltersPointerEnd(pointerId: number) {
-    const scroller = typeFiltersScrollRef.current
     const dragState = typeFilterDragStateRef.current
 
     if (!dragState.active || dragState.pointerId !== pointerId) {
@@ -307,10 +325,6 @@ function App() {
       window.setTimeout(() => {
         suppressTypeFilterClickRef.current = false
       }, 0)
-    }
-
-    if (scroller?.hasPointerCapture?.(pointerId)) {
-      scroller.releasePointerCapture(pointerId)
     }
 
     typeFilterDragStateRef.current = {
@@ -529,16 +543,6 @@ function App() {
                   <div
                     ref={typeFiltersScrollRef}
                     onPointerDown={handleTypeFiltersPointerDown}
-                    onPointerMove={handleTypeFiltersPointerMove}
-                    onPointerUp={(event) =>
-                      handleTypeFiltersPointerEnd(event.pointerId)
-                    }
-                    onPointerCancel={(event) =>
-                      handleTypeFiltersPointerEnd(event.pointerId)
-                    }
-                    onLostPointerCapture={(event) =>
-                      handleTypeFiltersPointerEnd(event.pointerId)
-                    }
                     onClickCapture={handleTypeFiltersClickCapture}
                     className={[
                       'min-w-0 flex-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
