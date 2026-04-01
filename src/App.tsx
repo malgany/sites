@@ -1,12 +1,24 @@
-import { useDeferredValue, useEffect, useState } from 'react'
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { ComponentCard } from './components/ComponentCard'
-import { getCatalogContent, listPublicCatalog } from './catalog/repository'
+import {
+  getCatalogContent,
+  getStaticCatalog,
+  refreshCatalogMetadata,
+} from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
 import { filterCatalog } from './lib/filterCatalog'
 import type { CatalogCardItem } from './types'
 
 const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
+const INITIAL_RENDER_COUNT = 24
+const RENDER_BATCH_SIZE = 12
 
 function getCopyState(copiedId: string | null, itemSlug: string) {
   if (copiedId === itemSlug) {
@@ -37,44 +49,83 @@ function getLiveMessage(copiedId: string | null) {
 }
 
 function App() {
-  const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>([])
-  const [catalogStatus, setCatalogStatus] = useState<
-    'loading' | 'ready' | 'error'
-  >('loading')
+  const initialCatalogRef = useRef<CatalogCardItem[] | null>(null)
+
+  if (initialCatalogRef.current === null) {
+    initialCatalogRef.current = getStaticCatalog()
+  }
+
+  const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>(
+    initialCatalogRef.current,
+  )
+  const [catalogRefreshState, setCatalogRefreshState] = useState<
+    'idle' | 'refreshing' | 'error'
+  >('idle')
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(() =>
+    initialCatalogRef.current?.length
+      ? Math.min(INITIAL_RENDER_COUNT, initialCatalogRef.current.length)
+      : 0,
+  )
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
   const deferredQuery = useDeferredValue(query)
 
   useEffect(() => {
     let isCancelled = false
+    let idleHandle: number | null = null
+    let timeoutHandle: number | null = null
 
-    async function loadCatalog() {
+    setCatalogRefreshState('refreshing')
+
+    async function syncCatalogMetadata() {
       try {
-        const items = await listPublicCatalog()
+        const items = await refreshCatalogMetadata()
 
         if (isCancelled) {
           return
         }
 
-        setCatalogItems(items)
-        setCatalogStatus('ready')
+        startTransition(() => {
+          setCatalogItems(items)
+        })
+        setCatalogRefreshState('idle')
+        setCatalogError(null)
       } catch (error) {
         if (isCancelled) {
           return
         }
 
-        setCatalogStatus('error')
+        setCatalogRefreshState('error')
         setCatalogError(
-          error instanceof Error ? error.message : 'Could not load catalog.',
+          error instanceof Error ? error.message : 'Could not refresh catalog.',
         )
       }
     }
 
-    void loadCatalog()
+    const runSyncWhenIdle = () => {
+      if (isCancelled) {
+        return
+      }
+
+      void syncCatalogMetadata()
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleHandle = window.requestIdleCallback(runSyncWhenIdle, { timeout: 1200 })
+    } else {
+      timeoutHandle = window.setTimeout(runSyncWhenIdle, 250)
+    }
 
     return () => {
       isCancelled = true
+      if (idleHandle !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleHandle)
+      }
+      if (timeoutHandle !== null) {
+        window.clearTimeout(timeoutHandle)
+      }
     }
   }, [])
 
@@ -103,8 +154,68 @@ function App() {
   }
 
   const filteredItems = filterCatalog(catalogItems, deferredQuery)
+  const visibleItems = filteredItems.slice(0, visibleCount)
   const totalTypes = new Set(catalogItems.map((item) => item.typeLabel)).size
   const publicCount = catalogItems.filter((item) => item.isPublic).length
+  const hasCatalogItems = catalogItems.length > 0
+
+  useEffect(() => {
+    setVisibleCount(
+      filteredItems.length ? Math.min(INITIAL_RENDER_COUNT, filteredItems.length) : 0,
+    )
+  }, [deferredQuery])
+
+  useEffect(() => {
+    setVisibleCount((current) => {
+      if (!filteredItems.length) {
+        return 0
+      }
+
+      if (!current) {
+        return Math.min(INITIAL_RENDER_COUNT, filteredItems.length)
+      }
+
+      return Math.min(current, filteredItems.length)
+    })
+  }, [filteredItems.length])
+
+  useEffect(() => {
+    if (visibleCount >= filteredItems.length) {
+      return undefined
+    }
+
+    const sentinel = loadMoreSentinelRef.current
+
+    if (!sentinel) {
+      return undefined
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setVisibleCount(filteredItems.length)
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return
+        }
+
+        startTransition(() => {
+          setVisibleCount((current) =>
+            Math.min(current + RENDER_BATCH_SIZE, filteredItems.length),
+          )
+        })
+      },
+      {
+        rootMargin: '480px 0px',
+      },
+    )
+
+    observer.observe(sentinel)
+
+    return () => observer.disconnect()
+  }, [filteredItems.length, visibleCount])
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--foreground)]">
@@ -120,7 +231,7 @@ function App() {
                 Public Prompt Catalog
               </p>
               <p className="mt-1 text-sm font-medium tracking-[-0.02em] text-[var(--foreground)]">
-                Supabase-backed archive for reusable website prompts
+                Local-first archive with background Supabase refresh
               </p>
             </div>
 
@@ -145,7 +256,7 @@ function App() {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)] lg:items-end">
             <div>
               <p className="text-[0.72rem] font-semibold tracking-[0.24em] text-[var(--secondary)] uppercase">
-                Direct Browser Read
+                Local-first catalog
               </p>
               <h1 className="mt-4 max-w-[11ch] text-[clamp(3.5rem,9vw,7rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
                 Prompt Archive
@@ -153,10 +264,9 @@ function App() {
 
               <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
                 <p className="max-w-[30rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
-                  Browse the public catalog stored in Supabase, scan by title or
-                  type, and copy the raw Markdown only when a card is clicked.
-                  The grid stays lightweight while the full prompt body remains
-                  fetched on demand.
+                  The grid renders from a local manifest first, so titles, types,
+                  and posters appear without waiting for Supabase. Raw Markdown
+                  stays fetched on demand only when a card is copied.
                 </p>
 
                 <div className="space-y-4">
@@ -164,9 +274,9 @@ function App() {
                     Catalog mode
                   </p>
                   <p className="text-[0.92rem] leading-6 text-[var(--foreground)]">
-                    Public content reads directly from Supabase in the browser.
-                    Premium or protected items can move to an authenticated
-                    fetch path later without changing this UI.
+                    Posters and labels ship with the app. Supabase refreshes
+                    preview metadata in the background, while heavy motion assets
+                    stay deferred until the card is visible or interacted with.
                   </p>
                 </div>
               </div>
@@ -177,7 +287,7 @@ function App() {
                 Archive status
               </p>
 
-              <div className="mt-8 grid gap-6 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
                 <div>
                   <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
                     Total prompts
@@ -204,7 +314,28 @@ function App() {
                     {publicCount}
                   </p>
                 </div>
+
+                <div>
+                  <p className="text-[0.7rem] font-semibold tracking-[0.16em] text-[var(--secondary)] uppercase">
+                    Sync status
+                  </p>
+                  <p className="mt-2 text-[0.92rem] leading-6 text-[var(--foreground)]">
+                    {catalogRefreshState === 'refreshing'
+                      ? 'Refreshing Supabase metadata.'
+                      : catalogRefreshState === 'error'
+                        ? 'Using the local manifest only.'
+                        : 'Local manifest ready.'}
+                  </p>
+                </div>
               </div>
+
+              {catalogError ? (
+                <p className="mt-6 text-sm leading-6 text-[var(--secondary)]">
+                  {catalogRefreshState === 'error'
+                    ? 'Background metadata sync is unavailable. Browsing still uses the local catalog.'
+                    : catalogError}
+                </p>
+              ) : null}
             </aside>
           </div>
         </header>
@@ -222,9 +353,10 @@ function App() {
                 Search public prompts by title or type.
               </h2>
               <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-7 text-[var(--secondary)]">
-                Each card keeps the preview, title, and configured type label on
-                the surface. The raw Markdown stays in Supabase until the copy
-                action requests it.
+                Each card starts with lightweight poster imagery. Animated
+                previews stay paused until the card scrolls into view or receives
+                hover or focus, while Markdown remains in Supabase until copy
+                time.
               </p>
             </div>
 
@@ -273,6 +405,9 @@ function App() {
                 </h2>
                 <p className="mt-2 text-[0.92rem] text-[var(--secondary)]">
                   {filteredItems.length} result{filteredItems.length === 1 ? '' : 's'}
+                  {filteredItems.length > visibleItems.length
+                    ? ` · showing ${visibleItems.length}`
+                    : ''}
                 </p>
               </div>
 
@@ -285,12 +420,12 @@ function App() {
             </div>
 
             <p className="max-w-[18rem] text-[0.92rem] leading-6 text-[var(--secondary)]">
-              The browser loads only the card metadata up front. Each copy action
-              pulls the raw Markdown for the selected prompt on demand.
+              The first paint comes from local data. Supabase refreshes in the
+              background, and heavy motion media stays deferred behind posters.
             </p>
           </div>
 
-          {catalogStatus === 'loading' ? (
+          {!hasCatalogItems && catalogRefreshState === 'refreshing' ? (
             <div className="mt-8 rounded-[1.5rem] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-6 py-12 text-center">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[var(--foreground)]">
                 Loading public catalog
@@ -299,7 +434,7 @@ function App() {
                 Reading the card list from Supabase.
               </p>
             </div>
-          ) : catalogStatus === 'error' ? (
+          ) : !hasCatalogItems && catalogRefreshState === 'error' ? (
             <div className="mt-8 rounded-[1.5rem] border border-[#f2b7b7] bg-[#fff0f0] px-6 py-12 text-center">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[#8f1d1d]">
                 Public catalog unavailable
@@ -309,17 +444,28 @@ function App() {
               </p>
             </div>
           ) : filteredItems.length ? (
-            <div className="mx-auto mt-8 max-w-[1136px] columns-1 gap-3 sm:columns-2 lg:columns-4">
-              {filteredItems.map((item) => (
-                <div key={item.slug} className="mb-3 break-inside-avoid">
-                  <ComponentCard
-                    item={item}
-                    copyState={getCopyState(copiedId, item.slug)}
-                    onCopy={handleCopy}
-                  />
+            <>
+              <div className="mx-auto mt-8 max-w-[1136px] columns-1 gap-3 sm:columns-2 lg:columns-4">
+                {visibleItems.map((item) => (
+                  <div key={item.slug} className="mb-3 break-inside-avoid">
+                    <ComponentCard
+                      item={item}
+                      copyState={getCopyState(copiedId, item.slug)}
+                      onCopy={handleCopy}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {visibleItems.length < filteredItems.length ? (
+                <div
+                  ref={loadMoreSentinelRef}
+                  className="mt-6 rounded-[1rem] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-4 py-5 text-center text-sm text-[var(--secondary)]"
+                >
+                  Loading more cards
                 </div>
-              ))}
-            </div>
+              ) : null}
+            </>
           ) : (
             <div className="mt-8 rounded-[1.5rem] border border-[var(--ghost-border)] bg-[var(--surface-lowest)] px-6 py-12 text-center">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[var(--foreground)]">

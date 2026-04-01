@@ -21,8 +21,11 @@ export type CatalogCardItem = {
   slug: string
   title: string
   typeLabel: string
-  previewUrl: string | null
-  previewKind: CatalogPreviewKind
+  posterUrl: string | null
+  animatedPreviewUrl: string | null
+  animatedPreviewKind: CatalogPreviewKind | null
+  previewWidth: number | null
+  previewHeight: number | null
   isPublic: boolean
 }
 

@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type RefObject,
+} from 'react'
 import { getCatalogCardLayout } from '../lib/catalogCardLayout'
 import type {
   CatalogCardItem,
@@ -30,64 +36,200 @@ function CopyIcon() {
 
 type PreviewMediaProps = Pick<ComponentCardProps, 'item'> & {
   onMediaReady: (layout: CatalogCardLayout) => void
+  shouldLoadAnimation: boolean
 }
 
-function PreviewMedia({ item, onMediaReady }: PreviewMediaProps) {
-  const [hasMediaError, setHasMediaError] = useState(false)
+function getInitialLayout(item: CatalogCardItem) {
+  return getCatalogCardLayout(item.previewWidth ?? NaN, item.previewHeight ?? NaN)
+}
 
-  if (!item.previewUrl || hasMediaError) {
-    return (
-      <div className="absolute inset-0 flex items-end bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
-        <div>
-          <p className="text-[0.68rem] font-semibold tracking-[0.18em] uppercase text-white/70">
-            Preview pending
-          </p>
-          <p className="mt-3 max-w-[12ch] text-[1.4rem] leading-[0.95] font-semibold tracking-[-0.05em]">
-            {item.title}
-          </p>
-        </div>
-      </div>
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const syncPreference = () => setPrefersReducedMotion(mediaQuery.matches)
+
+    syncPreference()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncPreference)
+      return () => mediaQuery.removeEventListener('change', syncPreference)
+    }
+
+    mediaQuery.addListener(syncPreference)
+    return () => mediaQuery.removeListener(syncPreference)
+  }, [])
+
+  return prefersReducedMotion
+}
+
+function useIsInView(targetRef: RefObject<HTMLElement | null>) {
+  const [isInView, setIsInView] = useState(false)
+
+  useEffect(() => {
+    const target = targetRef.current
+
+    if (!target) {
+      return undefined
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsInView(true)
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsInView(entries.some((entry) => entry.isIntersecting))
+      },
+      {
+        rootMargin: '240px 0px',
+        threshold: 0.2,
+      },
     )
+
+    observer.observe(target)
+
+    return () => observer.disconnect()
+  }, [targetRef])
+
+  return isInView
+}
+
+function scheduleIdleActivation(callback: () => void) {
+  if (typeof window === 'undefined') {
+    return null
   }
 
-  if (item.previewKind === 'video') {
+  if (typeof window.requestIdleCallback === 'function') {
+    return window.requestIdleCallback(callback, { timeout: 400 })
+  }
+
+  return window.setTimeout(callback, 180)
+}
+
+function cancelIdleActivation(handle: number | null) {
+  if (handle === null || typeof window === 'undefined') {
+    return
+  }
+
+  if (typeof window.cancelIdleCallback === 'function') {
+    window.cancelIdleCallback(handle)
+    return
+  }
+
+  window.clearTimeout(handle)
+}
+
+function PreviewMedia({
+  item,
+  onMediaReady,
+  shouldLoadAnimation,
+}: PreviewMediaProps) {
+  const [hasAnimatedMediaError, setHasAnimatedMediaError] = useState(false)
+  const [hasPosterError, setHasPosterError] = useState(false)
+
+  useEffect(() => {
+    setHasAnimatedMediaError(false)
+    setHasPosterError(false)
+  }, [item.animatedPreviewUrl, item.posterUrl, item.slug])
+
+  const width = item.previewWidth ?? undefined
+  const height = item.previewHeight ?? undefined
+  const hasPoster = Boolean(item.posterUrl) && !hasPosterError
+  const hasAnimatedPreview =
+    shouldLoadAnimation &&
+    Boolean(item.animatedPreviewUrl) &&
+    !hasAnimatedMediaError
+
+  if (hasAnimatedPreview) {
+    if (item.animatedPreviewKind === 'video') {
+      return (
+        <video
+          src={item.animatedPreviewUrl ?? undefined}
+          poster={item.posterUrl ?? undefined}
+          width={width}
+          height={height}
+          className="absolute inset-0 size-full object-cover object-top"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          onLoadedMetadata={(event) => {
+            onMediaReady(
+              getCatalogCardLayout(
+                event.currentTarget.videoWidth,
+                event.currentTarget.videoHeight,
+              ),
+            )
+          }}
+          onError={() => setHasAnimatedMediaError(true)}
+        />
+      )
+    }
+
     return (
-      <video
-        src={item.previewUrl}
+      <img
+        src={item.animatedPreviewUrl ?? undefined}
+        alt={`${item.title} preview`}
+        width={width}
+        height={height}
         className="absolute inset-0 size-full object-cover object-top"
-        autoPlay
-        muted
-        loop
-        playsInline
-        onLoadedMetadata={(event) => {
+        loading="lazy"
+        decoding="async"
+        onLoad={(event) => {
           onMediaReady(
             getCatalogCardLayout(
-              event.currentTarget.videoWidth,
-              event.currentTarget.videoHeight,
+              event.currentTarget.naturalWidth,
+              event.currentTarget.naturalHeight,
             ),
           )
         }}
-        onError={() => setHasMediaError(true)}
+        onError={() => setHasAnimatedMediaError(true)}
+      />
+    )
+  }
+
+  if (hasPoster) {
+    return (
+      <img
+        src={item.posterUrl ?? undefined}
+        alt={`${item.title} preview`}
+        width={width}
+        height={height}
+        className="absolute inset-0 size-full object-cover object-top"
+        loading="lazy"
+        decoding="async"
+        onLoad={(event) => {
+          onMediaReady(
+            getCatalogCardLayout(
+              event.currentTarget.naturalWidth,
+              event.currentTarget.naturalHeight,
+            ),
+          )
+        }}
+        onError={() => setHasPosterError(true)}
       />
     )
   }
 
   return (
-    <img
-      src={item.previewUrl}
-      alt={`${item.title} preview`}
-      className="absolute inset-0 size-full object-cover object-top"
-      loading="lazy"
-      onLoad={(event) => {
-        onMediaReady(
-          getCatalogCardLayout(
-            event.currentTarget.naturalWidth,
-            event.currentTarget.naturalHeight,
-          ),
-        )
-      }}
-      onError={() => setHasMediaError(true)}
-    />
+    <div className="absolute inset-0 flex items-end bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
+      <div>
+        <p className="text-[0.68rem] font-semibold tracking-[0.18em] uppercase text-white/70">
+          {item.animatedPreviewUrl ? 'Poster only' : 'Preview pending'}
+        </p>
+        <p className="mt-3 max-w-[12ch] text-[1.4rem] leading-[0.95] font-semibold tracking-[-0.05em]">
+          {item.title}
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -96,11 +238,58 @@ export function ComponentCard({
   copyState,
   onCopy,
 }: ComponentCardProps) {
-  const [layout, setLayout] = useState<CatalogCardLayout>('compact')
+  const articleRef = useRef<HTMLElement | null>(null)
+  const [layout, setLayout] = useState<CatalogCardLayout>(() => getInitialLayout(item))
+  const [isHovered, setIsHovered] = useState(false)
+  const [isFocusWithin, setIsFocusWithin] = useState(false)
+  const [shouldLoadAnimation, setShouldLoadAnimation] = useState(false)
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const isInView = useIsInView(articleRef)
 
   useEffect(() => {
-    setLayout('compact')
-  }, [item.previewKind, item.previewUrl, item.slug])
+    setLayout(getInitialLayout(item))
+    setIsHovered(false)
+    setIsFocusWithin(false)
+    setShouldLoadAnimation(false)
+  }, [
+    item.animatedPreviewKind,
+    item.animatedPreviewUrl,
+    item.posterUrl,
+    item.previewHeight,
+    item.previewWidth,
+    item.slug,
+  ])
+
+  useEffect(() => {
+    if (!item.animatedPreviewUrl || prefersReducedMotion) {
+      setShouldLoadAnimation(false)
+      return undefined
+    }
+
+    if (isHovered || isFocusWithin) {
+      setShouldLoadAnimation(true)
+      return undefined
+    }
+
+    if (!isInView) {
+      setShouldLoadAnimation(false)
+      return undefined
+    }
+
+    const handle = scheduleIdleActivation(() => {
+      setShouldLoadAnimation(true)
+    })
+
+    return () => {
+      cancelIdleActivation(handle)
+    }
+  }, [
+    isFocusWithin,
+    isHovered,
+    isInView,
+    item.animatedPreviewUrl,
+    prefersReducedMotion,
+  ])
 
   const buttonLabel =
     copyState === 'copied'
@@ -111,10 +300,28 @@ export function ComponentCard({
           ? 'Copying'
           : 'Copy'
 
+  function handleBlur(event: FocusEvent<HTMLElement>) {
+    const nextFocusedElement = event.relatedTarget
+
+    if (
+      nextFocusedElement instanceof Node &&
+      event.currentTarget.contains(nextFocusedElement)
+    ) {
+      return
+    }
+
+    setIsFocusWithin(false)
+  }
+
   return (
     <article
+      ref={articleRef}
       className="group flex flex-col overflow-hidden rounded-[1.5rem] border border-black/8 bg-[var(--surface-lowest)] shadow-[0_18px_40px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(0,0,0,0.08)]"
       role="article"
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
+      onFocusCapture={() => setIsFocusWithin(true)}
+      onBlurCapture={handleBlur}
     >
       <div
         className={[
@@ -123,9 +330,10 @@ export function ComponentCard({
         ].join(' ')}
       >
         <PreviewMedia
-          key={`${item.previewKind}:${item.previewUrl ?? 'none'}`}
+          key={`${item.slug}:${shouldLoadAnimation ? 'animated' : 'poster'}`}
           item={item}
           onMediaReady={setLayout}
+          shouldLoadAnimation={shouldLoadAnimation}
         />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(0,0,0,0.08)_100%)]" />
       </div>

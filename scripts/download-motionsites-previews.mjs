@@ -18,6 +18,16 @@ const overridesPath = path.join(
 
 await fs.mkdir(outputDir, { recursive: true })
 
+let existingPreviewOverrides = {}
+
+try {
+  existingPreviewOverrides = JSON.parse(await fs.readFile(overridesPath, 'utf8'))
+} catch (error) {
+  if (error?.code !== 'ENOENT') {
+    throw error
+  }
+}
+
 const activeManifestItems = []
 
 for (const item of manifest) {
@@ -70,9 +80,16 @@ for (const item of activeManifestItems) {
   const absolutePath = path.join(outputDir, localFileName)
   await fs.writeFile(absolutePath, Buffer.from(arrayBuffer))
 
+  const existingOverride = existingPreviewOverrides[item.slug] ?? {}
+
   localPreviewOverrides[item.slug] = {
     previewKind: 'image',
     previewUrl: `/motionsites-previews/${localFileName}`,
+    animatedPreviewKind: 'image',
+    animatedPreviewUrl: `/motionsites-previews/${localFileName}`,
+    posterUrl: existingOverride.posterUrl ?? null,
+    previewWidth: existingOverride.previewWidth ?? null,
+    previewHeight: existingOverride.previewHeight ?? null,
     sourceUrl: cardAsset.sourceUrl,
   }
 

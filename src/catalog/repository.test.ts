@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getCatalogContent, listPublicCatalog } from './repository'
+import {
+  getCatalogContent,
+  getStaticCatalog,
+  refreshCatalogMetadata,
+} from './repository'
 import { getBrowserSupabaseClient } from './client'
 
 vi.mock('./client', () => ({
@@ -9,26 +13,32 @@ vi.mock('./client', () => ({
 const mockedGetBrowserSupabaseClient = vi.mocked(getBrowserSupabaseClient)
 
 describe('catalog repository', () => {
-  it('lists public cards ordered by sort order', async () => {
+  it('builds the initial card list from the local manifest and local posters', () => {
+    const items = getStaticCatalog()
+    const aetheraCard = items.find((item) => item.slug === 'aethera-hero')
+
+    expect(items.length).toBeGreaterThan(0)
+    expect(aetheraCard).toMatchObject({
+      slug: 'aethera-hero',
+      title: 'Aethera Studio',
+      posterUrl: expect.stringMatching(/^\/motionsites-posters\//),
+      animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
+      animatedPreviewKind: 'image',
+      isPublic: true,
+    })
+  })
+
+  it('merges remote preview metadata without blocking the local catalog', async () => {
     const order = vi.fn().mockResolvedValue({
       data: [
         {
-          slug: 'b',
-          title: 'B item',
-          type_label: 'Automation',
-          preview_url: null,
-          preview_kind: null,
-          is_public: true,
-          sort_order: 20,
-        },
-        {
-          slug: 'a',
-          title: 'A item',
-          type_label: 'Studio',
-          preview_url: 'https://example.com/a.webp',
+          slug: 'ai-designer-agency',
+          title: 'AI Designer Agency',
+          type_label: 'Agency',
+          preview_url: 'https://example.com/ai-designer-agency.webp',
           preview_kind: 'image',
           is_public: true,
-          sort_order: 10,
+          sort_order: 3,
         },
       ],
       error: null,
@@ -42,24 +52,18 @@ describe('catalog repository', () => {
       from,
     } as never)
 
-    await expect(listPublicCatalog()).resolves.toEqual([
-      {
-        slug: 'a',
-        title: 'A item',
-        typeLabel: 'Studio',
-        previewUrl: 'https://example.com/a.webp',
-        previewKind: 'image',
-        isPublic: true,
-      },
-      {
-        slug: 'b',
-        title: 'B item',
-        typeLabel: 'Automation',
-        previewUrl: null,
-        previewKind: 'image',
-        isPublic: true,
-      },
-    ])
+    const items = await refreshCatalogMetadata()
+    const mergedCard = items.find((item) => item.slug === 'ai-designer-agency')
+
+    expect(mergedCard).toMatchObject({
+      slug: 'ai-designer-agency',
+      title: 'AI Designer Agency',
+      typeLabel: 'Agency',
+      posterUrl: 'https://example.com/ai-designer-agency.webp',
+      animatedPreviewUrl: null,
+      animatedPreviewKind: null,
+      isPublic: true,
+    })
 
     expect(from).toHaveBeenCalledWith('catalog_prompts')
     expect(select).toHaveBeenCalledWith(

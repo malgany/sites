@@ -1,12 +1,17 @@
-import { getBrowserSupabaseClient } from './client'
 import rawLocalPreviewOverrides from './local-preview-overrides.json'
+import { catalogManifest } from './manifest'
 import type { CatalogCardItem, CatalogPreviewKind } from '../types'
 
 export const CATALOG_TABLE = 'catalog_prompts'
 
 type LocalPreviewOverride = {
-  previewKind: CatalogPreviewKind
-  previewUrl: string
+  previewKind?: CatalogPreviewKind
+  previewUrl?: string
+  posterUrl?: string
+  animatedPreviewUrl?: string
+  animatedPreviewKind?: CatalogPreviewKind
+  previewWidth?: number
+  previewHeight?: number
   sourceUrl?: string
 }
 
@@ -29,22 +34,103 @@ type CatalogContentRow = {
   content_markdown: string
 }
 
-function mapCatalogRowToCardItem(row: CatalogListRow): CatalogCardItem {
-  const localPreviewOverride = localPreviewOverrides[row.slug]
+function isAnimatedImageUrl(url: string) {
+  return /\.gif(?:$|\?)/i.test(url)
+}
+
+function isVideoUrl(url: string) {
+  return /\.(?:mp4|webm|m4v|mov)(?:$|\?)/i.test(url)
+}
+
+function getRemotePreviewFields(
+  previewUrl: string | null,
+  previewKind: CatalogPreviewKind | null,
+) {
+  if (!previewUrl) {
+    return {
+      posterUrl: null,
+      animatedPreviewUrl: null,
+      animatedPreviewKind: null,
+    }
+  }
+
+  if (previewKind === 'video' || isVideoUrl(previewUrl)) {
+    return {
+      posterUrl: null,
+      animatedPreviewUrl: previewUrl,
+      animatedPreviewKind: 'video' as const,
+    }
+  }
+
+  if (isAnimatedImageUrl(previewUrl)) {
+    return {
+      posterUrl: null,
+      animatedPreviewUrl: previewUrl,
+      animatedPreviewKind: 'image' as const,
+    }
+  }
 
   return {
-    slug: row.slug,
-    title: row.title,
-    typeLabel: row.type_label,
-    previewUrl: localPreviewOverride?.previewUrl ?? row.preview_url,
-    previewKind:
-      localPreviewOverride?.previewKind ?? row.preview_kind ?? 'image',
-    isPublic: row.is_public,
+    posterUrl: previewUrl,
+    animatedPreviewUrl: null,
+    animatedPreviewKind: null,
   }
 }
 
-export async function listPublicCatalog() {
-  const supabase = getBrowserSupabaseClient()
+function mapStaticCatalogItem(
+  slug: string,
+  title: string,
+  typeLabel: string,
+): CatalogCardItem {
+  const localPreviewOverride = localPreviewOverrides[slug]
+  const animatedPreviewUrl =
+    localPreviewOverride?.animatedPreviewUrl ??
+    localPreviewOverride?.previewUrl ??
+    null
+  const animatedPreviewKind =
+    localPreviewOverride?.animatedPreviewKind ??
+    localPreviewOverride?.previewKind ??
+    null
+
+  return {
+    slug,
+    title,
+    typeLabel,
+    posterUrl: localPreviewOverride?.posterUrl ?? null,
+    animatedPreviewUrl,
+    animatedPreviewKind,
+    previewWidth: localPreviewOverride?.previewWidth ?? null,
+    previewHeight: localPreviewOverride?.previewHeight ?? null,
+    isPublic: true,
+  }
+}
+
+function mergeRemoteCatalogRow(
+  item: CatalogCardItem,
+  row: CatalogListRow | undefined,
+): CatalogCardItem {
+  if (!row) {
+    return item
+  }
+
+  const remotePreview = getRemotePreviewFields(row.preview_url, row.preview_kind)
+
+  return {
+    ...item,
+    posterUrl: item.posterUrl ?? remotePreview.posterUrl,
+    animatedPreviewUrl: item.animatedPreviewUrl ?? remotePreview.animatedPreviewUrl,
+    animatedPreviewKind:
+      item.animatedPreviewKind ?? remotePreview.animatedPreviewKind,
+  }
+}
+
+async function getBrowserSupabaseClient() {
+  const clientModule = await import('./client')
+  return clientModule.getBrowserSupabaseClient()
+}
+
+async function loadRemoteCatalogRows() {
+  const supabase = await getBrowserSupabaseClient()
   const { data, error } = await supabase
     .from(CATALOG_TABLE)
     .select(
@@ -57,19 +143,39 @@ export async function listPublicCatalog() {
     throw new Error(`Could not load public catalog: ${error.message}`)
   }
 
-  return [...((data ?? []) as CatalogListRow[])]
+  return [...((data ?? []) as CatalogListRow[])].sort((left, right) => {
+    if (left.sort_order !== right.sort_order) {
+      return left.sort_order - right.sort_order
+    }
+
+    return left.title.localeCompare(right.title)
+  })
+}
+
+export function getStaticCatalog() {
+  return catalogManifest
+    .filter((item) => item.visibility === 'public')
+    .slice()
     .sort((left, right) => {
-      if (left.sort_order !== right.sort_order) {
-        return left.sort_order - right.sort_order
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder
       }
 
       return left.title.localeCompare(right.title)
     })
-    .map(mapCatalogRowToCardItem)
+    .map((item) => mapStaticCatalogItem(item.slug, item.title, item.typeLabel))
+}
+
+export async function refreshCatalogMetadata() {
+  const staticCatalog = getStaticCatalog()
+  const remoteRows = await loadRemoteCatalogRows()
+  const rowMap = new Map(remoteRows.map((row) => [row.slug, row] as const))
+
+  return staticCatalog.map((item) => mergeRemoteCatalogRow(item, rowMap.get(item.slug)))
 }
 
 export async function getCatalogContent(slug: string) {
-  const supabase = getBrowserSupabaseClient()
+  const supabase = await getBrowserSupabaseClient()
   const { data, error } = await supabase
     .from(CATALOG_TABLE)
     .select('content_markdown')
@@ -83,3 +189,5 @@ export async function getCatalogContent(slug: string) {
 
   return (data as CatalogContentRow).content_markdown
 }
+
+export const listPublicCatalog = refreshCatalogMetadata

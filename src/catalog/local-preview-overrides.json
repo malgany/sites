@@ -2,186 +2,371 @@
   "1": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/1.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/1.gif",
+    "posterUrl": "/motionsites-posters/1.webp",
+    "previewWidth": 800,
+    "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-new-era-preview-CocuDUm9.gif"
   },
   "3": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/3.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/3.gif",
+    "posterUrl": "/motionsites-posters/3.webp",
+    "previewWidth": 800,
+    "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-clearinvoice-preview-l3q8sam6.gif"
   },
   "5": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/5.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/5.gif",
+    "posterUrl": "/motionsites-posters/5.webp",
+    "previewWidth": 800,
+    "previewHeight": 559,
     "sourceUrl": "https://motionsites.ai/assets/hero-glassmorphism-agency-preview-CGqeRoqP.gif"
   },
   "7": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/7.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/7.gif",
+    "posterUrl": "/motionsites-posters/7.webp",
+    "previewWidth": 800,
+    "previewHeight": 602,
     "sourceUrl": "https://motionsites.ai/assets/hero-synapse-preview-CP83ds5W.gif"
   },
   "9": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/9.png",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/9.png",
+    "posterUrl": "/motionsites-posters/9.webp",
+    "previewWidth": 800,
+    "previewHeight": 571,
     "sourceUrl": "https://motionsites.ai/assets/hero-web3-eos-poster-DF0_WdVS.png"
   },
   "10": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/10.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/10.gif",
+    "posterUrl": "/motionsites-posters/10.webp",
+    "previewWidth": 800,
+    "previewHeight": 563,
     "sourceUrl": "https://motionsites.ai/assets/hero-synapse-ai-preview-BjBuH68i.gif"
   },
   "12": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/12.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/12.gif",
+    "posterUrl": "/motionsites-posters/12.webp",
+    "previewWidth": 800,
+    "previewHeight": 572,
     "sourceUrl": "https://motionsites.ai/assets/hero-targo-preview-BF9qQyMr.gif"
   },
   "14": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/14.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/14.gif",
+    "posterUrl": "/motionsites-posters/14.webp",
+    "previewWidth": 800,
+    "previewHeight": 564,
     "sourceUrl": "https://motionsites.ai/assets/hero-logoisum-preview-yhpSc7Yy.gif"
   },
   "16": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/16.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/16.gif",
+    "posterUrl": "/motionsites-posters/16.webp",
+    "previewWidth": 800,
+    "previewHeight": 554,
     "sourceUrl": "https://motionsites.ai/assets/hero-hr-saas-preview-Cf365Y1O.gif"
   },
   "18": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/18.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/18.gif",
+    "posterUrl": "/motionsites-posters/18.webp",
+    "previewWidth": 800,
+    "previewHeight": 636,
     "sourceUrl": "https://motionsites.ai/assets/hero-loader-animation-preview-C3_SX_Io.gif"
   },
   "21": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/21.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/21.gif",
+    "posterUrl": "/motionsites-posters/21.webp",
+    "previewWidth": 800,
+    "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-buzzentic-preview-CbopM29R.gif"
   },
   "aethera-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/aethera-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/aethera-hero.gif",
+    "posterUrl": "/motionsites-posters/aethera-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 582,
     "sourceUrl": "https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif"
   },
   "asme-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/asme-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/asme-hero.gif",
+    "posterUrl": "/motionsites-posters/asme-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 582,
     "sourceUrl": "https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif"
   },
   "automation-machines-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/automation-machines-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/automation-machines-hero.gif",
+    "posterUrl": "/motionsites-posters/automation-machines-hero.webp",
+    "previewWidth": 656,
+    "previewHeight": 480,
     "sourceUrl": "https://motionsites.ai/assets/hero-automation-machines-preview-DlTveRIN.gif"
   },
   "bionova-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/bionova-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/bionova-hero.gif",
+    "posterUrl": "/motionsites-posters/bionova-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 551,
     "sourceUrl": "https://motionsites.ai/assets/hero-bionova-preview-Sk76d0_D.gif"
   },
   "bloom-ai-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/bloom-ai-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/bloom-ai-hero.gif",
+    "posterUrl": "/motionsites-posters/bloom-ai-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 564,
     "sourceUrl": "https://motionsites.ai/assets/hero-bloom-ai-preview-g6RcYLTl.gif"
   },
   "datacore-booking-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/datacore-booking-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/datacore-booking-hero.gif",
+    "posterUrl": "/motionsites-posters/datacore-booking-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 553,
     "sourceUrl": "https://motionsites.ai/assets/hero-datacore-booking-preview-B3t9SRK6.gif"
   },
   "designpro-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/designpro-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/designpro-hero.gif",
+    "posterUrl": "/motionsites-posters/designpro-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 569,
     "sourceUrl": "https://motionsites.ai/assets/hero-designpro-preview-D8c5_een.gif"
   },
   "digitwist-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/digitwist-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/digitwist-hero.gif",
+    "posterUrl": "/motionsites-posters/digitwist-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 556,
     "sourceUrl": "https://motionsites.ai/assets/hero-digitwist-preview-s2pJetjQ.gif"
   },
   "evr-ventures-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/evr-ventures-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/evr-ventures-hero.gif",
+    "posterUrl": "/motionsites-posters/evr-ventures-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 624,
     "sourceUrl": "https://motionsites.ai/assets/hero-evr-ventures-preview-DZxeVFEX.gif"
   },
   "finlytic-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/finlytic-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/finlytic-hero.gif",
+    "posterUrl": "/motionsites-posters/finlytic-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 601,
     "sourceUrl": "https://motionsites.ai/assets/hero-finlytic-preview-CV9g0FHP.gif"
   },
   "grow-ai-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/grow-ai-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/grow-ai-hero.gif",
+    "posterUrl": "/motionsites-posters/grow-ai-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 573,
     "sourceUrl": "https://motionsites.ai/assets/hero-grow-ai-preview-BlQ8tAQ-.gif"
   },
   "liquid-glass-agency": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/liquid-glass-agency.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/liquid-glass-agency.gif",
+    "posterUrl": "/motionsites-posters/liquid-glass-agency.webp",
+    "previewWidth": 385,
+    "previewHeight": 800,
     "sourceUrl": "https://motionsites.ai/assets/hero-liquid-glass-agency-preview-Cr5Q9-lc.gif"
   },
   "mindloop-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/mindloop-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/mindloop-hero.gif",
+    "posterUrl": "/motionsites-posters/mindloop-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 651,
     "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-preview-BR8xW6xW.gif"
   },
   "mindloop-landing": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/mindloop-landing.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/mindloop-landing.gif",
+    "posterUrl": "/motionsites-posters/mindloop-landing.webp",
+    "previewWidth": 455,
+    "previewHeight": 800,
     "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-landing-preview-Bqnstohr.gif"
   },
   "neuralyn-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/neuralyn-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/neuralyn-hero.gif",
+    "posterUrl": "/motionsites-posters/neuralyn-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 590,
     "sourceUrl": "https://motionsites.ai/assets/hero-neuralyn-preview-Br4FRDQA.gif"
   },
   "nexora-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/nexora-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/nexora-hero.gif",
+    "posterUrl": "/motionsites-posters/nexora-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 552,
     "sourceUrl": "https://motionsites.ai/assets/hero-nexora-preview-cx5HmUgo.gif"
   },
   "nickel-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/nickel-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/nickel-hero.gif",
+    "posterUrl": "/motionsites-posters/nickel-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 554,
     "sourceUrl": "https://motionsites.ai/assets/hero-nickel-preview-CnRoBZt5.gif"
   },
   "orbit-web3-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/orbit-web3-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/orbit-web3-hero.gif",
+    "posterUrl": "/motionsites-posters/orbit-web3-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 603,
     "sourceUrl": "https://motionsites.ai/assets/hero-orbit-web3-preview-BXt4OttD.gif"
   },
   "portfolio-cosmic-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/portfolio-cosmic-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/portfolio-cosmic-hero.gif",
+    "posterUrl": "/motionsites-posters/portfolio-cosmic-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 562,
     "sourceUrl": "https://motionsites.ai/assets/hero-portfolio-cosmic-preview-BpvWJ3Nc.gif"
   },
   "power-ai-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/power-ai-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/power-ai-hero.gif",
+    "posterUrl": "/motionsites-posters/power-ai-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 604,
     "sourceUrl": "https://motionsites.ai/assets/hero-power-ai-preview-BqpSbx41.gif"
   },
   "price-calculator": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/price-calculator.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/price-calculator.gif",
+    "posterUrl": "/motionsites-posters/price-calculator.webp",
+    "previewWidth": 800,
+    "previewHeight": 648,
     "sourceUrl": "https://motionsites.ai/assets/hero-price-calculator-preview-Dak8DDgY.gif"
   },
   "skyelite-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/skyelite-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/skyelite-hero.gif",
+    "posterUrl": "/motionsites-posters/skyelite-hero.webp",
+    "previewWidth": 1920,
+    "previewHeight": 1455,
     "sourceUrl": "https://motionsites.ai/assets/hero-skyelite-preview-DHaZIgUv.gif"
   },
   "taskly-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/taskly-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/taskly-hero.gif",
+    "posterUrl": "/motionsites-posters/taskly-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 592,
     "sourceUrl": "https://motionsites.ai/assets/hero-taskly-preview-Dq2MKaI0.gif"
   },
   "terra-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/terra-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/terra-hero.gif",
+    "posterUrl": "/motionsites-posters/terra-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 581,
     "sourceUrl": "https://motionsites.ai/assets/hero-terra-preview-BFjrCr7T.gif"
   },
   "velorah-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/velorah-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/velorah-hero.gif",
+    "posterUrl": "/motionsites-posters/velorah-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 589,
     "sourceUrl": "https://motionsites.ai/assets/hero-velorah-preview-CJNTtbpd.gif"
   },
   "xportfolio-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/xportfolio-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/xportfolio-hero.gif",
+    "posterUrl": "/motionsites-posters/xportfolio-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 608,
     "sourceUrl": "https://motionsites.ai/assets/hero-xportfolio-preview-D4A8maiC.gif"
   }
 }
