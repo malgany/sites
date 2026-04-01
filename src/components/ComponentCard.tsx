@@ -220,14 +220,15 @@ function PreviewMedia({
   }
 
   return (
-    <div className="absolute inset-0 flex items-end bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
-      <div>
-        <p className="text-[0.68rem] font-semibold tracking-[0.18em] uppercase text-white/70">
-          {item.animatedPreviewUrl ? 'Poster only' : 'Preview pending'}
-        </p>
-        <p className="mt-3 max-w-[12ch] text-[1.4rem] leading-[0.95] font-semibold tracking-[-0.05em]">
-          {item.title}
-        </p>
+    <div className="absolute inset-0 bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
+      <div className="flex h-full flex-col justify-between">
+        <span className="inline-flex w-fit rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[0.62rem] font-semibold tracking-[0.18em] uppercase text-white/72">
+          {item.animatedPreviewUrl ? 'Preview loading' : 'Preview unavailable'}
+        </span>
+        <div className="space-y-3">
+          <div className="h-2.5 w-24 rounded-full bg-white/18" />
+          <div className="h-2.5 w-36 rounded-full bg-white/12" />
+        </div>
       </div>
     </div>
   )

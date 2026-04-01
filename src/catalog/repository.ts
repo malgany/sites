@@ -19,6 +19,7 @@ const localPreviewOverrides = rawLocalPreviewOverrides as Record<
   string,
   LocalPreviewOverride
 >
+const manifestBySlug = new Map(catalogManifest.map((item) => [item.slug, item] as const))
 
 type CatalogListRow = {
   slug: string
@@ -105,6 +106,25 @@ function mapStaticCatalogItem(
   }
 }
 
+function createEmptyCatalogCardItem(
+  slug: string,
+  title: string,
+  typeLabel: string,
+  isPublic = true,
+): CatalogCardItem {
+  return {
+    slug,
+    title,
+    typeLabel,
+    posterUrl: null,
+    animatedPreviewUrl: null,
+    animatedPreviewKind: null,
+    previewWidth: null,
+    previewHeight: null,
+    isPublic,
+  }
+}
+
 function mergeRemoteCatalogRow(
   item: CatalogCardItem,
   row: CatalogListRow | undefined,
@@ -154,7 +174,9 @@ async function loadRemoteCatalogRows() {
 
 export function getStaticCatalog() {
   return catalogManifest
-    .filter((item) => item.visibility === 'public')
+    .filter(
+      (item) => item.visibility === 'public' && Boolean(localPreviewOverrides[item.slug]),
+    )
     .slice()
     .sort((left, right) => {
       if (left.sortOrder !== right.sortOrder) {
@@ -167,11 +189,24 @@ export function getStaticCatalog() {
 }
 
 export async function refreshCatalogMetadata() {
-  const staticCatalog = getStaticCatalog()
   const remoteRows = await loadRemoteCatalogRows()
-  const rowMap = new Map(remoteRows.map((row) => [row.slug, row] as const))
 
-  return staticCatalog.map((item) => mergeRemoteCatalogRow(item, rowMap.get(item.slug)))
+  return remoteRows.map((row) => {
+    const manifestItem = manifestBySlug.get(row.slug)
+    const baseItem = manifestItem
+      ? mapStaticCatalogItem(manifestItem.slug, manifestItem.title, manifestItem.typeLabel)
+      : createEmptyCatalogCardItem(row.slug, row.title, row.type_label, row.is_public)
+
+    return mergeRemoteCatalogRow(
+      {
+        ...baseItem,
+        title: row.title,
+        typeLabel: row.type_label,
+        isPublic: row.is_public,
+      },
+      row,
+    )
+  })
 }
 
 export async function getCatalogContent(slug: string) {
