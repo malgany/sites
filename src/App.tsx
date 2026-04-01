@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { ComponentCard } from './components/ComponentCard'
 import {
@@ -19,6 +20,11 @@ const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
 const INITIAL_RENDER_COUNT = 24
 const RENDER_BATCH_SIZE = 12
+const TYPE_FILTER_SCROLL_STEP = 280
+
+function getCatalogTypeLabels(items: readonly CatalogCardItem[]) {
+  return [...new Set(items.map((item) => item.typeLabel.trim()).filter(Boolean))]
+}
 
 function getCopyState(copiedId: string | null, itemSlug: string) {
   if (copiedId === itemSlug) {
@@ -48,6 +54,25 @@ function getLiveMessage(copiedId: string | null) {
   return copiedId.startsWith(ERROR_PREFIX) ? 'Copy failed' : 'Markdown copied'
 }
 
+function getCatalogStatusMessage(
+  catalogRefreshState: 'idle' | 'refreshing' | 'error',
+  hasCatalogItems: boolean,
+) {
+  if (!hasCatalogItems) {
+    return ''
+  }
+
+  if (catalogRefreshState === 'refreshing') {
+    return 'Refreshing Supabase metadata.'
+  }
+
+  if (catalogRefreshState === 'error') {
+    return 'Background metadata sync is unavailable. Browsing still uses the local catalog.'
+  }
+
+  return ''
+}
+
 function App() {
   const initialCatalogRef = useRef<CatalogCardItem[] | null>(null)
 
@@ -63,14 +88,29 @@ function App() {
   >('idle')
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [canScrollTypeFiltersLeft, setCanScrollTypeFiltersLeft] = useState(false)
+  const [canScrollTypeFiltersRight, setCanScrollTypeFiltersRight] = useState(false)
+  const [isDraggingTypeFilters, setIsDraggingTypeFilters] = useState(false)
   const [visibleCount, setVisibleCount] = useState(() =>
     initialCatalogRef.current?.length
       ? Math.min(INITIAL_RENDER_COUNT, initialCatalogRef.current.length)
       : 0,
   )
   const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
+  const typeFiltersScrollRef = useRef<HTMLDivElement | null>(null)
+  const typeFilterDragStateRef = useRef({
+    active: false,
+    moved: false,
+    pointerId: null as number | null,
+    startX: 0,
+    startScrollLeft: 0,
+  })
+  const suppressTypeFilterClickRef = useRef(false)
   const deferredQuery = useDeferredValue(query)
+  const catalogTypeLabels = getCatalogTypeLabels(catalogItems)
+  const catalogTypeLabelsKey = catalogTypeLabels.join('|')
 
   useEffect(() => {
     let isCancelled = false
@@ -153,15 +193,202 @@ function App() {
     }
   }
 
-  const filteredItems = filterCatalog(catalogItems, deferredQuery)
+  function handleTypeToggle(typeLabel: string) {
+    setSelectedTypes((current) => {
+      const isSelected = current.includes(typeLabel)
+
+      if (isSelected) {
+        return current.filter((currentType) => currentType !== typeLabel)
+      }
+
+      return catalogTypeLabels.filter((catalogTypeLabel) =>
+        [...current, typeLabel].includes(catalogTypeLabel),
+      )
+    })
+  }
+
+  function handleResetFilters() {
+    setQuery('')
+    setSelectedTypes([])
+  }
+
+  function syncTypeFilterScrollState() {
+    const scroller = typeFiltersScrollRef.current
+
+    if (!scroller) {
+      setCanScrollTypeFiltersLeft(false)
+      setCanScrollTypeFiltersRight(false)
+      return
+    }
+
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth
+    const hasOverflow = maxScrollLeft > 1
+
+    setCanScrollTypeFiltersLeft(hasOverflow && scroller.scrollLeft > 1)
+    setCanScrollTypeFiltersRight(
+      hasOverflow && scroller.scrollLeft < maxScrollLeft - 1,
+    )
+  }
+
+  function handleTypeFiltersScroll(direction: 'left' | 'right') {
+    const scroller = typeFiltersScrollRef.current
+
+    if (!scroller) {
+      return
+    }
+
+    scroller.scrollBy({
+      left:
+        direction === 'left'
+          ? -TYPE_FILTER_SCROLL_STEP
+          : TYPE_FILTER_SCROLL_STEP,
+      behavior: 'smooth',
+    })
+  }
+
+  function handleTypeFiltersPointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return
+    }
+
+    const scroller = typeFiltersScrollRef.current
+
+    if (!scroller) {
+      return
+    }
+
+    typeFilterDragStateRef.current = {
+      active: true,
+      moved: false,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: scroller.scrollLeft,
+    }
+
+    setIsDraggingTypeFilters(true)
+    scroller.setPointerCapture?.(event.pointerId)
+  }
+
+  function handleTypeFiltersPointerMove(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    const scroller = typeFiltersScrollRef.current
+    const dragState = typeFilterDragStateRef.current
+
+    if (
+      !scroller ||
+      !dragState.active ||
+      dragState.pointerId !== event.pointerId
+    ) {
+      return
+    }
+
+    const delta = event.clientX - dragState.startX
+
+    if (Math.abs(delta) > 6) {
+      dragState.moved = true
+    }
+
+    scroller.scrollLeft = dragState.startScrollLeft - delta
+  }
+
+  function handleTypeFiltersPointerEnd(pointerId: number) {
+    const scroller = typeFiltersScrollRef.current
+    const dragState = typeFilterDragStateRef.current
+
+    if (!dragState.active || dragState.pointerId !== pointerId) {
+      return
+    }
+
+    if (dragState.moved) {
+      suppressTypeFilterClickRef.current = true
+      window.setTimeout(() => {
+        suppressTypeFilterClickRef.current = false
+      }, 0)
+    }
+
+    if (scroller?.hasPointerCapture?.(pointerId)) {
+      scroller.releasePointerCapture(pointerId)
+    }
+
+    typeFilterDragStateRef.current = {
+      active: false,
+      moved: false,
+      pointerId: null,
+      startX: 0,
+      startScrollLeft: 0,
+    }
+    setIsDraggingTypeFilters(false)
+  }
+
+  function handleTypeFiltersClickCapture(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    if (!suppressTypeFilterClickRef.current) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const filteredItems = filterCatalog(catalogItems, deferredQuery, selectedTypes)
   const visibleItems = filteredItems.slice(0, visibleCount)
   const hasCatalogItems = catalogItems.length > 0
+  const catalogStatusMessage = getCatalogStatusMessage(
+    catalogRefreshState,
+    hasCatalogItems,
+  )
+
+  useEffect(() => {
+    const availableTypes = new Set(catalogItems.map((item) => item.typeLabel.trim()))
+
+    setSelectedTypes((current) => {
+      if (!current.length) {
+        return current
+      }
+
+      const nextSelectedTypes = current.filter((typeLabel) =>
+        availableTypes.has(typeLabel),
+      )
+
+      return nextSelectedTypes.length === current.length
+        ? current
+        : nextSelectedTypes
+    })
+  }, [catalogItems])
+
+  useEffect(() => {
+    const scroller = typeFiltersScrollRef.current
+
+    if (!scroller) {
+      setCanScrollTypeFiltersLeft(false)
+      setCanScrollTypeFiltersRight(false)
+      return undefined
+    }
+
+    const handleScroll = () => {
+      syncTypeFilterScrollState()
+    }
+
+    handleScroll()
+
+    scroller.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleScroll)
+
+    return () => {
+      scroller.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [catalogTypeLabelsKey])
 
   useEffect(() => {
     setVisibleCount(
       filteredItems.length ? Math.min(INITIAL_RENDER_COUNT, filteredItems.length) : 0,
     )
-  }, [deferredQuery])
+  }, [deferredQuery, selectedTypes, filteredItems.length])
 
   useEffect(() => {
     setVisibleCount((current) => {
@@ -222,45 +449,156 @@ function App() {
       <div className="pointer-events-none absolute right-[-10rem] top-[32rem] h-[18rem] w-[18rem] rounded-full bg-black/5 blur-3xl" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1380px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="pb-8 pt-8 sm:pt-12 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <h1 className="max-w-[11ch] text-[clamp(4.5rem,10vw,8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
-            Prompt Archive
-          </h1>
+        <header className="px-5 pb-8 pt-8 sm:px-6 sm:pt-12">
+          <div className="mx-auto grid max-w-[1136px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start">
+            <h1 className="max-w-[11ch] text-[clamp(4.5rem,10vw,8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
+              Prompt Archive
+            </h1>
 
-          <label className="block w-full lg:max-w-[20rem] xl:max-w-[24rem] pb-2">
-            <span className="sr-only">Search prompts or types</span>
-            <div className="flex items-center gap-3 border-b border-[var(--outline)] pb-3 text-[var(--secondary)] transition focus-within:border-b-2 focus-within:border-[var(--primary)] focus-within:pb-[11px] focus-within:text-[var(--foreground)]">
-              <svg
-                viewBox="0 0 24 24"
-                className="size-4 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search prompts or types"
-                aria-label="Search prompts or types"
-                className="w-full border-none bg-transparent p-0 text-[0.95rem] text-[var(--foreground)] outline-none placeholder:text-[var(--secondary)]"
-              />
-            </div>
-          </label>
+            <label className="block w-full pb-2 lg:justify-self-end lg:self-start">
+              <span className="sr-only">Search prompts or types</span>
+              <div className="flex items-center gap-3 border-b border-[var(--outline)] pb-3 text-[var(--secondary)] transition focus-within:border-b-2 focus-within:border-[var(--primary)] focus-within:pb-[11px] focus-within:text-[var(--foreground)]">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search prompts or types"
+                  aria-label="Search prompts or types"
+                  className="w-full border-none bg-transparent p-0 text-[0.95rem] text-[var(--foreground)] outline-none placeholder:text-[var(--secondary)]"
+                />
+              </div>
+            </label>
+          </div>
         </header>
 
         <section
           id="component-grid-panel"
           className="mt-6 rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:px-6 sm:py-8"
         >
-          <div className="flex justify-end">
+          {catalogTypeLabels.length ? (
+            <div className="mx-auto max-w-[1136px] border-b border-black/8 pb-5">
+              <div
+                className="flex w-full items-center gap-3"
+                aria-label="Prompt type filters"
+              >
+                <button
+                  type="button"
+                  aria-pressed={selectedTypes.length === 0}
+                  onClick={handleResetFilters}
+                  className={[
+                    'inline-flex shrink-0 items-center rounded-full border px-3.5 py-2 text-[0.72rem] font-semibold tracking-[0.16em] whitespace-nowrap uppercase transition',
+                    selectedTypes.length === 0
+                      ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
+                      : 'border-black/10 bg-[var(--surface-lowest)] text-[var(--secondary)] hover:border-black/20 hover:text-[var(--foreground)]',
+                  ].join(' ')}
+                >
+                  <span>All</span>
+                </button>
+
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Scroll type filters left"
+                    onClick={() => handleTypeFiltersScroll('left')}
+                    disabled={!canScrollTypeFiltersLeft}
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="size-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      aria-hidden="true"
+                    >
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                  </button>
+
+                  <div
+                    ref={typeFiltersScrollRef}
+                    onPointerDown={handleTypeFiltersPointerDown}
+                    onPointerMove={handleTypeFiltersPointerMove}
+                    onPointerUp={(event) =>
+                      handleTypeFiltersPointerEnd(event.pointerId)
+                    }
+                    onPointerCancel={(event) =>
+                      handleTypeFiltersPointerEnd(event.pointerId)
+                    }
+                    onLostPointerCapture={(event) =>
+                      handleTypeFiltersPointerEnd(event.pointerId)
+                    }
+                    onClickCapture={handleTypeFiltersClickCapture}
+                    className={[
+                      'min-w-0 flex-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+                      isDraggingTypeFilters ? 'cursor-grabbing select-none' : 'cursor-grab',
+                    ].join(' ')}
+                  >
+                    <div className="flex min-w-max items-center gap-2 pr-1">
+                      {catalogTypeLabels.map((typeLabel) => {
+                        const isSelected = selectedTypes.includes(typeLabel)
+
+                        return (
+                          <button
+                            key={typeLabel}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => handleTypeToggle(typeLabel)}
+                            className={[
+                              'inline-flex shrink-0 items-center rounded-full border px-3.5 py-2 text-[0.72rem] font-semibold tracking-[0.16em] whitespace-nowrap uppercase transition',
+                              isSelected
+                                ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
+                                : 'border-black/10 bg-[var(--surface-lowest)] text-[var(--secondary)] hover:border-black/20 hover:text-[var(--foreground)]',
+                            ].join(' ')}
+                          >
+                            <span>{typeLabel}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label="Scroll type filters right"
+                    onClick={() => handleTypeFiltersScroll('right')}
+                    disabled={!canScrollTypeFiltersRight}
+                    className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-[var(--surface-lowest)] text-[var(--foreground)] transition hover:border-black/20 hover:bg-[var(--surface-high)] disabled:cursor-default disabled:opacity-35"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="size-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      aria-hidden="true"
+                    >
+                      <path d="m9 6 6 6-6 6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mx-auto mt-4 flex max-w-[1136px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="min-h-5 text-sm text-[var(--secondary)]">
+              {catalogStatusMessage}
+            </p>
             <p
               aria-live="polite"
-              className="min-h-5 text-sm text-[var(--secondary)]"
+              className="min-h-5 text-sm text-[var(--secondary)] sm:text-right"
             >
               {getLiveMessage(copiedId)}
             </p>
