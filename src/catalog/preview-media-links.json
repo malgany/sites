@@ -9,5 +9,16 @@
     "previewWidth": 480,
     "previewHeight": 339,
     "updatedAt": "2026-04-02T20:10:44.339Z"
+  },
+  "fluxo-neural-automacao-ia": {
+    "gifUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
+    "s3Key": "cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
+    "fileName": "CPT2604021849-800x564.gif",
+    "fileBytes": 3137270,
+    "originalWidth": 800,
+    "originalHeight": 564,
+    "previewWidth": 480,
+    "previewHeight": 338,
+    "updatedAt": "2026-04-02T22:51:29.891Z"
   }
 }

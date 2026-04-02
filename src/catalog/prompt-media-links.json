@@ -5,5 +5,12 @@
     "fileName": "grok-video-7ef3e302-a8f4-41be-9f2a-5424418c9fb2.mp4",
     "fileBytes": 17189922,
     "updatedAt": "2026-04-02T16:07:19.555Z"
+  },
+  "fluxo-neural-automacao-ia": {
+    "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/prompt-video-20260402-202759-bbb544.mp4",
+    "s3Key": "cards/fluxo-neural-automacao-ia/prompt-video-20260402-202759-bbb544.mp4",
+    "fileName": "fluxo-neural-automacao-ia-muted.mp4",
+    "fileBytes": 2290880,
+    "updatedAt": "2026-04-02T20:28:00.097Z"
   }
 }

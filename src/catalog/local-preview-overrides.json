@@ -49,16 +49,6 @@
     "previewHeight": 571,
     "sourceUrl": "https://motionsites.ai/assets/hero-web3-eos-poster-DF0_WdVS.png"
   },
-  "10": {
-    "previewKind": "image",
-    "previewUrl": "/motionsites-previews/10.gif",
-    "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "/motionsites-previews/10.gif",
-    "posterUrl": "/motionsites-posters/10.webp",
-    "previewWidth": 800,
-    "previewHeight": 563,
-    "sourceUrl": "https://motionsites.ai/assets/hero-synapse-ai-preview-BjBuH68i.gif"
-  },
   "12": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/12.gif",
@@ -108,6 +98,16 @@
     "previewWidth": 800,
     "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-buzzentic-preview-CbopM29R.gif"
+  },
+  "fluxo-neural-automacao-ia": {
+    "previewKind": "image",
+    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
+    "posterUrl": "/card-posters/fluxo-neural-automacao-ia.webp",
+    "previewWidth": 480,
+    "previewHeight": 338,
+    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif"
   },
   "atelie-orbita": {
     "previewKind": "image",

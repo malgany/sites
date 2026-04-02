@@ -11,12 +11,13 @@
     }
   },
   {
-    "slug": "10",
-    "title": "AI Automation Hero",
-    "typeLabel": "Automation",
+    "slug": "fluxo-neural-automacao-ia",
+    "title": "Fluxo Neural de Automacao",
+    "typeLabel": "Automacao de IA",
     "sortOrder": 2,
     "visibility": "public",
     "referenceLookup": {
+      "motionSitesSlug": "10",
       "motionSitesTitle": "AI Automation Hero"
     }
   },

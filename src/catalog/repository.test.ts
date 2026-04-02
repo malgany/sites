@@ -99,11 +99,12 @@ describe('catalog repository', () => {
         title: 'Atelie Orbita',
         typeLabel: 'Estudio',
         keywords: ['Estudio'],
-        posterUrl: '/motionsites-posters/aethera-hero.webp',
-        animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
+        posterUrl: '/card-posters/atelie-orbita.webp',
+        animatedPreviewUrl:
+          'https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif',
         animatedPreviewKind: 'image',
-        previewWidth: 800,
-        previewHeight: 582,
+        previewWidth: 480,
+        previewHeight: 339,
         isPublic: true,
       },
     ])
@@ -142,11 +143,12 @@ describe('catalog repository', () => {
         title: 'Atelie Orbita',
         typeLabel: 'Agency',
         keywords: ['Estudio'],
-        posterUrl: '/motionsites-posters/aethera-hero.webp',
-        animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
+        posterUrl: '/card-posters/atelie-orbita.webp',
+        animatedPreviewUrl:
+          'https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif',
         animatedPreviewKind: 'image',
-        previewWidth: 800,
-        previewHeight: 582,
+        previewWidth: 480,
+        previewHeight: 339,
         isPublic: true,
       },
     ])

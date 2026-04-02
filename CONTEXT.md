@@ -150,3 +150,9 @@
 - `dist/`, `node_modules/`, local logs, env files, caches, and `.agents/` are ignored by Git
 - The runtime no longer depends on `catalog-manifest.json` or `local-preview-overrides.json`
 - Operational scripts now load catalog inventory from Supabase and keep a fallback read path for legacy schemas that do not yet have the newer preview columns
+
+## Prompt Adaptation Rule
+- For MotionSites-derived cards, the original live prompt is the highest-fidelity reference for what must appear on screen
+- When adapting a card locally, preserve the original prompt scaffold as closely as possible, including layout, colors, spacing, typography, animation, and structure
+- Only change hosted media URLs, visible site copy, and brand names when they appear in the rendered UI
+- Do not rewrite or translate the instructional scaffold unless the user explicitly asks for that
