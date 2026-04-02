@@ -53,4 +53,19 @@ describe('ComponentCard', () => {
     expect(mediaClassName).toContain('aspect-[4/3]')
     expect(mediaClassName).not.toContain('catalog-card__media--feature')
   })
+
+  it('disables image dragging for preview media', () => {
+    render(
+      <ComponentCard
+        item={baseItem}
+        copyState="idle"
+        onCopy={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByAltText('Aethera Studio preview')).toHaveAttribute(
+      'draggable',
+      'false',
+    )
+  })
 })

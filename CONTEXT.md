@@ -48,22 +48,19 @@
   - shows `Copy failed` on failure
 
 ## Content Model
-- Manifest source of truth: `src/catalog/catalog-manifest.json`
-- Manifest fields:
-  - `slug`
-  - `title`
-  - `typeLabel`
-  - `sortOrder`
-  - `visibility`
-  - `referenceLookup`
+- Runtime and operational source of truth: `public.catalog_prompts` in Supabase
 - Supabase table: `public.catalog_prompts`
 - Table fields:
   - `slug`
   - `title`
   - `type_label`
   - `content_markdown`
+  - `reference_lookup`
+  - `poster_url`
   - `preview_url`
   - `preview_kind`
+  - `preview_width`
+  - `preview_height`
   - `source_file_name`
   - `source_hash`
   - `sort_order`
@@ -74,25 +71,31 @@
 
 ## Source Structure
 - `src/App.tsx`
-  - page composition, remote catalog loading, and copy state
+  - page composition, cached Supabase catalog loading, and copy state
 - `src/components/ComponentCard.tsx`
   - gallery card UI with image/video preview handling
 - `src/catalog/catalog-manifest.json`
-  - canonical `slug`, `title`, `typeLabel`, visibility, and MotionSites lookup map
+  - legacy catalog archive retained in the repo, no longer used by runtime or operational scripts
 - `src/catalog/manifest.ts`
-  - manifest validation and typed export
+  - legacy manifest validation helper
 - `src/catalog/client.ts`
   - browser Supabase client bootstrap
 - `src/catalog/repository.ts`
-  - public Supabase read layer for cards and Markdown content
+  - public Supabase read layer for cards and Markdown content, with legacy-schema fallback
+- `src/catalog/cache.ts`
+  - browser localStorage cache for stale-while-refresh catalog hydration
 - `src/lib/filterCatalog.ts`
   - pure helper for title/type filtering
 - `src/lib/copyTextToClipboard.ts`
   - clipboard helper with fallback
 - `scripts/sync-catalog-to-supabase.mjs`
-  - sync/import pipeline from the live MotionSites site into Supabase
+  - sync/import pipeline from the live MotionSites site into Supabase using Supabase catalog inventory
 - `scripts/compare-motionsites-catalog.mjs`
-  - compares the live MotionSites site catalog and prompt availability against the local manifest
+  - compares the live MotionSites site catalog and prompt availability against the Supabase catalog inventory
+- `scripts/download-motionsites-previews.mjs`
+  - downloads MotionSites previews for the current Supabase catalog inventory into local overrides
+- `scripts/lib/catalog-supabase.mjs`
+  - shared Supabase inventory loader and sync ownership helpers for catalog scripts
 - `scripts/lib/catalog-sync-utils.mjs`
   - file resolution, URL extraction, hashing, and asset helper logic
 - `scripts/lib/motionsites-site-catalog.mjs`
@@ -102,7 +105,7 @@
 
 ## Type Model
 - `CatalogManifestItem = { slug, title, typeLabel, sortOrder, visibility, referenceLookup }`
-- `CatalogCardItem = { slug, title, typeLabel, previewUrl, previewKind, isPublic }`
+- `CatalogCardItem = { slug, title, typeLabel, posterUrl, animatedPreviewUrl, animatedPreviewKind, previewWidth, previewHeight, isPublic }`
 - `CatalogCopyState = 'idle' | 'pending' | 'copied' | 'error'`
 
 ## Commands
@@ -112,7 +115,8 @@
 - Lint: `npm run lint`
 - Tests: `npm run test`
 - Sync live MotionSites prompts + previews to Supabase: `npm run sync:catalog`
-- Compare the local catalog against the live MotionSites site: `npm run compare:motionsites-catalog`
+- Compare the Supabase catalog inventory against the live MotionSites site: `npm run compare:motionsites-catalog`
+- Download MotionSites previews for the Supabase catalog inventory: `npm run download:motionsites-previews`
 - Regenerate old local preview assets: `npm run generate:previews`
 
 ## Test Coverage
@@ -144,4 +148,5 @@
 
 ## Repository Notes
 - `dist/`, `node_modules/`, local logs, env files, caches, and `.agents/` are ignored by Git
-- The repo no longer needs a local Markdown prompt source to populate Supabase; prompt text now comes from MotionSites when it is publicly available
+- The runtime no longer depends on `catalog-manifest.json` or `local-preview-overrides.json`
+- Operational scripts now load catalog inventory from Supabase and keep a fallback read path for legacy schemas that do not yet have the newer preview columns

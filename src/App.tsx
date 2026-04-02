@@ -7,11 +7,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { ComponentCard } from './components/ComponentCard'
-import {
-  getCatalogContent,
-  getStaticCatalog,
-  refreshCatalogMetadata,
-} from './catalog/repository'
+import { loadCachedCatalog, storeCachedCatalog } from './catalog/cache'
+import { getCatalogContent, refreshCatalogMetadata } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
 import {
   distributeCatalogItemsAcrossColumns,
@@ -19,12 +16,19 @@ import {
 } from './lib/distributeCatalogColumns'
 import { filterCatalog } from './lib/filterCatalog'
 import type { CatalogCardItem } from './types'
+import logoImage from './assets/logo.png'
 
 const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
 const INITIAL_RENDER_COUNT = 24
 const RENDER_BATCH_SIZE = 12
 const TYPE_FILTER_SCROLL_STEP = 280
+const CATALOG_LOADING_MESSAGE = 'Loading the card list.'
+const CATALOG_REFRESHING_MESSAGE = 'Refreshing catalog.'
+const CATALOG_REFRESH_ERROR_MESSAGE =
+  'The catalog could not be refreshed. Showing the last saved version.'
+const CATALOG_BLOCKING_ERROR_MESSAGE =
+  'The catalog is temporarily unavailable. Please try again in a moment.'
 
 function getCatalogTypeLabels(items: readonly CatalogCardItem[]) {
   return [...new Set(items.map((item) => item.typeLabel.trim()).filter(Boolean))]
@@ -61,35 +65,38 @@ function getLiveMessage(copiedId: string | null) {
 function getCatalogStatusMessage(
   catalogRefreshState: 'idle' | 'refreshing' | 'error',
   hasCatalogItems: boolean,
+  hasCachedCatalog: boolean,
 ) {
   if (!hasCatalogItems) {
     return ''
   }
 
   if (catalogRefreshState === 'refreshing') {
-    return 'Refreshing Supabase metadata.'
+    return CATALOG_REFRESHING_MESSAGE
   }
 
   if (catalogRefreshState === 'error') {
-    return 'Background metadata sync is unavailable. Browsing still uses the local catalog.'
+    return hasCachedCatalog
+      ? CATALOG_REFRESH_ERROR_MESSAGE
+      : 'The catalog could not be refreshed.'
   }
 
   return ''
 }
 
 function App() {
-  const initialCatalogRef = useRef<CatalogCardItem[] | null>(null)
+  const initialCachedCatalogRef = useRef<CatalogCardItem[] | null>(null)
 
-  if (initialCatalogRef.current === null) {
-    initialCatalogRef.current = getStaticCatalog()
+  if (initialCachedCatalogRef.current === null) {
+    initialCachedCatalogRef.current = loadCachedCatalog()
   }
 
   const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>(
-    initialCatalogRef.current,
+    initialCachedCatalogRef.current,
   )
   const [catalogRefreshState, setCatalogRefreshState] = useState<
     'idle' | 'refreshing' | 'error'
-  >('idle')
+  >('refreshing')
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
@@ -103,8 +110,8 @@ function App() {
     ),
   )
   const [visibleCount, setVisibleCount] = useState(() =>
-    initialCatalogRef.current?.length
-      ? Math.min(INITIAL_RENDER_COUNT, initialCatalogRef.current.length)
+    initialCachedCatalogRef.current?.length
+      ? Math.min(INITIAL_RENDER_COUNT, initialCachedCatalogRef.current.length)
       : 0,
   )
   const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
@@ -120,6 +127,7 @@ function App() {
   const deferredQuery = useDeferredValue(query)
   const catalogTypeLabels = getCatalogTypeLabels(catalogItems)
   const catalogTypeLabelsKey = catalogTypeLabels.join('|')
+  const hasCachedCatalog = Boolean(initialCachedCatalogRef.current?.length)
 
   useEffect(() => {
     let isCancelled = false
@@ -136,6 +144,8 @@ function App() {
           return
         }
 
+        storeCachedCatalog(items)
+
         startTransition(() => {
           setCatalogItems(items)
         })
@@ -146,10 +156,9 @@ function App() {
           return
         }
 
+        console.error('Catalog refresh failed.', error)
         setCatalogRefreshState('error')
-        setCatalogError(
-          error instanceof Error ? error.message : 'Could not refresh catalog.',
-        )
+        setCatalogError(CATALOG_BLOCKING_ERROR_MESSAGE)
       }
     }
 
@@ -384,6 +393,7 @@ function App() {
   const catalogStatusMessage = getCatalogStatusMessage(
     catalogRefreshState,
     hasCatalogItems,
+    hasCachedCatalog,
   )
 
   useEffect(() => {
@@ -495,8 +505,13 @@ function App() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1380px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <header className="px-5 pb-8 pt-8 sm:px-6 sm:pt-12">
           <div className="mx-auto grid max-w-[1136px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start">
-            <h1 className="max-w-[11ch] text-[clamp(4.5rem,10vw,8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
-              Prompt Archive
+            <h1 className="flex items-center">
+              <img
+                src={logoImage}
+                alt="Prompt Archive"
+                draggable={false}
+                className="h-auto w-full max-w-[300px] object-contain md:max-w-[420px] lg:max-w-[500px]"
+              />
             </h1>
 
             <label className="block w-full pb-2 lg:justify-self-end lg:self-start">
@@ -644,7 +659,7 @@ function App() {
                 Loading public catalog
               </p>
               <p className="mt-2 text-sm text-[var(--secondary)]">
-                Reading the card list from Supabase.
+                {CATALOG_LOADING_MESSAGE}
               </p>
             </div>
           ) : !hasCatalogItems && catalogRefreshState === 'error' ? (
@@ -653,7 +668,7 @@ function App() {
                 Public catalog unavailable
               </p>
               <p className="mt-2 text-sm text-[#8f1d1d]/80">
-                {catalogError ?? 'Check the Supabase environment variables and table.'}
+                {catalogError ?? CATALOG_BLOCKING_ERROR_MESSAGE}
               </p>
             </div>
           ) : filteredItems.length ? (

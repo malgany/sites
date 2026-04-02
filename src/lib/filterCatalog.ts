@@ -16,7 +16,7 @@ export function filterCatalog(
   }
 
   return items.filter((item) => {
-    const searchableText = `${item.title} ${item.typeLabel}`.toLowerCase()
+    const searchableText = `${item.title} ${item.typeLabel} ${(item.keywords ?? []).join(' ')}`.toLowerCase()
     const matchesQuery =
       !normalizedQuery || searchableText.includes(normalizedQuery)
     const matchesType =

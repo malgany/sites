@@ -2,17 +2,13 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import {
-  getCatalogContent,
-  getStaticCatalog,
-  refreshCatalogMetadata,
-} from './catalog/repository'
+import { CATALOG_CACHE_KEY } from './catalog/cache'
+import { getCatalogContent, refreshCatalogMetadata } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
 import type { CatalogCardItem } from './types'
 
 vi.mock('./catalog/repository', () => ({
   getCatalogContent: vi.fn(),
-  getStaticCatalog: vi.fn(),
   refreshCatalogMetadata: vi.fn(),
 }))
 
@@ -20,10 +16,10 @@ vi.mock('./lib/copyTextToClipboard', () => ({
   copyTextToClipboard: vi.fn(),
 }))
 
-const mockedGetStaticCatalog = vi.mocked(getStaticCatalog)
 const mockedRefreshCatalogMetadata = vi.mocked(refreshCatalogMetadata)
 const mockedGetCatalogContent = vi.mocked(getCatalogContent)
 const mockedCopy = vi.mocked(copyTextToClipboard)
+const mockedConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
 const catalogItems: CatalogCardItem[] = [
   {
@@ -62,20 +58,23 @@ const catalogItems: CatalogCardItem[] = [
 ]
 
 beforeEach(() => {
-  mockedGetStaticCatalog.mockReturnValue(catalogItems)
   mockedRefreshCatalogMetadata.mockResolvedValue(catalogItems)
+  window.localStorage.clear()
 })
 
 afterEach(() => {
   vi.useRealTimers()
-  mockedGetStaticCatalog.mockReset()
   mockedRefreshCatalogMetadata.mockReset()
   mockedGetCatalogContent.mockReset()
   mockedCopy.mockReset()
+  mockedConsoleError.mockClear()
+  window.localStorage.clear()
 })
 
 describe('App', () => {
-  it('renders the local catalog immediately and refreshes metadata in the background', async () => {
+  it('renders the cached catalog immediately and refreshes metadata in the background', async () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
     render(<App />)
 
     expect(screen.queryByText('Loading public catalog')).not.toBeInTheDocument()
@@ -83,14 +82,28 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(3)
-    expect(screen.getByText('Refreshing Supabase metadata.')).toBeInTheDocument()
+    expect(screen.getByText('Refreshing catalog.')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(mockedRefreshCatalogMetadata).toHaveBeenCalledTimes(1)
     })
   })
 
+  it('persists the refreshed catalog in local storage', async () => {
+    render(<App />)
+
+    await waitFor(() => {
+      expect(mockedRefreshCatalogMetadata).toHaveBeenCalledTimes(1)
+    })
+
+    expect(window.localStorage.getItem(CATALOG_CACHE_KEY)).toBe(
+      JSON.stringify(catalogItems),
+    )
+  })
+
   it('filters cards by title and type label', async () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
     render(<App />)
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search prompts or types' }), {
@@ -107,6 +120,8 @@ describe('App', () => {
   })
 
   it('shows All as the default selected type filter', () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
     render(<App />)
 
     expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
@@ -121,6 +136,7 @@ describe('App', () => {
 
   it('filters cards by selected types and combines multiple types', async () => {
     const user = userEvent.setup()
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
 
@@ -151,6 +167,7 @@ describe('App', () => {
 
   it('clicking All clears both the selected types and the text search', async () => {
     const user = userEvent.setup()
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
 
@@ -185,6 +202,8 @@ describe('App', () => {
   })
 
   it('shows the empty state when the query has no matches', async () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
     render(<App />)
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search prompts or types' }), {
@@ -201,6 +220,7 @@ describe('App', () => {
   it('copies the selected markdown and resets the button state', async () => {
     mockedGetCatalogContent.mockResolvedValue('# Raw markdown prompt')
     mockedCopy.mockResolvedValue(true)
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
     vi.useFakeTimers()
@@ -228,6 +248,7 @@ describe('App', () => {
 
   it('shows an error state when the markdown fetch fails', async () => {
     mockedGetCatalogContent.mockRejectedValue(new Error('boom'))
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
 
@@ -243,10 +264,11 @@ describe('App', () => {
     })
   })
 
-  it('keeps the local catalog available when the metadata refresh fails', async () => {
+  it('keeps the cached catalog available when the metadata refresh fails', async () => {
     mockedRefreshCatalogMetadata.mockRejectedValue(
       new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.'),
     )
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
 
@@ -257,11 +279,36 @@ describe('App', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'Background metadata sync is unavailable. Browsing still uses the local catalog.',
+          'The catalog could not be refreshed. Showing the last saved version.',
         ),
       ).toBeInTheDocument()
     })
 
     expect(screen.queryByText('Public catalog unavailable')).not.toBeInTheDocument()
+  })
+
+  it('shows the blocking error state when refresh fails without cached data', async () => {
+    mockedRefreshCatalogMetadata.mockRejectedValue(
+      new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.'),
+    )
+
+    render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Public catalog unavailable')).toBeInTheDocument()
+    })
+
+    expect(
+      screen.getByText(
+        'The catalog is temporarily unavailable. Please try again in a moment.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(mockedConsoleError).toHaveBeenCalled()
+    expect(screen.queryByRole('article')).not.toBeInTheDocument()
   })
 })

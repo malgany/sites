@@ -1,10 +1,15 @@
-import { createClient } from '@supabase/supabase-js'
-import { existsSync } from 'node:fs'
-import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import manifest from '../src/catalog/catalog-manifest.json' with { type: 'json' }
-import { createSourceHash, getAssetExtension, inferPreviewKindFromUrl, normalizeLookupValue, slugToStorageBasename } from './lib/catalog-sync-utils.mjs'
+import rawLocalPreviewOverrides from '../src/catalog/local-preview-overrides.json' with { type: 'json' }
+import { getAssetExtension, inferPreviewKindFromUrl, normalizeLookupValue, slugToStorageBasename } from './lib/catalog-sync-utils.mjs'
+import {
+  buildCatalogUpsertPayload,
+  createCatalogAdminClient,
+  getMotionSitesLookupSlug,
+  getMotionSitesReferenceTitle,
+  loadCatalogInventory,
+  loadEnvFiles,
+} from './lib/catalog-supabase.mjs'
 import {
   createMotionSitesPublicClient,
   DEFAULT_MOTIONSITES_SITE_URL,
@@ -21,25 +26,19 @@ await loadEnvFiles([
   path.join(repoRoot, '.env.local'),
 ])
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim()
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
 const previewBucket =
   process.env.SUPABASE_PREVIEW_BUCKET?.trim() || 'catalog-previews'
 const motionSitesSiteUrl =
   process.env.MOTIONSITES_SITE_URL?.trim() || DEFAULT_MOTIONSITES_SITE_URL
 
-if (!supabaseUrl || !serviceRoleKey) {
+const supabase = createCatalogAdminClient()
+const catalogInventory = await loadCatalogInventory({ supabase })
+
+if (!catalogInventory.length) {
   throw new Error(
-    'Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for sync:catalog.',
+    'Catalog inventory is empty in Supabase. Create rows in public.catalog_prompts before running sync:catalog.',
   )
 }
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
 
 const snapshot = await fetchMotionSitesSiteCatalog({
   siteUrl: motionSitesSiteUrl,
@@ -47,11 +46,10 @@ const snapshot = await fetchMotionSitesSiteCatalog({
 const motionSitesClient = createMotionSitesPublicClient(snapshot)
 const promptMap = await fetchMotionSitesPromptMap({
   client: motionSitesClient,
-  promptIds: manifest.map(
-    (item) => item.referenceLookup?.motionSitesSlug?.trim() || item.slug,
-  ),
+  promptIds: catalogInventory.map(getMotionSitesLookupSlug),
 })
 const motionSitesCatalog = snapshot.items
+const localPreviewOverrides = rawLocalPreviewOverrides
 
 const summary = {
   deactivated: [],
@@ -61,7 +59,7 @@ const summary = {
   syncedCount: 0,
 }
 
-for (const item of manifest) {
+for (const item of catalogInventory) {
   const siteEntry = findMotionSitesMatch(item, motionSitesCatalog)
 
   if (!siteEntry) {
@@ -86,8 +84,9 @@ for (const item of manifest) {
   }
 
   const previewAsset = await resolvePreviewAsset(siteEntry)
-  let previewUrl = null
-  let previewKind = siteEntry.previewKind
+  const localPreviewOverride = localPreviewOverrides[item.slug] ?? null
+  let previewUrl = item.previewUrl ?? null
+  let previewKind = item.previewKind ?? siteEntry.previewKind
 
   if (previewAsset) {
     const uploadResult = await uploadPreviewAsset({
@@ -104,20 +103,14 @@ for (const item of manifest) {
   }
 
   const { error } = await supabase.from('catalog_prompts').upsert(
-    {
-      slug: item.slug,
-      title: item.title,
-      type_label: item.typeLabel,
-      content_markdown: promptDetails.promptText,
-      is_public: item.visibility === 'public',
-      preview_kind: previewKind,
-      preview_url: previewUrl,
-      published_at: item.visibility === 'public' ? new Date().toISOString() : null,
-      required_plan: item.visibility === 'public' ? null : 'private',
-      sort_order: item.sortOrder,
-      source_file_name: `motionsites:${siteEntry.id}`,
-      source_hash: createSourceHash(promptDetails.promptText),
-    },
+    buildCatalogUpsertPayload({
+      item,
+      localPreviewOverride,
+      promptText: promptDetails.promptText,
+      resolvedPreviewKind: previewKind,
+      resolvedPreviewUrl: previewUrl,
+      siteEntry,
+    }),
     {
       onConflict: 'slug',
     },
@@ -141,37 +134,6 @@ if (summary.deactivated.length) {
   )
 }
 
-async function loadEnvFiles(filePaths) {
-  for (const filePath of filePaths) {
-    if (!existsSync(filePath)) {
-      continue
-    }
-
-    const content = await fs.readFile(filePath, 'utf8')
-
-    for (const line of content.split(/\r?\n/)) {
-      if (!line || line.trim().startsWith('#')) {
-        continue
-      }
-
-      const separatorIndex = line.indexOf('=')
-
-      if (separatorIndex < 1) {
-        continue
-      }
-
-      const key = line.slice(0, separatorIndex).trim()
-      const rawValue = line.slice(separatorIndex + 1).trim()
-
-      if (process.env[key] !== undefined) {
-        continue
-      }
-
-      process.env[key] = rawValue.replace(/^['"]|['"]$/g, '')
-    }
-  }
-}
-
 async function resolvePreviewAsset(siteEntry) {
   return tryDownloadRemoteAsset({
     fallbackUrl: siteEntry.posterUrl,
@@ -186,10 +148,7 @@ function findMotionSitesMatch(item, catalogEntries) {
     return null
   }
 
-  const slugCandidates = [
-    item.referenceLookup?.motionSitesSlug?.trim(),
-    item.slug,
-  ].filter(Boolean)
+  const slugCandidates = [getMotionSitesLookupSlug(item), item.slug].filter(Boolean)
 
   for (const slugCandidate of slugCandidates) {
     const directMatch = catalogEntries.find((entry) => entry.id === slugCandidate)
@@ -199,7 +158,7 @@ function findMotionSitesMatch(item, catalogEntries) {
     }
   }
 
-  const referenceTitle = item.referenceLookup?.motionSitesTitle || item.title
+  const referenceTitle = getMotionSitesReferenceTitle(item)
   const explicitKeywords = item.referenceLookup?.keywords ?? []
   const normalizedReferenceTitle = normalizeLookupValue(referenceTitle)
   const lookupTokens = Array.from(

@@ -22,6 +22,7 @@ export type CatalogCardItem = {
   slug: string
   title: string
   typeLabel: string
+  keywords?: readonly string[]
   posterUrl: string | null
   animatedPreviewUrl: string | null
   animatedPreviewKind: CatalogPreviewKind | null

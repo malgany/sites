@@ -6,6 +6,7 @@ const items = [
     slug: 'aethera-hero',
     title: 'Aethera Studio',
     typeLabel: 'Studio',
+    keywords: ['Agency'],
     posterUrl: 'https://example.com/a.webp',
     animatedPreviewUrl: 'https://example.com/a.gif',
     animatedPreviewKind: 'image',
@@ -17,6 +18,7 @@ const items = [
     slug: 'nexora-hero',
     title: 'Nexora Automation',
     typeLabel: 'Automation',
+    keywords: ['AI'],
     posterUrl: 'https://example.com/nexora.webp',
     animatedPreviewUrl: 'https://example.com/nexora.mp4',
     animatedPreviewKind: 'video',
@@ -28,6 +30,7 @@ const items = [
     slug: 'price-calculator',
     title: 'Price Calculator',
     typeLabel: 'Calculator',
+    keywords: ['Component'],
     posterUrl: null,
     animatedPreviewUrl: null,
     animatedPreviewKind: null,
@@ -48,6 +51,10 @@ describe('filterCatalog', () => {
 
   it('matches the type label case-insensitively', () => {
     expect(filterCatalog(items, 'AUTOMATION')).toEqual([items[1]])
+  })
+
+  it('matches keywords case-insensitively', () => {
+    expect(filterCatalog(items, 'agency')).toEqual([items[0]])
   })
 
   it('filters by one selected type', () => {

@@ -1,14 +1,18 @@
-import { existsSync } from 'node:fs'
-import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import manifest from '../src/catalog/catalog-manifest.json' with { type: 'json' }
+import {
+  createCatalogAdminClient,
+  getMotionSitesLookupSlug,
+  loadCatalogInventory,
+  loadEnvFiles,
+} from './lib/catalog-supabase.mjs'
 import {
   createMotionSitesPublicClient,
   DEFAULT_MOTIONSITES_SITE_URL,
   fetchMotionSitesPromptMap,
   fetchMotionSitesSiteCatalog,
 } from './lib/motionsites-site-catalog.mjs'
+import { normalizeCatalogTypeLabel } from './lib/catalog-taxonomy.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -21,6 +25,15 @@ await loadEnvFiles([
 
 const motionSitesSiteUrl =
   process.env.MOTIONSITES_SITE_URL?.trim() || DEFAULT_MOTIONSITES_SITE_URL
+const supabase = createCatalogAdminClient()
+const catalogInventory = await loadCatalogInventory({ supabase })
+
+if (!catalogInventory.length) {
+  throw new Error(
+    'Catalog inventory is empty in Supabase. Create rows in public.catalog_prompts before comparing against MotionSites.',
+  )
+}
+
 const snapshot = await fetchMotionSitesSiteCatalog({
   siteUrl: motionSitesSiteUrl,
 })
@@ -31,11 +44,11 @@ const promptMap = await fetchMotionSitesPromptMap({
 })
 
 const siteById = new Map(snapshot.items.map((item) => [item.id, item]))
-const manifestSlugs = new Set(manifest.map((item) => item.slug))
+const inventorySiteIds = new Set(catalogInventory.map(getMotionSitesLookupSlug))
 const promptAvailabilitySummary = summarizePromptAvailability(promptMap)
 
 const siteOnly = snapshot.items
-  .filter((item) => !manifestSlugs.has(item.id))
+  .filter((item) => !inventorySiteIds.has(item.id))
   .map((item) => ({
     availability: getPromptAvailabilityLabel(promptMap.get(item.id)),
     category: item.category,
@@ -49,8 +62,8 @@ const inaccessibleSiteOnly = siteOnly.filter(
   (item) => item.availability !== 'available',
 )
 
-const manifestOnly = manifest
-  .filter((item) => !siteById.has(item.referenceLookup?.motionSitesSlug ?? item.slug))
+const inventoryOnly = catalogInventory
+  .filter((item) => !siteById.has(getMotionSitesLookupSlug(item)))
   .map((item) => ({
     slug: item.slug,
     title: item.title,
@@ -58,14 +71,14 @@ const manifestOnly = manifest
 
 const metadataDifferences = []
 const syncReady = []
-const unavailableInManifest = []
+const unavailableInCatalog = []
 
-for (const item of manifest) {
-  const lookupSlug = item.referenceLookup?.motionSitesSlug?.trim() || item.slug
+for (const item of catalogInventory) {
+  const lookupSlug = getMotionSitesLookupSlug(item)
   const siteEntry = siteById.get(lookupSlug)
 
   if (!siteEntry) {
-    unavailableInManifest.push({
+    unavailableInCatalog.push({
       availability: 'missing_on_site',
       slug: item.slug,
       title: item.title,
@@ -73,10 +86,16 @@ for (const item of manifest) {
     continue
   }
 
-  if (siteEntry.title !== item.title || siteEntry.category !== item.typeLabel) {
+  const normalizedSiteTypeLabel = normalizeCatalogTypeLabel(siteEntry)
+
+  if (
+    siteEntry.title !== item.title ||
+    normalizedSiteTypeLabel !== item.typeLabel
+  ) {
     metadataDifferences.push({
       localTitle: item.title,
       localTypeLabel: item.typeLabel,
+      normalizedSiteTypeLabel,
       siteCategory: siteEntry.category,
       siteTitle: siteEntry.title,
       slug: item.slug,
@@ -95,7 +114,7 @@ for (const item of manifest) {
     continue
   }
 
-  unavailableInManifest.push({
+  unavailableInCatalog.push({
     availability: getPromptAvailabilityLabel(promptDetails),
     siteId: siteEntry.id,
     slug: item.slug,
@@ -110,11 +129,11 @@ console.log(
       availableSiteOnly,
       availableSiteOnlyCount: availableSiteOnly.length,
       bundleUrl: snapshot.bundleUrl,
+      catalogCount: catalogInventory.length,
+      catalogOnly: inventoryOnly,
+      catalogOnlyCount: inventoryOnly.length,
       inaccessibleSiteOnly,
       inaccessibleSiteOnlyCount: inaccessibleSiteOnly.length,
-      manifestCount: manifest.length,
-      manifestOnly,
-      manifestOnlyCount: manifestOnly.length,
       metadataDifferences,
       metadataDifferencesCount: metadataDifferences.length,
       motionSitesSiteUrl: snapshot.siteUrl,
@@ -124,8 +143,8 @@ console.log(
       siteOnlyCount: siteOnly.length,
       syncReady,
       syncReadyCount: syncReady.length,
-      unavailableInManifest,
-      unavailableInManifestCount: unavailableInManifest.length,
+      unavailableInCatalog,
+      unavailableInCatalogCount: unavailableInCatalog.length,
       unavailablePromptCount:
         snapshot.items.length - (promptAvailabilitySummary.available ?? 0),
     },
@@ -151,35 +170,4 @@ function summarizePromptAvailability(promptMap) {
   }
 
   return summary
-}
-
-async function loadEnvFiles(filePaths) {
-  for (const filePath of filePaths) {
-    if (!existsSync(filePath)) {
-      continue
-    }
-
-    const content = await fs.readFile(filePath, 'utf8')
-
-    for (const line of content.split(/\r?\n/)) {
-      if (!line || line.trim().startsWith('#')) {
-        continue
-      }
-
-      const separatorIndex = line.indexOf('=')
-
-      if (separatorIndex < 1) {
-        continue
-      }
-
-      const key = line.slice(0, separatorIndex).trim()
-      const rawValue = line.slice(separatorIndex + 1).trim()
-
-      if (process.env[key] !== undefined) {
-        continue
-      }
-
-      process.env[key] = rawValue.replace(/^['"]|['"]$/g, '')
-    }
-  }
 }

@@ -1,7 +1,12 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import manifest from '../src/catalog/catalog-manifest.json' with { type: 'json' }
+import {
+  createCatalogAdminClient,
+  getMotionSitesLookupSlug,
+  loadCatalogInventory,
+  loadEnvFiles,
+} from './lib/catalog-supabase.mjs'
 import {
   createMotionSitesPublicClient,
   DEFAULT_MOTIONSITES_SITE_URL,
@@ -19,8 +24,22 @@ const overridesPath = path.join(
   'catalog',
   'local-preview-overrides.json',
 )
+
+await loadEnvFiles([
+  path.join(repoRoot, '.env'),
+  path.join(repoRoot, '.env.local'),
+])
+
 const motionSitesSiteUrl =
   process.env.MOTIONSITES_SITE_URL?.trim() || DEFAULT_MOTIONSITES_SITE_URL
+const supabase = createCatalogAdminClient()
+const catalogInventory = await loadCatalogInventory({ supabase })
+
+if (!catalogInventory.length) {
+  throw new Error(
+    'Catalog inventory is empty in Supabase. Create rows in public.catalog_prompts before downloading previews.',
+  )
+}
 
 await fs.mkdir(outputDir, { recursive: true })
 
@@ -40,9 +59,7 @@ const snapshot = await fetchMotionSitesSiteCatalog({
 const motionSitesClient = createMotionSitesPublicClient(snapshot)
 const promptMap = await fetchMotionSitesPromptMap({
   client: motionSitesClient,
-  promptIds: manifest.map(
-    (item) => item.referenceLookup?.motionSitesSlug?.trim() || item.slug,
-  ),
+  promptIds: catalogInventory.map(getMotionSitesLookupSlug),
 })
 const cardMap = new Map(snapshot.items.map((card) => [card.id, card]))
 
@@ -54,8 +71,8 @@ const summary = {
   skippedUnavailablePrompt: [],
 }
 
-for (const item of manifest) {
-  const lookupSlug = item.referenceLookup?.motionSitesSlug?.trim() || item.slug
+for (const item of catalogInventory) {
+  const lookupSlug = getMotionSitesLookupSlug(item)
   const promptDetails = promptMap.get(lookupSlug)
 
   if (!promptDetails?.promptText) {

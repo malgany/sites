@@ -169,6 +169,7 @@ function PreviewMedia({
               alt={`${item.title} preview`}
               width={width}
               height={height}
+              draggable={false}
               className={posterClassName}
               loading="eager"
               decoding="async"
@@ -217,6 +218,7 @@ function PreviewMedia({
             alt={`${item.title} preview`}
             width={width}
             height={height}
+            draggable={false}
             className={posterClassName}
             loading="eager"
             decoding="async"
@@ -236,6 +238,7 @@ function PreviewMedia({
           alt={`${item.title} preview`}
           width={width}
           height={height}
+          draggable={false}
           className={animatedMediaClassName}
           loading="lazy"
           decoding="async"
@@ -261,6 +264,7 @@ function PreviewMedia({
         alt={`${item.title} preview`}
         width={width}
         height={height}
+        draggable={false}
         className="absolute inset-0 size-full object-cover object-top"
         loading="eager"
         decoding="async"

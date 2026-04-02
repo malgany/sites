@@ -1,32 +1,28 @@
-import rawLocalPreviewOverrides from './local-preview-overrides.json'
+import type {
+  CatalogCardItem,
+  CatalogManifestReferenceLookup,
+  CatalogPreviewKind,
+} from '../types'
 import { catalogManifest } from './manifest'
-import type { CatalogCardItem, CatalogPreviewKind } from '../types'
+import { getLocalCatalogMedia } from './localMedia'
 
 export const CATALOG_TABLE = 'catalog_prompts'
 
-type LocalPreviewOverride = {
-  previewKind?: CatalogPreviewKind
-  previewUrl?: string
-  posterUrl?: string
-  animatedPreviewUrl?: string
-  animatedPreviewKind?: CatalogPreviewKind
-  previewWidth?: number
-  previewHeight?: number
-  sourceUrl?: string
-}
-
-const localPreviewOverrides = rawLocalPreviewOverrides as Record<
-  string,
-  LocalPreviewOverride
->
-const manifestBySlug = new Map(catalogManifest.map((item) => [item.slug, item] as const))
+const FULL_LIST_SELECT =
+  'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_public, sort_order'
+const LEGACY_LIST_SELECT =
+  'slug, title, type_label, preview_url, preview_kind, is_public, sort_order'
 
 type CatalogListRow = {
   slug: string
   title: string
   type_label: string
+  reference_lookup?: CatalogManifestReferenceLookup | null
+  poster_url?: string | null
   preview_url: string | null
   preview_kind: CatalogPreviewKind | null
+  preview_width?: number | null
+  preview_height?: number | null
   is_public: boolean
   sort_order: number
 }
@@ -34,6 +30,10 @@ type CatalogListRow = {
 type CatalogContentRow = {
   content_markdown: string
 }
+
+const legacyTypeLabelBySlug = new Map(
+  catalogManifest.map((item) => [item.slug, item.typeLabel]),
+)
 
 function isAnimatedImageUrl(url: string) {
   return /\.gif(?:$|\?)/i.test(url)
@@ -44,12 +44,13 @@ function isVideoUrl(url: string) {
 }
 
 function getRemotePreviewFields(
+  posterUrl: string | null,
   previewUrl: string | null,
   previewKind: CatalogPreviewKind | null,
 ) {
   if (!previewUrl) {
     return {
-      posterUrl: null,
+      posterUrl,
       animatedPreviewUrl: null,
       animatedPreviewKind: null,
     }
@@ -57,7 +58,7 @@ function getRemotePreviewFields(
 
   if (previewKind === 'video' || isVideoUrl(previewUrl)) {
     return {
-      posterUrl: null,
+      posterUrl,
       animatedPreviewUrl: previewUrl,
       animatedPreviewKind: 'video' as const,
     }
@@ -65,82 +66,52 @@ function getRemotePreviewFields(
 
   if (isAnimatedImageUrl(previewUrl)) {
     return {
-      posterUrl: null,
+      posterUrl,
       animatedPreviewUrl: previewUrl,
       animatedPreviewKind: 'image' as const,
     }
   }
 
   return {
-    posterUrl: previewUrl,
+    posterUrl: posterUrl ?? previewUrl,
     animatedPreviewUrl: null,
     animatedPreviewKind: null,
   }
 }
 
-function mapStaticCatalogItem(
-  slug: string,
-  title: string,
-  typeLabel: string,
-): CatalogCardItem {
-  const localPreviewOverride = localPreviewOverrides[slug]
-  const animatedPreviewUrl =
-    localPreviewOverride?.animatedPreviewUrl ??
-    localPreviewOverride?.previewUrl ??
-    null
-  const animatedPreviewKind =
-    localPreviewOverride?.animatedPreviewKind ??
-    localPreviewOverride?.previewKind ??
-    null
+function mapRemoteCatalogRow(row: CatalogListRow): CatalogCardItem {
+  const localMedia = getLocalCatalogMedia(row.slug)
+  const remoteKeywords = Array.isArray(row.reference_lookup?.keywords)
+    ? row.reference_lookup.keywords.filter(
+        (keyword): keyword is string => typeof keyword === 'string' && Boolean(keyword.trim()),
+      )
+    : []
+  const legacyTypeLabel = legacyTypeLabelBySlug.get(row.slug)
+  const keywords = Array.from(
+    new Set([
+      ...remoteKeywords,
+      ...(legacyTypeLabel && legacyTypeLabel !== row.type_label
+        ? [legacyTypeLabel]
+        : []),
+    ]),
+  )
+  const remotePreview = getRemotePreviewFields(
+    localMedia?.posterUrl ?? row.poster_url ?? null,
+    localMedia?.animatedPreviewUrl ?? row.preview_url,
+    localMedia?.animatedPreviewKind ?? row.preview_kind,
+  )
 
   return {
-    slug,
-    title,
-    typeLabel,
-    posterUrl: localPreviewOverride?.posterUrl ?? null,
-    animatedPreviewUrl,
-    animatedPreviewKind,
-    previewWidth: localPreviewOverride?.previewWidth ?? null,
-    previewHeight: localPreviewOverride?.previewHeight ?? null,
-    isPublic: true,
-  }
-}
-
-function createEmptyCatalogCardItem(
-  slug: string,
-  title: string,
-  typeLabel: string,
-  isPublic = true,
-): CatalogCardItem {
-  return {
-    slug,
-    title,
-    typeLabel,
-    posterUrl: null,
-    animatedPreviewUrl: null,
-    animatedPreviewKind: null,
-    previewWidth: null,
-    previewHeight: null,
-    isPublic,
-  }
-}
-
-function mergeRemoteCatalogRow(
-  item: CatalogCardItem,
-  row: CatalogListRow | undefined,
-): CatalogCardItem {
-  if (!row) {
-    return item
-  }
-
-  const remotePreview = getRemotePreviewFields(row.preview_url, row.preview_kind)
-
-  return {
-    ...item,
-    posterUrl: item.posterUrl ?? remotePreview.posterUrl,
-    animatedPreviewUrl: item.animatedPreviewUrl ?? remotePreview.animatedPreviewUrl,
-    animatedPreviewKind:
-      item.animatedPreviewKind ?? remotePreview.animatedPreviewKind,
+    slug: row.slug,
+    title: row.title,
+    typeLabel: row.type_label,
+    ...(keywords.length ? { keywords } : {}),
+    posterUrl: remotePreview.posterUrl,
+    animatedPreviewUrl: remotePreview.animatedPreviewUrl,
+    animatedPreviewKind: remotePreview.animatedPreviewKind,
+    previewWidth: localMedia?.previewWidth ?? row.preview_width ?? null,
+    previewHeight: localMedia?.previewHeight ?? row.preview_height ?? null,
+    isPublic: row.is_public,
   }
 }
 
@@ -149,21 +120,39 @@ async function getBrowserSupabaseClient() {
   return clientModule.getBrowserSupabaseClient()
 }
 
+function isMissingCatalogColumnError(message: string) {
+  return (
+    message.includes(`column ${CATALOG_TABLE}.`) && message.includes('does not exist')
+  )
+}
+
 async function loadRemoteCatalogRows() {
   const supabase = await getBrowserSupabaseClient()
-  const { data, error } = await supabase
+  const fullQuery = supabase
     .from(CATALOG_TABLE)
-    .select(
-      'slug, title, type_label, preview_url, preview_kind, is_public, sort_order',
-    )
+    .select(FULL_LIST_SELECT)
     .eq('is_public', true)
     .order('sort_order', { ascending: true })
 
-  if (error) {
+  const { data, error } = await fullQuery
+
+  if (error && !isMissingCatalogColumnError(error.message)) {
     throw new Error(`Could not load public catalog: ${error.message}`)
   }
 
-  return [...((data ?? []) as CatalogListRow[])].sort((left, right) => {
+  const fallbackResponse = error
+    ? await supabase
+        .from(CATALOG_TABLE)
+        .select(LEGACY_LIST_SELECT)
+        .eq('is_public', true)
+        .order('sort_order', { ascending: true })
+    : { data, error: null }
+
+  if (fallbackResponse.error) {
+    throw new Error(`Could not load public catalog: ${fallbackResponse.error.message}`)
+  }
+
+  return [...((fallbackResponse.data ?? []) as CatalogListRow[])].sort((left, right) => {
     if (left.sort_order !== right.sort_order) {
       return left.sort_order - right.sort_order
     }
@@ -172,41 +161,10 @@ async function loadRemoteCatalogRows() {
   })
 }
 
-export function getStaticCatalog() {
-  return catalogManifest
-    .filter(
-      (item) => item.visibility === 'public' && Boolean(localPreviewOverrides[item.slug]),
-    )
-    .slice()
-    .sort((left, right) => {
-      if (left.sortOrder !== right.sortOrder) {
-        return left.sortOrder - right.sortOrder
-      }
-
-      return left.title.localeCompare(right.title)
-    })
-    .map((item) => mapStaticCatalogItem(item.slug, item.title, item.typeLabel))
-}
-
 export async function refreshCatalogMetadata() {
   const remoteRows = await loadRemoteCatalogRows()
 
-  return remoteRows.map((row) => {
-    const manifestItem = manifestBySlug.get(row.slug)
-    const baseItem = manifestItem
-      ? mapStaticCatalogItem(manifestItem.slug, manifestItem.title, manifestItem.typeLabel)
-      : createEmptyCatalogCardItem(row.slug, row.title, row.type_label, row.is_public)
-
-    return mergeRemoteCatalogRow(
-      {
-        ...baseItem,
-        title: row.title,
-        typeLabel: row.type_label,
-        isPublic: row.is_public,
-      },
-      row,
-    )
-  })
+  return remoteRows.map(mapRemoteCatalogRow)
 }
 
 export async function getCatalogContent(slug: string) {
