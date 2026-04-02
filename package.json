@@ -10,6 +10,7 @@
     "download:motionsites-previews": "node scripts/download-motionsites-previews.mjs",
     "generate:motion-posters": "node scripts/generate-motion-preview-posters.mjs",
     "lint": "eslint .",
+    "normalize:catalog-taxonomy": "node scripts/normalize-catalog-taxonomy.mjs",
     "preview": "vite preview",
     "sync:catalog": "node scripts/sync-catalog-to-supabase.mjs",
     "test": "vitest run",
