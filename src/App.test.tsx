@@ -23,11 +23,11 @@ const mockedConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {
 
 const catalogItems: CatalogCardItem[] = [
   {
-    slug: 'aethera-hero',
-    title: 'Aethera Studio',
-    typeLabel: 'Studio',
-    posterUrl: 'https://example.com/aethera.webp',
-    animatedPreviewUrl: 'https://example.com/aethera.gif',
+    slug: 'atelie-orbita',
+    title: 'Atelie Orbita',
+    typeLabel: 'Estudio',
+    posterUrl: 'https://example.com/atelie-orbita.webp',
+    animatedPreviewUrl: 'https://example.com/atelie-orbita.gif',
     animatedPreviewKind: 'image',
     previewWidth: 1200,
     previewHeight: 1600,
@@ -79,7 +79,7 @@ describe('App', () => {
 
     expect(screen.queryByText('Loading public catalog')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
+      screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(3)
     expect(screen.getByText('Refreshing catalog.')).toBeInTheDocument()
@@ -128,7 +128,7 @@ describe('App', () => {
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('button', { name: 'Studio' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Estudio' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )
@@ -140,14 +140,14 @@ describe('App', () => {
 
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Studio' }))
+    await user.click(screen.getByRole('button', { name: 'Estudio' }))
 
     await waitFor(() => {
       expect(screen.getAllByRole('article')).toHaveLength(1)
     })
 
     expect(
-      screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
+      screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
       'aria-pressed',
@@ -235,7 +235,7 @@ describe('App', () => {
       await Promise.resolve()
     })
 
-    expect(mockedGetCatalogContent).toHaveBeenCalledWith('aethera-hero')
+    expect(mockedGetCatalogContent).toHaveBeenCalledWith('atelie-orbita')
     expect(mockedCopy).toHaveBeenCalledWith('# Raw markdown prompt')
     expect(button).toHaveTextContent('Copied')
 
@@ -273,7 +273,7 @@ describe('App', () => {
     render(<App />)
 
     expect(
-      screen.getByRole('heading', { name: 'Aethera Studio', level: 2 }),
+      screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
 
     await waitFor(() => {

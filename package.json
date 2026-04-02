@@ -8,16 +8,21 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "download:motionsites-previews": "node scripts/download-motionsites-previews.mjs",
+    "finalize:card-gif-preview": "node scripts/finalize-card-gif-preview.mjs",
     "generate:motion-posters": "node scripts/generate-motion-preview-posters.mjs",
     "lint": "eslint .",
     "normalize:catalog-taxonomy": "node scripts/normalize-catalog-taxonomy.mjs",
     "preview": "vite preview",
+    "publish:card-preview-gif": "node scripts/publish-card-preview-gif.mjs",
+    "set:preview-override": "node scripts/upsert-preview-override.mjs",
     "sync:catalog": "node scripts/sync-catalog-to-supabase.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:previews": "node scripts/generate-previews.mjs"
+    "generate:previews": "node scripts/generate-previews.mjs",
+    "upload:card-prompt-video": "node scripts/upload-card-prompt-video.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1022.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@supabase/supabase-js": "^2.58.0",
     "@tailwindcss/vite": "^4.2.2",

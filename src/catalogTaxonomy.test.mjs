@@ -27,7 +27,7 @@ describe('catalog taxonomy', () => {
     expect(
       buildCatalogTaxonomy({
         referenceLookup: {},
-        slug: 'aethera-hero',
+        slug: 'sample-studio-card',
         typeLabel: 'Studio',
       }),
     ).toEqual({

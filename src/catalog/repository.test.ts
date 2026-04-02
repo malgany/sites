@@ -67,14 +67,14 @@ describe('catalog repository', () => {
     const order = vi.fn().mockResolvedValue({
       data: [
         {
-          slug: 'aethera-hero',
-          title: 'Aethera Studio',
-          type_label: 'Studio',
+          slug: 'atelie-orbita',
+          title: 'Atelie Orbita',
+          type_label: 'Estudio',
           reference_lookup: {
-            keywords: ['Studio'],
+            keywords: ['Estudio'],
           },
-          poster_url: 'https://example.com/remote-aethera.webp',
-          preview_url: 'https://example.com/remote-aethera.gif',
+          poster_url: 'https://example.com/remote-atelie-orbita.webp',
+          preview_url: 'https://example.com/remote-atelie-orbita.gif',
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
@@ -95,10 +95,10 @@ describe('catalog repository', () => {
 
     await expect(refreshCatalogMetadata()).resolves.toEqual([
       {
-        slug: 'aethera-hero',
-        title: 'Aethera Studio',
-        typeLabel: 'Studio',
-        keywords: ['Studio'],
+        slug: 'atelie-orbita',
+        title: 'Atelie Orbita',
+        typeLabel: 'Estudio',
+        keywords: ['Estudio'],
         posterUrl: '/motionsites-posters/aethera-hero.webp',
         animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
         animatedPreviewKind: 'image',
@@ -113,11 +113,11 @@ describe('catalog repository', () => {
     const order = vi.fn().mockResolvedValue({
       data: [
         {
-          slug: 'aethera-hero',
-          title: 'Aethera Studio',
+          slug: 'atelie-orbita',
+          title: 'Atelie Orbita',
           type_label: 'Agency',
-          poster_url: 'https://example.com/remote-aethera.webp',
-          preview_url: 'https://example.com/remote-aethera.gif',
+          poster_url: 'https://example.com/remote-atelie-orbita.webp',
+          preview_url: 'https://example.com/remote-atelie-orbita.gif',
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
@@ -138,10 +138,10 @@ describe('catalog repository', () => {
 
     await expect(refreshCatalogMetadata()).resolves.toEqual([
       {
-        slug: 'aethera-hero',
-        title: 'Aethera Studio',
+        slug: 'atelie-orbita',
+        title: 'Atelie Orbita',
         typeLabel: 'Agency',
-        keywords: ['Studio'],
+        keywords: ['Estudio'],
         posterUrl: '/motionsites-posters/aethera-hero.webp',
         animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
         animatedPreviewKind: 'image',
@@ -166,11 +166,11 @@ describe('catalog repository', () => {
       from,
     } as never)
 
-    await expect(getCatalogContent('aethera-hero')).resolves.toBe('# markdown')
+    await expect(getCatalogContent('atelie-orbita')).resolves.toBe('# markdown')
 
     expect(from).toHaveBeenCalledWith('catalog_prompts')
     expect(select).toHaveBeenCalledWith('content_markdown')
-    expect(firstEq).toHaveBeenCalledWith('slug', 'aethera-hero')
+    expect(firstEq).toHaveBeenCalledWith('slug', 'atelie-orbita')
     expect(secondEq).toHaveBeenCalledWith('is_public', true)
   })
 

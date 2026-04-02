@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   buildCatalogUpsertPayload,
   getMotionSitesLookupSlug,
+  getMissingCatalogColumnName,
   loadCatalogInventory,
   normalizeCatalogReferenceLookup,
+  upsertCatalogWithSchemaFallback,
 } from '../scripts/lib/catalog-supabase.mjs'
 
 describe('catalog supabase helpers', () => {
@@ -208,6 +210,71 @@ describe('catalog supabase helpers', () => {
     expect(payload.source_hash).toMatch(/^[a-f0-9]{64}$/)
     expect(getMotionSitesLookupSlug({ slug: 'fallback', referenceLookup: {} })).toBe(
       'fallback',
+    )
+  })
+
+  it('detects missing catalog columns from both PostgREST error formats', () => {
+    expect(
+      getMissingCatalogColumnName({
+        message: 'column catalog_prompts.poster_url does not exist',
+      }),
+    ).toBe('poster_url')
+
+    expect(
+      getMissingCatalogColumnName({
+        message:
+          "Could not find the 'poster_url' column of 'catalog_prompts' in the schema cache",
+      }),
+    ).toBe('poster_url')
+  })
+
+  it('retries catalog upserts without unsupported columns', async () => {
+    const upsert = vi
+      .fn()
+      .mockResolvedValueOnce({
+        error: {
+          message:
+            "Could not find the 'poster_url' column of 'catalog_prompts' in the schema cache",
+        },
+      })
+      .mockResolvedValueOnce({
+        error: null,
+      })
+    const from = vi.fn(() => ({ upsert }))
+
+    await expect(
+      upsertCatalogWithSchemaFallback({
+        payload: {
+          slug: 'atelie-orbita',
+          poster_url: '/card-posters/atelie-orbita.webp',
+          preview_url: '/card-gifs/atelie-orbita.gif',
+        },
+        supabase: { from },
+      }),
+    ).resolves.toEqual({
+      unsupportedColumns: ['poster_url'],
+    })
+
+    expect(upsert).toHaveBeenNthCalledWith(
+      1,
+      {
+        slug: 'atelie-orbita',
+        poster_url: '/card-posters/atelie-orbita.webp',
+        preview_url: '/card-gifs/atelie-orbita.gif',
+      },
+      {
+        onConflict: 'slug',
+      },
+    )
+    expect(upsert).toHaveBeenNthCalledWith(
+      2,
+      {
+        slug: 'atelie-orbita',
+        preview_url: '/card-gifs/atelie-orbita.gif',
+      },
+      {
+        onConflict: 'slug',
+      },
     )
   })
 })

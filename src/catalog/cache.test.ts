@@ -3,10 +3,10 @@ import { CATALOG_CACHE_KEY, loadCachedCatalog, storeCachedCatalog } from './cach
 import type { CatalogCardItem } from '../types'
 
 const cachedItem: CatalogCardItem = {
-  slug: 'aethera-hero',
-  title: 'Aethera Studio',
-  typeLabel: 'Studio',
-  keywords: ['Agency'],
+  slug: 'atelie-orbita',
+  title: 'Atelie Orbita',
+  typeLabel: 'Estudio',
+  keywords: ['Estudio'],
   posterUrl: '/motionsites-posters/aethera-hero.webp',
   animatedPreviewUrl: '/motionsites-previews/aethera-hero.gif',
   animatedPreviewKind: 'image',

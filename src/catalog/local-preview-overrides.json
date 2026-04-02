@@ -109,15 +109,15 @@
     "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-buzzentic-preview-CbopM29R.gif"
   },
-  "aethera-hero": {
+  "atelie-orbita": {
     "previewKind": "image",
-    "previewUrl": "/motionsites-previews/aethera-hero.gif",
+    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "/motionsites-previews/aethera-hero.gif",
-    "posterUrl": "/motionsites-posters/aethera-hero.webp",
-    "previewWidth": 800,
-    "previewHeight": 582,
-    "sourceUrl": "https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif"
+    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif",
+    "posterUrl": "/card-posters/atelie-orbita.webp",
+    "previewWidth": 480,
+    "previewHeight": 339,
+    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif"
   },
   "asme-hero": {
     "previewKind": "image",

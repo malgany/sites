@@ -1,11 +1,12 @@
 [
   {
-    "slug": "aethera-hero",
-    "title": "Aethera Studio",
-    "typeLabel": "Studio",
+    "slug": "atelie-orbita",
+    "title": "Atelie Orbita",
+    "typeLabel": "Estudio",
     "sortOrder": 1,
     "visibility": "public",
     "referenceLookup": {
+      "motionSitesSlug": "aethera-hero",
       "motionSitesTitle": "Aethera Studio"
     }
   },

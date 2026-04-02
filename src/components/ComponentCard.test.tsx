@@ -4,10 +4,10 @@ import { ComponentCard } from './ComponentCard'
 import type { CatalogCardItem } from '../types'
 
 const baseItem: CatalogCardItem = {
-  slug: 'aethera-hero',
-  title: 'Aethera Studio',
-  typeLabel: 'Studio',
-  posterUrl: 'https://example.com/aethera.webp',
+  slug: 'atelie-orbita',
+  title: 'Atelie Orbita',
+  typeLabel: 'Estudio',
+  posterUrl: 'https://example.com/atelie-orbita.webp',
   animatedPreviewUrl: null,
   animatedPreviewKind: null,
   previewWidth: 1200,
@@ -63,7 +63,7 @@ describe('ComponentCard', () => {
       />,
     )
 
-    expect(screen.getByAltText('Aethera Studio preview')).toHaveAttribute(
+    expect(screen.getByAltText('Atelie Orbita preview')).toHaveAttribute(
       'draggable',
       'false',
     )

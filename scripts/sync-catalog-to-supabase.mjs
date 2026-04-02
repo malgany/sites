@@ -9,6 +9,7 @@ import {
   getMotionSitesReferenceTitle,
   loadCatalogInventory,
   loadEnvFiles,
+  upsertCatalogWithSchemaFallback,
 } from './lib/catalog-supabase.mjs'
 import {
   createMotionSitesPublicClient,
@@ -57,6 +58,7 @@ const summary = {
   skippedMissingSite: [],
   skippedUnavailablePrompt: [],
   syncedCount: 0,
+  unsupportedColumns: new Set(),
 }
 
 for (const item of catalogInventory) {
@@ -102,22 +104,21 @@ for (const item of catalogInventory) {
     summary.missingPreview.push(item.slug)
   }
 
-  const { error } = await supabase.from('catalog_prompts').upsert(
-    buildCatalogUpsertPayload({
-      item,
-      localPreviewOverride,
-      promptText: promptDetails.promptText,
-      resolvedPreviewKind: previewKind,
-      resolvedPreviewUrl: previewUrl,
-      siteEntry,
-    }),
-    {
-      onConflict: 'slug',
-    },
-  )
+  const upsertPayload = buildCatalogUpsertPayload({
+    item,
+    localPreviewOverride,
+    promptText: promptDetails.promptText,
+    resolvedPreviewKind: previewKind,
+    resolvedPreviewUrl: previewUrl,
+    siteEntry,
+  })
+  const { unsupportedColumns } = await upsertCatalogWithSchemaFallback({
+    payload: upsertPayload,
+    supabase,
+  })
 
-  if (error) {
-    throw new Error(`Supabase upsert failed for "${item.slug}": ${error.message}`)
+  for (const column of unsupportedColumns) {
+    summary.unsupportedColumns.add(column)
   }
 
   summary.syncedCount += 1
@@ -131,6 +132,12 @@ console.log(
 if (summary.deactivated.length) {
   console.log(
     `Deactivated ${summary.deactivated.length} unavailable catalog rows: ${summary.deactivated.join(', ')}`,
+  )
+}
+
+if (summary.unsupportedColumns.size) {
+  console.log(
+    `Skipped unsupported columns during upsert: ${Array.from(summary.unsupportedColumns).join(', ')}`,
   )
 }
 

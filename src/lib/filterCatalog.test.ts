@@ -3,10 +3,10 @@ import { filterCatalog } from './filterCatalog'
 
 const items = [
   {
-    slug: 'aethera-hero',
-    title: 'Aethera Studio',
-    typeLabel: 'Studio',
-    keywords: ['Agency'],
+    slug: 'atelie-orbita',
+    title: 'Atelie Orbita',
+    typeLabel: 'Estudio',
+    keywords: ['Estudio'],
     posterUrl: 'https://example.com/a.webp',
     animatedPreviewUrl: 'https://example.com/a.gif',
     animatedPreviewKind: 'image',
@@ -46,7 +46,7 @@ describe('filterCatalog', () => {
   })
 
   it('matches the title case-insensitively', () => {
-    expect(filterCatalog(items, 'aethera')).toEqual([items[0]])
+    expect(filterCatalog(items, 'orbita')).toEqual([items[0]])
   })
 
   it('matches the type label case-insensitively', () => {
@@ -54,7 +54,7 @@ describe('filterCatalog', () => {
   })
 
   it('matches keywords case-insensitively', () => {
-    expect(filterCatalog(items, 'agency')).toEqual([items[0]])
+    expect(filterCatalog(items, 'estudio')).toEqual([items[0]])
   })
 
   it('filters by one selected type', () => {
@@ -62,7 +62,7 @@ describe('filterCatalog', () => {
   })
 
   it('filters by multiple selected types', () => {
-    expect(filterCatalog(items, '', ['Studio', 'Calculator'])).toEqual([
+    expect(filterCatalog(items, '', ['Estudio', 'Calculator'])).toEqual([
       items[0],
       items[2],
     ])

@@ -95,12 +95,34 @@ export function mapCatalogInventoryRow(row) {
   }
 }
 
-function isMissingCatalogColumnError(error) {
-  return (
-    typeof error?.message === 'string' &&
-    error.message.includes(`column ${CATALOG_TABLE}.`) &&
-    error.message.includes('does not exist')
+export function getMissingCatalogColumnName(error) {
+  const message = typeof error?.message === 'string' ? error.message : null
+
+  if (!message) {
+    return null
+  }
+
+  const legacyMatch = message.match(
+    /column\s+catalog_prompts\.([a-z0-9_]+)\s+does not exist/i,
   )
+
+  if (legacyMatch) {
+    return legacyMatch[1]
+  }
+
+  const schemaCacheMatch = message.match(
+    /Could not find the '([a-z0-9_]+)' column of 'catalog_prompts' in the schema cache/i,
+  )
+
+  if (schemaCacheMatch) {
+    return schemaCacheMatch[1]
+  }
+
+  return null
+}
+
+function isMissingCatalogColumnError(error) {
+  return Boolean(getMissingCatalogColumnName(error))
 }
 
 export async function loadCatalogInventory({ supabase }) {
@@ -175,6 +197,35 @@ export function buildCatalogUpsertPayload({
     sort_order: item.sortOrder,
     source_file_name: `motionsites:${siteEntry.id}`,
     source_hash: createSourceHash(promptText),
+  }
+}
+
+export async function upsertCatalogWithSchemaFallback({ payload, supabase }) {
+  const nextPayload = { ...payload }
+  const unsupportedColumns = []
+
+  while (true) {
+    const attemptPayload = { ...nextPayload }
+    const { error } = await supabase.from(CATALOG_TABLE).upsert(attemptPayload, {
+      onConflict: 'slug',
+    })
+
+    if (!error) {
+      return {
+        unsupportedColumns,
+      }
+    }
+
+    const missingColumn = getMissingCatalogColumnName(error)
+
+    if (!missingColumn || !(missingColumn in nextPayload)) {
+      throw new Error(
+        `Supabase upsert failed for "${payload.slug}": ${error.message}`,
+      )
+    }
+
+    delete nextPayload[missingColumn]
+    unsupportedColumns.push(missingColumn)
   }
 }
 

@@ -34,3 +34,7 @@ coverage
 
 # Temporary browser data
 .tmp-edge/
+
+# Specific unversioned files
+LEVANTAMENTO_RECRIACAO_CARDS_PUBLICOS.md
+GUIA_AWS_S3_CLOUDFRONT_VIDEOS.md
