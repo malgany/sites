@@ -119,15 +119,15 @@
     "previewHeight": 339,
     "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif"
   },
-  "asme-hero": {
+  "asme-vidro-liquido": {
     "previewKind": "image",
-    "previewUrl": "/motionsites-previews/asme-hero.gif",
+    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "/motionsites-previews/asme-hero.gif",
-    "posterUrl": "/motionsites-posters/asme-hero.webp",
-    "previewWidth": 800,
-    "previewHeight": 582,
-    "sourceUrl": "https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif"
+    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
+    "posterUrl": "/card-posters/asme-vidro-liquido.webp",
+    "previewWidth": 480,
+    "previewHeight": 334,
+    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif"
   },
   "automation-machines-hero": {
     "previewKind": "image",

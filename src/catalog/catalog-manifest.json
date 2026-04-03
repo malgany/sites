@@ -52,12 +52,13 @@
     }
   },
   {
-    "slug": "asme-hero",
-    "title": "Asme",
-    "typeLabel": "Brand",
+    "slug": "asme-vidro-liquido",
+    "title": "Asme Vidro Liquido",
+    "typeLabel": "Marca",
     "sortOrder": 6,
     "visibility": "public",
     "referenceLookup": {
+      "motionSitesSlug": "asme-hero",
       "motionSitesTitle": "Asme"
     }
   },

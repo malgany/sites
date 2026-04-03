@@ -20,5 +20,16 @@
     "previewWidth": 480,
     "previewHeight": 338,
     "updatedAt": "2026-04-02T22:51:29.891Z"
+  },
+  "asme-vidro-liquido": {
+    "gifUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
+    "s3Key": "cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
+    "fileName": "CPT2604022236-800x557.gif",
+    "fileBytes": 4839446,
+    "originalWidth": 800,
+    "originalHeight": 557,
+    "previewWidth": 480,
+    "previewHeight": 334,
+    "updatedAt": "2026-04-03T02:37:53.941Z"
   }
 }
