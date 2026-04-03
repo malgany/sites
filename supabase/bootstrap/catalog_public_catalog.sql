@@ -12,6 +12,7 @@ create table if not exists public.catalog_prompts (
   source_file_name text not null,
   source_hash text not null,
   sort_order integer not null,
+  is_active boolean not null default true,
   is_public boolean not null default true,
   required_plan text,
   published_at timestamptz,
@@ -30,6 +31,9 @@ add column if not exists preview_height integer;
 
 alter table public.catalog_prompts
 add column if not exists reference_lookup jsonb not null default '{}'::jsonb;
+
+alter table public.catalog_prompts
+add column if not exists is_active boolean not null default true;
 
 create or replace function public.set_catalog_prompts_updated_at()
 returns trigger
@@ -55,7 +59,7 @@ drop policy if exists "Public can read published catalog prompts" on public.cata
 create policy "Public can read published catalog prompts"
 on public.catalog_prompts
 for select
-using (is_public = true);
+using (is_active = true and is_public = true);
 
 insert into storage.buckets (id, name, public)
 values ('catalog-previews', 'catalog-previews', true)

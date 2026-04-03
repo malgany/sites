@@ -38,7 +38,7 @@
   - remote preview image or looped video
   - title
   - configured `typeLabel`
-  - public/private status label
+  - public/private access label
   - `Copy` button
 - Copy behavior:
   - fetches the raw Markdown for the selected slug from Supabase
@@ -64,10 +64,14 @@
   - `source_file_name`
   - `source_hash`
   - `sort_order`
+  - `is_active`
   - `is_public`
   - `required_plan`
   - `published_at`
   - timestamps
+- Field semantics:
+  - `is_active`: operational visibility switch for whether a card should appear at all
+  - `is_public`: access tier flag intended to distinguish public/free catalog entries from paid or private entries
 
 ## Source Structure
 - `src/App.tsx`
@@ -94,6 +98,8 @@
   - compares the live MotionSites site catalog and prompt availability against the Supabase catalog inventory
 - `scripts/download-motionsites-previews.mjs`
   - downloads MotionSites previews for the current Supabase catalog inventory into local overrides
+- `scripts/set-catalog-active-state.mjs`
+  - operational helper to mark catalog cards active or inactive without reusing `is_public`
 - `scripts/lib/catalog-supabase.mjs`
   - shared Supabase inventory loader and sync ownership helpers for catalog scripts
 - `scripts/lib/catalog-sync-utils.mjs`
@@ -117,6 +123,7 @@
 - Sync live MotionSites prompts + previews to Supabase: `npm run sync:catalog`
 - Compare the Supabase catalog inventory against the live MotionSites site: `npm run compare:motionsites-catalog`
 - Download MotionSites previews for the Supabase catalog inventory: `npm run download:motionsites-previews`
+- Toggle catalog visibility without changing public/free access: `npm run set:catalog-active -- --slug atelie-orbita --inactive`
 - Regenerate old local preview assets: `npm run generate:previews`
 
 ## Test Coverage
@@ -150,6 +157,7 @@
 - `dist/`, `node_modules/`, local logs, env files, caches, and `.agents/` are ignored by Git
 - The runtime no longer depends on `catalog-manifest.json` or `local-preview-overrides.json`
 - Operational scripts now load catalog inventory from Supabase and keep a fallback read path for legacy schemas that do not yet have the newer preview columns
+- Hide/show behavior is controlled by `is_active`; `is_public` is reserved for access semantics
 
 ## Prompt Adaptation Rule
 - For MotionSites-derived cards, the original live prompt is the highest-fidelity reference for what must appear on screen

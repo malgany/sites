@@ -24,6 +24,7 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 455,
           preview_height: 800,
+          is_active: true,
           is_public: true,
           sort_order: 3,
         },
@@ -31,8 +32,9 @@ describe('catalog repository', () => {
       error: null,
     })
 
-    const eq = vi.fn(() => ({ order }))
-    const select = vi.fn(() => ({ eq }))
+    const secondEq = vi.fn(() => ({ order }))
+    const firstEq = vi.fn(() => ({ eq: secondEq }))
+    const select = vi.fn(() => ({ eq: firstEq }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -57,9 +59,10 @@ describe('catalog repository', () => {
 
     expect(from).toHaveBeenCalledWith('catalog_prompts')
     expect(select).toHaveBeenCalledWith(
-      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_public, sort_order',
+      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_active, is_public, sort_order',
     )
-    expect(eq).toHaveBeenCalledWith('is_public', true)
+    expect(firstEq).toHaveBeenCalledWith('is_public', true)
+    expect(secondEq).toHaveBeenCalledWith('is_active', true)
     expect(order).toHaveBeenCalledWith('sort_order', { ascending: true })
   })
 
@@ -78,6 +81,7 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
+          is_active: true,
           is_public: true,
           sort_order: 1,
         },
@@ -85,8 +89,9 @@ describe('catalog repository', () => {
       error: null,
     })
 
-    const eq = vi.fn(() => ({ order }))
-    const select = vi.fn(() => ({ eq }))
+    const secondEq = vi.fn(() => ({ order }))
+    const firstEq = vi.fn(() => ({ eq: secondEq }))
+    const select = vi.fn(() => ({ eq: firstEq }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -122,6 +127,7 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
+          is_active: true,
           is_public: true,
           sort_order: 1,
         },
@@ -129,8 +135,9 @@ describe('catalog repository', () => {
       error: null,
     })
 
-    const eq = vi.fn(() => ({ order }))
-    const select = vi.fn(() => ({ eq }))
+    const secondEq = vi.fn(() => ({ order }))
+    const firstEq = vi.fn(() => ({ eq: secondEq }))
+    const select = vi.fn(() => ({ eq: firstEq }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -159,7 +166,8 @@ describe('catalog repository', () => {
       data: { content_markdown: '# markdown' },
       error: null,
     })
-    const secondEq = vi.fn(() => ({ single }))
+    const thirdEq = vi.fn(() => ({ single }))
+    const secondEq = vi.fn(() => ({ eq: thirdEq }))
     const firstEq = vi.fn(() => ({ eq: secondEq }))
     const select = vi.fn(() => ({ eq: firstEq }))
     const from = vi.fn(() => ({ select }))
@@ -174,10 +182,11 @@ describe('catalog repository', () => {
     expect(select).toHaveBeenCalledWith('content_markdown')
     expect(firstEq).toHaveBeenCalledWith('slug', 'atelie-orbita')
     expect(secondEq).toHaveBeenCalledWith('is_public', true)
+    expect(thirdEq).toHaveBeenCalledWith('is_active', true)
   })
 
   it('falls back to the legacy catalog schema when poster columns are not available', async () => {
-    const legacyOrder = vi.fn().mockResolvedValue({
+    const activeLegacyOrder = vi.fn().mockResolvedValue({
       data: [
         {
           slug: 'taskly-hero',
@@ -185,24 +194,27 @@ describe('catalog repository', () => {
           type_label: 'Productivity',
           preview_url: 'https://example.com/taskly.gif',
           preview_kind: 'image',
+          is_active: true,
           is_public: true,
           sort_order: 1,
         },
       ],
       error: null,
     })
-    const legacyEq = vi.fn(() => ({ order: legacyOrder }))
+    const activeLegacySecondEq = vi.fn(() => ({ order: activeLegacyOrder }))
+    const activeLegacyFirstEq = vi.fn(() => ({ eq: activeLegacySecondEq }))
     const fullOrder = vi.fn().mockResolvedValue({
       data: null,
       error: {
         message: 'column catalog_prompts.poster_url does not exist',
       },
     })
-    const fullEq = vi.fn(() => ({ order: fullOrder }))
+    const fullSecondEq = vi.fn(() => ({ order: fullOrder }))
+    const fullFirstEq = vi.fn(() => ({ eq: fullSecondEq }))
     const select = vi
       .fn()
-      .mockImplementationOnce(() => ({ eq: fullEq }))
-      .mockImplementationOnce(() => ({ eq: legacyEq }))
+      .mockImplementationOnce(() => ({ eq: fullFirstEq }))
+      .mockImplementationOnce(() => ({ eq: activeLegacyFirstEq }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -225,11 +237,11 @@ describe('catalog repository', () => {
 
     expect(select).toHaveBeenNthCalledWith(
       1,
-      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_public, sort_order',
+      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_active, is_public, sort_order',
     )
     expect(select).toHaveBeenNthCalledWith(
       2,
-      'slug, title, type_label, preview_url, preview_kind, is_public, sort_order',
+      'slug, title, type_label, preview_url, preview_kind, is_active, is_public, sort_order',
     )
   })
 })

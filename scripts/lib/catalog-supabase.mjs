@@ -7,7 +7,9 @@ import { createSourceHash } from './catalog-sync-utils.mjs'
 export const CATALOG_TABLE = 'catalog_prompts'
 
 const FULL_INVENTORY_SELECT =
-  'slug, title, type_label, sort_order, is_public, required_plan, published_at, poster_url, preview_url, preview_kind, preview_width, preview_height, reference_lookup'
+  'slug, title, type_label, sort_order, is_active, is_public, required_plan, published_at, poster_url, preview_url, preview_kind, preview_width, preview_height, reference_lookup'
+const ACTIVE_LEGACY_INVENTORY_SELECT =
+  'slug, title, type_label, sort_order, is_active, is_public, required_plan, published_at, preview_url, preview_kind'
 const LEGACY_INVENTORY_SELECT =
   'slug, title, type_label, sort_order, is_public, required_plan, published_at, preview_url, preview_kind'
 
@@ -80,6 +82,7 @@ export function mapCatalogInventoryRow(row) {
     typeLabel: row.type_label,
     sortOrder: row.sort_order,
     visibility: row.is_public ? 'public' : 'private',
+    isActive: row.is_active ?? true,
     isPublic: row.is_public,
     requiredPlan: row.required_plan ?? null,
     publishedAt: row.published_at ?? null,
@@ -137,12 +140,38 @@ export async function loadCatalogInventory({ supabase }) {
     throw new Error(`Could not load catalog inventory: ${error.message}`)
   }
 
-  const legacyResponse = error
+  if (!error) {
+    return [...(data ?? [])]
+      .map(mapCatalogInventoryRow)
+      .sort((left, right) => {
+        if (left.sortOrder !== right.sortOrder) {
+          return left.sortOrder - right.sortOrder
+        }
+
+        return left.title.localeCompare(right.title)
+      })
+  }
+
+  const activeLegacyResponse = await supabase
+    .from(CATALOG_TABLE)
+    .select(ACTIVE_LEGACY_INVENTORY_SELECT)
+    .order('sort_order', { ascending: true })
+
+  if (
+    activeLegacyResponse.error &&
+    !isMissingCatalogColumnError(activeLegacyResponse.error)
+  ) {
+    throw new Error(
+      `Could not load catalog inventory: ${activeLegacyResponse.error.message}`,
+    )
+  }
+
+  const legacyResponse = activeLegacyResponse.error
     ? await supabase
         .from(CATALOG_TABLE)
         .select(LEGACY_INVENTORY_SELECT)
         .order('sort_order', { ascending: true })
-    : { data, error: null }
+    : activeLegacyResponse
 
   if (legacyResponse.error) {
     throw new Error(
@@ -179,6 +208,7 @@ export function buildCatalogUpsertPayload({
     title: item.title,
     type_label: item.typeLabel,
     content_markdown: promptText,
+    is_active: item.isActive ?? true,
     is_public: item.isPublic,
     poster_url: localPreviewOverride?.posterUrl ?? item.posterUrl ?? null,
     preview_kind:

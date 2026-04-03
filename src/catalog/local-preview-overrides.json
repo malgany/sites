@@ -229,25 +229,25 @@
     "previewHeight": 800,
     "sourceUrl": "https://motionsites.ai/assets/hero-liquid-glass-agency-preview-Cr5Q9-lc.gif"
   },
-  "mindloop-hero": {
+  "mindloop-workspace": {
     "previewKind": "image",
-    "previewUrl": "/motionsites-previews/mindloop-hero.gif",
+    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "/motionsites-previews/mindloop-hero.gif",
-    "posterUrl": "/motionsites-posters/mindloop-hero.webp",
-    "previewWidth": 800,
-    "previewHeight": 651,
-    "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-preview-BR8xW6xW.gif"
+    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
+    "posterUrl": "/card-posters/mindloop-workspace.webp",
+    "previewWidth": 480,
+    "previewHeight": 339,
+    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif"
   },
-  "mindloop-landing": {
+  "mindloop-operacao-unificada": {
     "previewKind": "image",
-    "previewUrl": "/motionsites-previews/mindloop-landing.gif",
+    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "/motionsites-previews/mindloop-landing.gif",
-    "posterUrl": "/motionsites-posters/mindloop-landing.webp",
-    "previewWidth": 455,
-    "previewHeight": 800,
-    "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-landing-preview-Bqnstohr.gif"
+    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
+    "posterUrl": "/card-posters/mindloop-operacao-unificada.webp",
+    "previewWidth": 480,
+    "previewHeight": 337,
+    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif"
   },
   "neuralyn-hero": {
     "previewKind": "image",

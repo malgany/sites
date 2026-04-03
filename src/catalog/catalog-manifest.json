@@ -303,22 +303,24 @@
     }
   },
   {
-    "slug": "mindloop-hero",
-    "title": "Mindloop",
+    "slug": "mindloop-workspace",
+    "title": "Mindloop Workspace",
     "typeLabel": "SaaS",
     "sortOrder": 31,
     "visibility": "public",
     "referenceLookup": {
+      "motionSitesSlug": "mindloop-hero",
       "motionSitesTitle": "Mindloop"
     }
   },
   {
-    "slug": "mindloop-landing",
-    "title": "Mindloop Landing",
+    "slug": "mindloop-operacao-unificada",
+    "title": "Mindloop Operacao Unificada",
     "typeLabel": "Landing Page",
     "sortOrder": 32,
     "visibility": "public",
     "referenceLookup": {
+      "motionSitesSlug": "mindloop-landing",
       "motionSitesTitle": "Mindloop Landing"
     }
   },

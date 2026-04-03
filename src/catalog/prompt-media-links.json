@@ -19,5 +19,45 @@
     "fileName": "asme-vidro-liquido-muted.mp4",
     "fileBytes": 9898180,
     "updatedAt": "2026-04-03T02:25:31.039Z"
+  },
+  "mindloop-workspace": {
+    "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/prompt-video-20260403-025259-9fd4d5.mp4",
+    "s3Key": "cards/mindloop-workspace/prompt-video-20260403-025259-9fd4d5.mp4",
+    "fileName": "0.mp4",
+    "fileBytes": 3496192,
+    "updatedAt": "2026-04-03T02:53:00.906Z"
+  },
+  "mindloop-operacao-unificada": {
+    "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4",
+    "s3Key": "cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4",
+    "fileName": "hero-muted.mp4",
+    "fileBytes": 11934187,
+    "videos": {
+      "hero": {
+        "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4",
+        "s3Key": "cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4",
+        "fileName": "hero-muted.mp4",
+        "fileBytes": 11934187
+      },
+      "mission": {
+        "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-mission-20260403-031818-b57c4d.mp4",
+        "s3Key": "cards/mindloop-operacao-unificada/prompt-video-mission-20260403-031818-b57c4d.mp4",
+        "fileName": "mission-muted.mp4",
+        "fileBytes": 1048159
+      },
+      "solution": {
+        "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-solution-20260403-031833-f04d91.mp4",
+        "s3Key": "cards/mindloop-operacao-unificada/prompt-video-solution-20260403-031833-f04d91.mp4",
+        "fileName": "solution-muted.mp4",
+        "fileBytes": 6282875
+      },
+      "cta": {
+        "mp4Url": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-cta-20260403-031850-c7318b.mp4",
+        "s3Key": "cards/mindloop-operacao-unificada/prompt-video-cta-20260403-031850-c7318b.mp4",
+        "fileName": "cta-original-muted.mp4",
+        "fileBytes": 1174165
+      }
+    },
+    "updatedAt": "2026-04-03T03:52:06.029Z"
   }
 }

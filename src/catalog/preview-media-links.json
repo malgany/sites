@@ -31,5 +31,27 @@
     "previewWidth": 480,
     "previewHeight": 334,
     "updatedAt": "2026-04-03T02:37:53.941Z"
+  },
+  "mindloop-workspace": {
+    "gifUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
+    "s3Key": "cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
+    "fileName": "CPT2604022300-800x565.gif",
+    "fileBytes": 3812791,
+    "originalWidth": 800,
+    "originalHeight": 565,
+    "previewWidth": 480,
+    "previewHeight": 339,
+    "updatedAt": "2026-04-03T03:01:51.487Z"
+  },
+  "mindloop-operacao-unificada": {
+    "gifUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
+    "s3Key": "cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
+    "fileName": "CPT2604030001-800x562.gif",
+    "fileBytes": 4009118,
+    "originalWidth": 800,
+    "originalHeight": 562,
+    "previewWidth": 480,
+    "previewHeight": 337,
+    "updatedAt": "2026-04-03T04:03:03.371Z"
   }
 }

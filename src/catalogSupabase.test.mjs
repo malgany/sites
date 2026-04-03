@@ -40,6 +40,7 @@ describe('catalog supabase helpers', () => {
           title: 'AI Designer Agency',
           type_label: 'Agency',
           sort_order: 3,
+          is_active: true,
           is_public: true,
           required_plan: null,
           published_at: '2026-04-01T10:00:00.000Z',
@@ -69,6 +70,7 @@ describe('catalog supabase helpers', () => {
         typeLabel: 'Agency',
         sortOrder: 3,
         visibility: 'public',
+        isActive: true,
         isPublic: true,
         requiredPlan: null,
         publishedAt: '2026-04-01T10:00:00.000Z',
@@ -86,7 +88,7 @@ describe('catalog supabase helpers', () => {
 
     expect(from).toHaveBeenCalledWith('catalog_prompts')
     expect(select).toHaveBeenCalledWith(
-      'slug, title, type_label, sort_order, is_public, required_plan, published_at, poster_url, preview_url, preview_kind, preview_width, preview_height, reference_lookup',
+      'slug, title, type_label, sort_order, is_active, is_public, required_plan, published_at, poster_url, preview_url, preview_kind, preview_width, preview_height, reference_lookup',
     )
     expect(order).toHaveBeenCalledWith('sort_order', { ascending: true })
   })
@@ -108,7 +110,15 @@ describe('catalog supabase helpers', () => {
       ],
       error: null,
     })
+    const activeLegacyOrder = vi.fn().mockResolvedValue({
+      data: null,
+      error: {
+        message:
+          "Could not find the 'is_active' column of 'catalog_prompts' in the schema cache",
+      },
+    })
     const legacySelect = vi.fn(() => ({ order: legacyOrder }))
+    const activeLegacySelect = vi.fn(() => ({ order: activeLegacyOrder }))
     const fullOrder = vi.fn().mockResolvedValue({
       data: null,
       error: {
@@ -119,6 +129,7 @@ describe('catalog supabase helpers', () => {
     const from = vi
       .fn()
       .mockImplementationOnce(() => ({ select: fullSelect }))
+      .mockImplementationOnce(() => ({ select: activeLegacySelect }))
       .mockImplementationOnce(() => ({ select: legacySelect }))
 
     const items = await loadCatalogInventory({
@@ -132,6 +143,7 @@ describe('catalog supabase helpers', () => {
         typeLabel: 'SaaS',
         sortOrder: 31,
         visibility: 'public',
+        isActive: true,
         isPublic: true,
         requiredPlan: null,
         publishedAt: null,
@@ -155,6 +167,7 @@ describe('catalog supabase helpers', () => {
         typeLabel: 'Luxury',
         sortOrder: 48,
         visibility: 'private',
+        isActive: true,
         isPublic: false,
         requiredPlan: 'enterprise',
         publishedAt: '2026-04-01T10:00:00.000Z',
@@ -191,6 +204,7 @@ describe('catalog supabase helpers', () => {
       title: 'SkyElite Private Jets',
       type_label: 'Luxury',
       content_markdown: '# Premium jets',
+      is_active: true,
       is_public: false,
       poster_url: '/motionsites-posters/skyelite-override.webp',
       preview_kind: 'image',

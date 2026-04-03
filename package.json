@@ -14,6 +14,7 @@
     "normalize:catalog-taxonomy": "node scripts/normalize-catalog-taxonomy.mjs",
     "preview": "vite preview",
     "publish:card-preview-gif": "node scripts/publish-card-preview-gif.mjs",
+    "set:catalog-active": "node scripts/set-catalog-active-state.mjs",
     "set:preview-override": "node scripts/upsert-preview-override.mjs",
     "sync:catalog": "node scripts/sync-catalog-to-supabase.mjs",
     "test": "vitest run",

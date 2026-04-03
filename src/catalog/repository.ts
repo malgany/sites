@@ -9,7 +9,9 @@ import { getLocalCatalogMedia } from './localMedia'
 export const CATALOG_TABLE = 'catalog_prompts'
 
 const FULL_LIST_SELECT =
-  'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_public, sort_order'
+  'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_active, is_public, sort_order'
+const ACTIVE_LEGACY_LIST_SELECT =
+  'slug, title, type_label, preview_url, preview_kind, is_active, is_public, sort_order'
 const LEGACY_LIST_SELECT =
   'slug, title, type_label, preview_url, preview_kind, is_public, sort_order'
 
@@ -21,6 +23,7 @@ type CatalogListRow = {
   poster_url?: string | null
   preview_url: string | null
   preview_kind: CatalogPreviewKind | null
+  is_active?: boolean | null
   preview_width?: number | null
   preview_height?: number | null
   is_public: boolean
@@ -122,7 +125,10 @@ async function getBrowserSupabaseClient() {
 
 function isMissingCatalogColumnError(message: string) {
   return (
-    message.includes(`column ${CATALOG_TABLE}.`) && message.includes('does not exist')
+    (message.includes(`column ${CATALOG_TABLE}.`) &&
+      message.includes('does not exist')) ||
+    (message.includes(`column of '${CATALOG_TABLE}' in the schema cache`) &&
+      message.includes('Could not find'))
   )
 }
 
@@ -132,6 +138,7 @@ async function loadRemoteCatalogRows() {
     .from(CATALOG_TABLE)
     .select(FULL_LIST_SELECT)
     .eq('is_public', true)
+    .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
   const { data, error } = await fullQuery
@@ -140,13 +147,34 @@ async function loadRemoteCatalogRows() {
     throw new Error(`Could not load public catalog: ${error.message}`)
   }
 
-  const fallbackResponse = error
+  if (!error) {
+    return [...((data ?? []) as CatalogListRow[])].sort((left, right) => {
+      if (left.sort_order !== right.sort_order) {
+        return left.sort_order - right.sort_order
+      }
+
+      return left.title.localeCompare(right.title)
+    })
+  }
+
+  const activeFallbackResponse = await supabase
+    .from(CATALOG_TABLE)
+    .select(ACTIVE_LEGACY_LIST_SELECT)
+    .eq('is_public', true)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  if (activeFallbackResponse.error && !isMissingCatalogColumnError(activeFallbackResponse.error.message)) {
+    throw new Error(`Could not load public catalog: ${activeFallbackResponse.error.message}`)
+  }
+
+  const fallbackResponse = activeFallbackResponse.error
     ? await supabase
         .from(CATALOG_TABLE)
         .select(LEGACY_LIST_SELECT)
         .eq('is_public', true)
         .order('sort_order', { ascending: true })
-    : { data, error: null }
+    : activeFallbackResponse
 
   if (fallbackResponse.error) {
     throw new Error(`Could not load public catalog: ${fallbackResponse.error.message}`)
@@ -169,18 +197,34 @@ export async function refreshCatalogMetadata() {
 
 export async function getCatalogContent(slug: string) {
   const supabase = await getBrowserSupabaseClient()
-  const { data, error } = await supabase
+  const activeQuery = supabase
     .from(CATALOG_TABLE)
     .select('content_markdown')
     .eq('slug', slug)
     .eq('is_public', true)
+    .eq('is_active', true)
     .single()
 
-  if (error || !data) {
+  const { data, error } = await activeQuery
+
+  if (error && !isMissingCatalogColumnError(error.message)) {
     throw new Error(`Could not load catalog content for "${slug}".`)
   }
 
-  return (data as CatalogContentRow).content_markdown
+  const fallbackResponse = error
+    ? await supabase
+        .from(CATALOG_TABLE)
+        .select('content_markdown')
+        .eq('slug', slug)
+        .eq('is_public', true)
+        .single()
+    : { data, error: null }
+
+  if (fallbackResponse.error || !fallbackResponse.data) {
+    throw new Error(`Could not load catalog content for "${slug}".`)
+  }
+
+  return (fallbackResponse.data as CatalogContentRow).content_markdown
 }
 
 export const listPublicCatalog = refreshCatalogMetadata

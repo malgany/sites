@@ -5,6 +5,7 @@ import { getAssetExtension, inferPreviewKindFromUrl, normalizeLookupValue, slugT
 import {
   buildCatalogUpsertPayload,
   createCatalogAdminClient,
+  getMissingCatalogColumnName,
   getMotionSitesLookupSlug,
   getMotionSitesReferenceTitle,
   loadCatalogInventory,
@@ -275,16 +276,31 @@ async function uploadPreviewAsset({ supabase, bucket, slug, asset }) {
 }
 
 async function deactivateCatalogPrompt({ supabase, slug }) {
-  const { error } = await supabase
-    .from('catalog_prompts')
-    .update({
-      is_public: false,
-      published_at: null,
-      required_plan: 'private',
-    })
-    .eq('slug', slug)
+  const nextPayload = {
+    is_active: false,
+    published_at: null,
+  }
 
-  if (error) {
-    throw new Error(`Could not deactivate catalog prompt "${slug}": ${error.message}`)
+  while (true) {
+    const { error } = await supabase
+      .from('catalog_prompts')
+      .update(nextPayload)
+      .eq('slug', slug)
+
+    if (!error) {
+      return
+    }
+
+    const missingColumn = getMissingCatalogColumnName(error)
+
+    if (!missingColumn || !(missingColumn in nextPayload)) {
+      throw new Error(`Could not deactivate catalog prompt "${slug}": ${error.message}`)
+    }
+
+    delete nextPayload[missingColumn]
+
+    if (!Object.keys(nextPayload).length) {
+      return
+    }
   }
 }
