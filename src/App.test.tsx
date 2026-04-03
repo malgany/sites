@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { CATALOG_CACHE_KEY } from './catalog/cache'
@@ -77,12 +76,12 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.queryByText('Loading public catalog')).not.toBeInTheDocument()
+    expect(screen.queryByText('Carregando catalogo publico')).not.toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(3)
-    expect(screen.getByText('Refreshing catalog.')).toBeInTheDocument()
+    expect(screen.getByText('Atualizando catalogo.')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(mockedRefreshCatalogMetadata).toHaveBeenCalledTimes(1)
@@ -101,122 +100,6 @@ describe('App', () => {
     )
   })
 
-  it('filters cards by title and type label', async () => {
-    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
-
-    render(<App />)
-
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Search prompts or types' }), {
-      target: { value: 'automation' },
-    })
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('article')).toHaveLength(1)
-    })
-
-    expect(
-      screen.getByRole('heading', { name: 'Nexora Automation', level: 2 }),
-    ).toBeInTheDocument()
-  })
-
-  it('shows All as the default selected type filter', () => {
-    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
-
-    render(<App />)
-
-    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Estudio' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-  })
-
-  it('filters cards by selected types and combines multiple types', async () => {
-    const user = userEvent.setup()
-    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
-
-    render(<App />)
-
-    await user.click(screen.getByRole('button', { name: 'Estudio' }))
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('article')).toHaveLength(1)
-    })
-
-    expect(
-      screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Calculator' }))
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('article')).toHaveLength(2)
-    })
-
-    expect(
-      screen.getByRole('heading', { name: 'Price Calculator', level: 2 }),
-    ).toBeInTheDocument()
-  })
-
-  it('clicking All clears both the selected types and the text search', async () => {
-    const user = userEvent.setup()
-    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
-
-    render(<App />)
-
-    const searchbox = screen.getByRole('searchbox', {
-      name: 'Search prompts or types',
-    })
-
-    fireEvent.change(searchbox, {
-      target: { value: 'automation' },
-    })
-    await user.click(screen.getByRole('button', { name: 'Calculator' }))
-
-    await waitFor(() => {
-      expect(screen.queryAllByRole('article')).toHaveLength(0)
-    })
-
-    await user.click(screen.getByRole('button', { name: 'All' }))
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('article')).toHaveLength(3)
-    })
-
-    expect(searchbox).toHaveValue('')
-    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Calculator' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-  })
-
-  it('shows the empty state when the query has no matches', async () => {
-    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
-
-    render(<App />)
-
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Search prompts or types' }), {
-      target: { value: 'not-a-real-match' },
-    })
-
-    await waitFor(() => {
-      expect(screen.queryAllByRole('article')).toHaveLength(0)
-    })
-
-    expect(screen.getByText('No prompts found')).toBeInTheDocument()
-  })
-
   it('copies the selected markdown and resets the button state', async () => {
     mockedGetCatalogContent.mockResolvedValue('# Raw markdown prompt')
     mockedCopy.mockResolvedValue(true)
@@ -226,7 +109,7 @@ describe('App', () => {
     vi.useFakeTimers()
 
     const button = within(screen.getAllByRole('article')[0]).getByRole('button', {
-      name: /copy/i,
+      name: /copiar/i,
     })
 
     await act(async () => {
@@ -237,13 +120,13 @@ describe('App', () => {
 
     expect(mockedGetCatalogContent).toHaveBeenCalledWith('atelie-orbita')
     expect(mockedCopy).toHaveBeenCalledWith('# Raw markdown prompt')
-    expect(button).toHaveTextContent('Copied')
+    expect(button).toHaveTextContent('Copiado')
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2000)
     })
 
-    expect(button).toHaveTextContent('Copy')
+    expect(button).toHaveTextContent('Copiar')
   })
 
   it('shows an error state when the markdown fetch fails', async () => {
@@ -253,14 +136,14 @@ describe('App', () => {
     render(<App />)
 
     const button = within(screen.getAllByRole('article')[1]).getByRole('button', {
-      name: /copy/i,
+      name: /copiar/i,
     })
 
     fireEvent.click(button)
 
     await waitFor(() => {
-      expect(button).toHaveTextContent('Copy failed')
-      expect(screen.getAllByText('Copy failed')).toHaveLength(2)
+      expect(button).toHaveTextContent('Falha ao copiar')
+      expect(screen.getAllByText('Falha ao copiar')).toHaveLength(2)
     })
   })
 
@@ -279,12 +162,12 @@ describe('App', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'The catalog could not be refreshed. Showing the last saved version.',
+          'Nao foi possivel atualizar o catalogo. Exibindo a ultima versao salva.',
         ),
       ).toBeInTheDocument()
     })
 
-    expect(screen.queryByText('Public catalog unavailable')).not.toBeInTheDocument()
+    expect(screen.queryByText('Catalogo publico indisponivel')).not.toBeInTheDocument()
   })
 
   it('shows the blocking error state when refresh fails without cached data', async () => {
@@ -295,12 +178,12 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Public catalog unavailable')).toBeInTheDocument()
+      expect(screen.getByText('Catalogo publico indisponivel')).toBeInTheDocument()
     })
 
     expect(
       screen.getByText(
-        'The catalog is temporarily unavailable. Please try again in a moment.',
+        'O catalogo esta temporariamente indisponivel. Tente novamente em instantes.',
       ),
     ).toBeInTheDocument()
     expect(

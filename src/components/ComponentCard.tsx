@@ -285,7 +285,7 @@ function PreviewMedia({
     <div className="absolute inset-0 bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
       <div className="flex h-full flex-col justify-between">
         <span className="inline-flex w-fit rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[0.62rem] font-semibold tracking-[0.18em] uppercase text-white/72">
-          {item.animatedPreviewUrl ? 'Preview loading' : 'Preview unavailable'}
+          {item.animatedPreviewUrl ? 'Preview carregando' : 'Preview indisponível'}
         </span>
         <div className="space-y-3">
           <div className="h-2.5 w-24 rounded-full bg-white/18" />
@@ -356,12 +356,12 @@ export function ComponentCard({
 
   const buttonLabel =
     copyState === 'copied'
-      ? 'Copied'
+      ? 'Copiado'
       : copyState === 'error'
-        ? 'Copy failed'
+        ? 'Falha ao copiar'
         : copyState === 'pending'
-          ? 'Copying'
-          : 'Copy'
+          ? 'Copiando'
+          : 'Copiar'
 
   function handleBlur(event: FocusEvent<HTMLElement>) {
     const nextFocusedElement = event.relatedTarget
@@ -414,7 +414,7 @@ export function ComponentCard({
           type="button"
           onClick={() => onCopy(item)}
           disabled={copyState === 'pending'}
-          aria-label={`${buttonLabel} for ${item.title}`}
+          aria-label={`${buttonLabel}: ${item.title}`}
           className={[
             'inline-flex shrink-0 items-center justify-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition disabled:cursor-wait disabled:opacity-80',
             copyState === 'copied'
