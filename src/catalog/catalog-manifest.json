@@ -2,23 +2,29 @@
   {
     "slug": "atelie-orbita",
     "title": "Atelie Orbita",
-    "typeLabel": "Estudio",
+    "typeLabel": "Agency",
     "sortOrder": 1,
     "visibility": "public",
     "referenceLookup": {
       "motionSitesSlug": "aethera-hero",
-      "motionSitesTitle": "Aethera Studio"
+      "motionSitesTitle": "Aethera Studio",
+      "keywords": [
+        "Estudio"
+      ]
     }
   },
   {
     "slug": "fluxo-neural-automacao-ia",
     "title": "Fluxo Neural de Automacao",
-    "typeLabel": "Automacao de IA",
+    "typeLabel": "Automation",
     "sortOrder": 2,
     "visibility": "public",
     "referenceLookup": {
       "motionSitesSlug": "10",
-      "motionSitesTitle": "AI Automation Hero"
+      "motionSitesTitle": "AI Automation Hero",
+      "keywords": [
+        "Automacao de IA"
+      ]
     }
   },
   {
@@ -54,12 +60,15 @@
   {
     "slug": "asme-vidro-liquido",
     "title": "Asme Vidro Liquido",
-    "typeLabel": "Marca",
+    "typeLabel": "Hero",
     "sortOrder": 6,
     "visibility": "public",
     "referenceLookup": {
       "motionSitesSlug": "asme-hero",
-      "motionSitesTitle": "Asme"
+      "motionSitesTitle": "Asme",
+      "keywords": [
+        "Marca"
+      ]
     }
   },
   {
@@ -75,11 +84,14 @@
   {
     "slug": "bionova-hero",
     "title": "Bionova Biotech",
-    "typeLabel": "Biotech",
+    "typeLabel": "Hero",
     "sortOrder": 8,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Bionova Biotech"
+      "motionSitesTitle": "Bionova Biotech",
+      "keywords": [
+        "Biotech"
+      ]
     }
   },
   {
@@ -155,11 +167,14 @@
   {
     "slug": "datacore-booking-hero",
     "title": "Datacore Booking",
-    "typeLabel": "Booking",
+    "typeLabel": "SaaS",
     "sortOrder": 16,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Datacore Booking"
+      "motionSitesTitle": "Datacore Booking",
+      "keywords": [
+        "Booking"
+      ]
     }
   },
   {
@@ -175,21 +190,27 @@
   {
     "slug": "designpro-hero",
     "title": "DesignPro Academy",
-    "typeLabel": "Education",
+    "typeLabel": "Landing Page",
     "sortOrder": 18,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "DesignPro Academy"
+      "motionSitesTitle": "DesignPro Academy",
+      "keywords": [
+        "Education"
+      ]
     }
   },
   {
     "slug": "digitwist-hero",
     "title": "Digitwist AI Builder",
-    "typeLabel": "Builder",
+    "typeLabel": "AI",
     "sortOrder": 19,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Digitwist AI Builder"
+      "motionSitesTitle": "Digitwist AI Builder",
+      "keywords": [
+        "Builder"
+      ]
     }
   },
   {
@@ -205,31 +226,40 @@
   {
     "slug": "evr-ventures-hero",
     "title": "EVR Ventures",
-    "typeLabel": "Ventures",
+    "typeLabel": "Hero",
     "sortOrder": 21,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "EVR Ventures"
+      "motionSitesTitle": "EVR Ventures",
+      "keywords": [
+        "Ventures"
+      ]
     }
   },
   {
     "slug": "finlytic-hero",
     "title": "Finlytic AI Agent",
-    "typeLabel": "AI Agent",
+    "typeLabel": "AI",
     "sortOrder": 22,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Finlytic AI Agent"
+      "motionSitesTitle": "Finlytic AI Agent",
+      "keywords": [
+        "AI Agent"
+      ]
     }
   },
   {
     "slug": "13",
     "title": "Framelix 3D Studios",
-    "typeLabel": "3D Studio",
+    "typeLabel": "Agency",
     "sortOrder": 23,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Framelix 3D Studios"
+      "motionSitesTitle": "Framelix 3D Studios",
+      "keywords": [
+        "3D Studio"
+      ]
     }
   },
   {
@@ -245,21 +275,27 @@
   {
     "slug": "grow-ai-hero",
     "title": "Grow AI Talent Platform",
-    "typeLabel": "Talent Platform",
+    "typeLabel": "SaaS",
     "sortOrder": 25,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Grow AI Talent Platform"
+      "motionSitesTitle": "Grow AI Talent Platform",
+      "keywords": [
+        "Talent Platform"
+      ]
     }
   },
   {
     "slug": "16",
     "title": "HR SaaS Hero",
-    "typeLabel": "HR SaaS",
+    "typeLabel": "SaaS",
     "sortOrder": 26,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "HR SaaS Hero"
+      "motionSitesTitle": "HR SaaS Hero",
+      "keywords": [
+        "HR SaaS"
+      ]
     }
   },
   {
@@ -285,21 +321,27 @@
   {
     "slug": "18",
     "title": "Loader Animation",
-    "typeLabel": "Animation",
+    "typeLabel": "Component",
     "sortOrder": 29,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Loader Animation"
+      "motionSitesTitle": "Loader Animation",
+      "keywords": [
+        "Animation"
+      ]
     }
   },
   {
     "slug": "14",
     "title": "Logoisum Video Agency Hero",
-    "typeLabel": "Video Agency",
+    "typeLabel": "Agency",
     "sortOrder": 30,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Logoisum Video Agency Hero"
+      "motionSitesTitle": "Logoisum Video Agency Hero",
+      "keywords": [
+        "Video Agency"
+      ]
     }
   },
   {
@@ -387,11 +429,14 @@
   {
     "slug": "nickel-hero",
     "title": "Nickel Payments",
-    "typeLabel": "Payments",
+    "typeLabel": "SaaS",
     "sortOrder": 39,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Nickel Payments"
+      "motionSitesTitle": "Nickel Payments",
+      "keywords": [
+        "Payments"
+      ]
     }
   },
   {
@@ -417,11 +462,14 @@
   {
     "slug": "orbit-web3-hero",
     "title": "Orbit Web3",
-    "typeLabel": "Web3",
+    "typeLabel": "Hero",
     "sortOrder": 42,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Orbit Web3"
+      "motionSitesTitle": "Orbit Web3",
+      "keywords": [
+        "Web3"
+      ]
     }
   },
   {
@@ -457,11 +505,14 @@
   {
     "slug": "price-calculator",
     "title": "Price Calculator",
-    "typeLabel": "Calculator",
+    "typeLabel": "Component",
     "sortOrder": 46,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Price Calculator"
+      "motionSitesTitle": "Price Calculator",
+      "keywords": [
+        "Calculator"
+      ]
     }
   },
   {
@@ -477,11 +528,14 @@
   {
     "slug": "skyelite-hero",
     "title": "SkyElite Private Jets",
-    "typeLabel": "Luxury",
+    "typeLabel": "Hero",
     "sortOrder": 48,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "SkyElite Private Jets"
+      "motionSitesTitle": "SkyElite Private Jets",
+      "keywords": [
+        "Luxury"
+      ]
     }
   },
   {
@@ -507,21 +561,27 @@
   {
     "slug": "12",
     "title": "Targo Logistics Hero",
-    "typeLabel": "Logistics",
+    "typeLabel": "Hero",
     "sortOrder": 51,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Targo Logistics Hero"
+      "motionSitesTitle": "Targo Logistics Hero",
+      "keywords": [
+        "Logistics"
+      ]
     }
   },
   {
     "slug": "taskly-hero",
     "title": "Taskly",
-    "typeLabel": "Productivity",
+    "typeLabel": "SaaS",
     "sortOrder": 52,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Taskly"
+      "motionSitesTitle": "Taskly",
+      "keywords": [
+        "Productivity"
+      ]
     }
   },
   {
@@ -537,11 +597,14 @@
   {
     "slug": "terra-hero",
     "title": "Terra Geo Map",
-    "typeLabel": "Map",
+    "typeLabel": "Component",
     "sortOrder": 54,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Terra Geo Map"
+      "motionSitesTitle": "Terra Geo Map",
+      "keywords": [
+        "Map"
+      ]
     }
   },
   {
@@ -587,11 +650,14 @@
   {
     "slug": "9",
     "title": "Web3 EOS Hero",
-    "typeLabel": "Web3",
+    "typeLabel": "Hero",
     "sortOrder": 59,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Web3 EOS Hero"
+      "motionSitesTitle": "Web3 EOS Hero",
+      "keywords": [
+        "Web3"
+      ]
     }
   },
   {
@@ -617,21 +683,27 @@
   {
     "slug": "stellar-ai-hero",
     "title": "Stellar AI",
-    "typeLabel": "Hero Section",
+    "typeLabel": "AI",
     "sortOrder": 62,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "Stellar AI"
+      "motionSitesTitle": "Stellar AI",
+      "keywords": [
+        "Hero Section"
+      ]
     }
   },
   {
     "slug": "vortex-studio-hero",
     "title": "AI Designer Portfolio",
-    "typeLabel": "Landing Page",
+    "typeLabel": "Portfolio",
     "sortOrder": 63,
     "visibility": "public",
     "referenceLookup": {
-      "motionSitesTitle": "AI Designer Portfolio"
+      "motionSitesTitle": "AI Designer Portfolio",
+      "keywords": [
+        "Landing Page"
+      ]
     }
   }
 ]

@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from 'react'
 import { getCatalogCardLayout } from '../lib/catalogCardLayout'
+import { isPremiumCatalogItem } from '../lib/catalogAccess'
 import type {
   CatalogCardItem,
   CatalogCardLayout,
@@ -13,9 +14,11 @@ import type {
 } from '../types'
 
 type ComponentCardProps = {
+  hasPremiumAccess: boolean
   item: CatalogCardItem
   copyState: CatalogCopyState
   onCopy: (item: CatalogCardItem) => void
+  pricingHref: string
 }
 
 function CopyIcon() {
@@ -34,6 +37,22 @@ function CopyIcon() {
   )
 }
 
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+    >
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 1 1 8 0v3" />
+    </svg>
+  )
+}
+
 type PreviewMediaProps = Pick<ComponentCardProps, 'item'> & {
   onMediaReady: (layout: CatalogCardLayout) => void
   shouldLoadAnimation: boolean
@@ -41,6 +60,16 @@ type PreviewMediaProps = Pick<ComponentCardProps, 'item'> & {
 
 function getInitialLayout(item: CatalogCardItem) {
   return getCatalogCardLayout(item.previewWidth ?? NaN, item.previewHeight ?? NaN)
+}
+
+function getMediaIdentity(item: CatalogCardItem) {
+  return [
+    item.slug,
+    item.posterUrl ?? '',
+    item.animatedPreviewUrl ?? '',
+    item.previewWidth ?? '',
+    item.previewHeight ?? '',
+  ].join(':')
 }
 
 function usePrefersReducedMotion() {
@@ -69,17 +98,14 @@ function usePrefersReducedMotion() {
 }
 
 function useIsInView(targetRef: RefObject<HTMLElement | null>) {
-  const [isInView, setIsInView] = useState(false)
+  const [isInView, setIsInView] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  )
 
   useEffect(() => {
     const target = targetRef.current
 
-    if (!target) {
-      return undefined
-    }
-
-    if (typeof IntersectionObserver === 'undefined') {
-      setIsInView(true)
+    if (!target || typeof IntersectionObserver === 'undefined') {
       return undefined
     }
 
@@ -134,12 +160,6 @@ function PreviewMedia({
   const [hasAnimatedMediaError, setHasAnimatedMediaError] = useState(false)
   const [hasPosterError, setHasPosterError] = useState(false)
   const [hasAnimatedMediaLoaded, setHasAnimatedMediaLoaded] = useState(false)
-
-  useEffect(() => {
-    setHasAnimatedMediaError(false)
-    setHasPosterError(false)
-    setHasAnimatedMediaLoaded(false)
-  }, [item.animatedPreviewUrl, item.posterUrl, item.slug])
 
   const width = item.previewWidth ?? undefined
   const height = item.previewHeight ?? undefined
@@ -285,7 +305,7 @@ function PreviewMedia({
     <div className="absolute inset-0 bg-[linear-gradient(160deg,#121212,#343434_52%,#e6e6e6)] p-5 text-white">
       <div className="flex h-full flex-col justify-between">
         <span className="inline-flex w-fit rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[0.62rem] font-semibold tracking-[0.18em] uppercase text-white/72">
-          {item.animatedPreviewUrl ? 'Preview carregando' : 'Preview indisponível'}
+          {item.animatedPreviewUrl ? 'Preview carregando' : 'Preview indisponivel'}
         </span>
         <div className="space-y-3">
           <div className="h-2.5 w-24 rounded-full bg-white/18" />
@@ -297,56 +317,45 @@ function PreviewMedia({
 }
 
 export function ComponentCard({
+  hasPremiumAccess,
   item,
   copyState,
   onCopy,
+  pricingHref,
 }: ComponentCardProps) {
   const articleRef = useRef<HTMLElement | null>(null)
   const [layout, setLayout] = useState<CatalogCardLayout>(() => getInitialLayout(item))
   const [isHovered, setIsHovered] = useState(false)
   const [isFocusWithin, setIsFocusWithin] = useState(false)
-  const [shouldLoadAnimation, setShouldLoadAnimation] = useState(false)
+  const [hasIdleActivation, setHasIdleActivation] = useState(false)
   const prefersReducedMotion = usePrefersReducedMotion()
   const isInView = useIsInView(articleRef)
+  const shouldLoadAnimation =
+    Boolean(item.animatedPreviewUrl) &&
+    !prefersReducedMotion &&
+    (isHovered || isFocusWithin || (isInView && hasIdleActivation))
 
   useEffect(() => {
-    setLayout(getInitialLayout(item))
-    setIsHovered(false)
-    setIsFocusWithin(false)
-    setShouldLoadAnimation(false)
-  }, [
-    item.animatedPreviewKind,
-    item.animatedPreviewUrl,
-    item.posterUrl,
-    item.previewHeight,
-    item.previewWidth,
-    item.slug,
-  ])
-
-  useEffect(() => {
-    if (!item.animatedPreviewUrl || prefersReducedMotion) {
-      setShouldLoadAnimation(false)
-      return undefined
-    }
-
-    if (isHovered || isFocusWithin) {
-      setShouldLoadAnimation(true)
-      return undefined
-    }
-
-    if (!isInView) {
-      setShouldLoadAnimation(false)
+    if (
+      !item.animatedPreviewUrl ||
+      prefersReducedMotion ||
+      isHovered ||
+      isFocusWithin ||
+      !isInView ||
+      hasIdleActivation
+    ) {
       return undefined
     }
 
     const handle = scheduleIdleActivation(() => {
-      setShouldLoadAnimation(true)
+      setHasIdleActivation(true)
     })
 
     return () => {
       cancelIdleActivation(handle)
     }
   }, [
+    hasIdleActivation,
     isFocusWithin,
     isHovered,
     isInView,
@@ -354,14 +363,33 @@ export function ComponentCard({
     prefersReducedMotion,
   ])
 
+  const isPremium = isPremiumCatalogItem(item)
+  const isPremiumLocked = isPremium && !hasPremiumAccess
   const buttonLabel =
-    copyState === 'copied'
-      ? 'Copiado'
-      : copyState === 'error'
-        ? 'Falha ao copiar'
-        : copyState === 'pending'
-          ? 'Copiando'
-          : 'Copiar'
+    isPremiumLocked
+      ? 'Premium'
+      : copyState === 'copied'
+        ? 'Copiado'
+        : copyState === 'error'
+          ? 'Falha ao copiar'
+          : copyState === 'pending'
+            ? 'Copiando'
+            : 'Copiar'
+  const actionClassName = [
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition',
+    isPremiumLocked
+      ? 'border-transparent bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] text-[var(--on-primary)] hover:opacity-92'
+      : 'disabled:cursor-wait disabled:opacity-80',
+    !isPremiumLocked && copyState === 'copied'
+      ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
+      : !isPremiumLocked && copyState === 'error'
+        ? 'border-[#f2b7b7] bg-[#fff0f0] text-[#8f1d1d]'
+        : !isPremiumLocked && copyState === 'pending'
+          ? 'border-black/8 bg-[var(--surface-high)] text-[var(--foreground)]'
+          : !isPremiumLocked
+            ? 'border-black/8 bg-[var(--surface-low)] text-[var(--foreground)] hover:bg-[var(--surface-high)]'
+            : '',
+  ].join(' ')
 
   function handleBlur(event: FocusEvent<HTMLElement>) {
     const nextFocusedElement = event.relatedTarget
@@ -393,6 +421,7 @@ export function ComponentCard({
         ].join(' ')}
       >
         <PreviewMedia
+          key={getMediaIdentity(item)}
           item={item}
           onMediaReady={setLayout}
           shouldLoadAnimation={shouldLoadAnimation}
@@ -410,25 +439,27 @@ export function ComponentCard({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onCopy(item)}
-          disabled={copyState === 'pending'}
-          aria-label={`${buttonLabel}: ${item.title}`}
-          className={[
-            'inline-flex shrink-0 items-center justify-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition disabled:cursor-wait disabled:opacity-80',
-            copyState === 'copied'
-              ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
-              : copyState === 'error'
-                ? 'border-[#f2b7b7] bg-[#fff0f0] text-[#8f1d1d]'
-                : copyState === 'pending'
-                  ? 'border-black/8 bg-[var(--surface-high)] text-[var(--foreground)]'
-                  : 'border-black/8 bg-[var(--surface-low)] text-[var(--foreground)] hover:bg-[var(--surface-high)]',
-          ].join(' ')}
-        >
-          <CopyIcon />
-          <span>{buttonLabel}</span>
-        </button>
+        {isPremiumLocked ? (
+          <a
+            href={pricingHref}
+            aria-label={`Ver plano premium: ${item.title}`}
+            className={actionClassName}
+          >
+            <LockIcon />
+            <span>{buttonLabel}</span>
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onCopy(item)}
+            disabled={copyState === 'pending'}
+            aria-label={`${buttonLabel}: ${item.title}`}
+            className={actionClassName}
+          >
+            <CopyIcon />
+            <span>{buttonLabel}</span>
+          </button>
+        )}
       </div>
     </article>
   )

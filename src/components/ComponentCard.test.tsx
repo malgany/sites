@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { ComponentCard } from './ComponentCard'
 import type { CatalogCardItem } from '../types'
+import { ComponentCard } from './ComponentCard'
 
 const baseItem: CatalogCardItem = {
   slug: 'atelie-orbita',
@@ -13,12 +13,14 @@ const baseItem: CatalogCardItem = {
   previewWidth: 1200,
   previewHeight: 900,
   isPublic: true,
+  requiredPlan: null,
 }
 
 describe('ComponentCard', () => {
   it('uses the shared feature media sizing for portrait previews', () => {
     render(
       <ComponentCard
+        hasPremiumAccess={false}
         item={{
           ...baseItem,
           previewWidth: 455,
@@ -26,6 +28,7 @@ describe('ComponentCard', () => {
         }}
         copyState="idle"
         onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
       />,
     )
 
@@ -41,9 +44,11 @@ describe('ComponentCard', () => {
   it('keeps landscape previews on the compact 4:3 media frame', () => {
     render(
       <ComponentCard
+        hasPremiumAccess={false}
         item={baseItem}
         copyState="idle"
         onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
       />,
     )
 
@@ -57,9 +62,11 @@ describe('ComponentCard', () => {
   it('disables image dragging for preview media', () => {
     render(
       <ComponentCard
+        hasPremiumAccess={false}
         item={baseItem}
         copyState="idle"
         onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
       />,
     )
 
@@ -67,5 +74,44 @@ describe('ComponentCard', () => {
       'draggable',
       'false',
     )
+  })
+
+  it('renders a premium pricing link when the card requires a plan and access is locked', () => {
+    render(
+      <ComponentCard
+        hasPremiumAccess={false}
+        item={{
+          ...baseItem,
+          requiredPlan: 'premium',
+        }}
+        copyState="idle"
+        onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: /ver plano premium/i })).toHaveAttribute(
+      'href',
+      '/pricing/?from=atelie-orbita',
+    )
+    expect(screen.queryByRole('button', { name: /copiar/i })).not.toBeInTheDocument()
+  })
+
+  it('renders the copy button for premium cards when the user already has access', () => {
+    render(
+      <ComponentCard
+        hasPremiumAccess
+        item={{
+          ...baseItem,
+          requiredPlan: 'premium',
+        }}
+        copyState="idle"
+        onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /copiar: atelie orbita/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /ver plano premium/i })).not.toBeInTheDocument()
   })
 })

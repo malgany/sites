@@ -12,6 +12,15 @@ describe('catalog taxonomy', () => {
     expect(normalizeCatalogTypeLabel({ typeLabel: 'HR SaaS', slug: 'sample-saas' })).toBe(
       'SaaS',
     )
+    expect(normalizeCatalogTypeLabel({ typeLabel: 'Estudio', slug: 'sample-studio' })).toBe(
+      'Agency',
+    )
+    expect(
+      normalizeCatalogTypeLabel({
+        typeLabel: 'Automacao de IA',
+        slug: 'sample-automation',
+      }),
+    ).toBe('Automation')
   })
 
   it('supports slug-specific overrides for better categorization', () => {

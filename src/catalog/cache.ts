@@ -1,6 +1,6 @@
 import type { CatalogCardItem, CatalogPreviewKind } from '../types'
 
-export const CATALOG_CACHE_KEY = 'catalog_prompts_cache_v1'
+export const CATALOG_CACHE_KEY = 'catalog_prompts_cache_v2'
 
 function isCatalogPreviewKind(value: unknown): value is CatalogPreviewKind | null {
   return value === null || value === 'image' || value === 'video'
@@ -27,7 +27,8 @@ function isCatalogCardItem(value: unknown): value is CatalogCardItem {
     isCatalogPreviewKind(item.animatedPreviewKind) &&
     (typeof item.previewWidth === 'number' || item.previewWidth === null) &&
     (typeof item.previewHeight === 'number' || item.previewHeight === null) &&
-    typeof item.isPublic === 'boolean'
+    typeof item.isPublic === 'boolean' &&
+    (typeof item.requiredPlan === 'string' || item.requiredPlan === null)
   )
 }
 

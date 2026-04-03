@@ -14,6 +14,7 @@ const cachedItem: CatalogCardItem = {
   previewWidth: 480,
   previewHeight: 339,
   isPublic: true,
+  requiredPlan: null,
 }
 
 afterEach(() => {

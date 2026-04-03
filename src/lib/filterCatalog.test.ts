@@ -13,6 +13,7 @@ const items = [
     previewWidth: 1200,
     previewHeight: 1600,
     isPublic: true,
+    requiredPlan: null,
   },
   {
     slug: 'nexora-hero',
@@ -25,6 +26,7 @@ const items = [
     previewWidth: 1280,
     previewHeight: 720,
     isPublic: true,
+    requiredPlan: 'premium',
   },
   {
     slug: 'price-calculator',
@@ -37,6 +39,7 @@ const items = [
     previewWidth: null,
     previewHeight: null,
     isPublic: true,
+    requiredPlan: null,
   },
 ] as const
 

@@ -15,6 +15,7 @@ const compactItem = (slug: string): CatalogCardItem => ({
   previewWidth: 1200,
   previewHeight: 900,
   isPublic: true,
+  requiredPlan: null,
 })
 
 const featureItem = (slug: string): CatalogCardItem => ({

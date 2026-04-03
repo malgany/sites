@@ -1,15 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getCatalogContent, refreshCatalogMetadata } from './repository'
+import { getBrowserAuthSupabaseClient } from '../auth/client'
 import { getBrowserSupabaseClient } from './client'
+import { getCatalogContent, refreshCatalogMetadata } from './repository'
 
 vi.mock('./client', () => ({
   getBrowserSupabaseClient: vi.fn(),
 }))
 
+vi.mock('../auth/client', () => ({
+  getBrowserAuthSupabaseClient: vi.fn(),
+}))
+
 const mockedGetBrowserSupabaseClient = vi.mocked(getBrowserSupabaseClient)
+const mockedGetBrowserAuthSupabaseClient = vi.mocked(getBrowserAuthSupabaseClient)
 
 describe('catalog repository', () => {
-  it('maps the remote catalog rows into card metadata', async () => {
+  it('maps the remote catalog rows from the public view into card metadata', async () => {
     const order = vi.fn().mockResolvedValue({
       data: [
         {
@@ -24,17 +30,14 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 455,
           preview_height: 800,
-          is_active: true,
           is_public: true,
+          required_plan: null,
           sort_order: 3,
         },
       ],
       error: null,
     })
-
-    const secondEq = vi.fn(() => ({ order }))
-    const firstEq = vi.fn(() => ({ eq: secondEq }))
-    const select = vi.fn(() => ({ eq: firstEq }))
+    const select = vi.fn(() => ({ order }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -55,14 +58,13 @@ describe('catalog repository', () => {
       previewWidth: 455,
       previewHeight: 800,
       isPublic: true,
+      requiredPlan: null,
     })
 
-    expect(from).toHaveBeenCalledWith('catalog_prompts')
+    expect(from).toHaveBeenCalledWith('catalog_public_catalog')
     expect(select).toHaveBeenCalledWith(
-      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_active, is_public, sort_order',
+      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_public, required_plan, sort_order',
     )
-    expect(firstEq).toHaveBeenCalledWith('is_public', true)
-    expect(secondEq).toHaveBeenCalledWith('is_active', true)
     expect(order).toHaveBeenCalledWith('sort_order', { ascending: true })
   })
 
@@ -81,17 +83,14 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
-          is_active: true,
           is_public: true,
+          required_plan: null,
           sort_order: 1,
         },
       ],
       error: null,
     })
-
-    const secondEq = vi.fn(() => ({ order }))
-    const firstEq = vi.fn(() => ({ eq: secondEq }))
-    const select = vi.fn(() => ({ eq: firstEq }))
+    const select = vi.fn(() => ({ order }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -103,7 +102,7 @@ describe('catalog repository', () => {
         slug: 'atelie-orbita',
         title: 'Atelie Orbita',
         typeLabel: 'Estudio',
-        keywords: ['Estudio'],
+        keywords: ['Estudio', 'Agency'],
         posterUrl: '/card-posters/atelie-orbita.webp',
         animatedPreviewUrl:
           'https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif',
@@ -111,11 +110,12 @@ describe('catalog repository', () => {
         previewWidth: 480,
         previewHeight: 339,
         isPublic: true,
+        requiredPlan: null,
       },
     ])
   })
 
-  it('uses the legacy manifest type label as a keyword fallback when the remote label was normalized', async () => {
+  it('uses manifest keywords as a fallback when the remote row does not expose taxonomy aliases', async () => {
     const order = vi.fn().mockResolvedValue({
       data: [
         {
@@ -127,17 +127,14 @@ describe('catalog repository', () => {
           preview_kind: 'image',
           preview_width: 1200,
           preview_height: 1600,
-          is_active: true,
           is_public: true,
+          required_plan: 'premium',
           sort_order: 1,
         },
       ],
       error: null,
     })
-
-    const secondEq = vi.fn(() => ({ order }))
-    const firstEq = vi.fn(() => ({ eq: secondEq }))
-    const select = vi.fn(() => ({ eq: firstEq }))
+    const select = vi.fn(() => ({ order }))
     const from = vi.fn(() => ({ select }))
 
     mockedGetBrowserSupabaseClient.mockReturnValue({
@@ -157,91 +154,31 @@ describe('catalog repository', () => {
         previewWidth: 480,
         previewHeight: 339,
         isPublic: true,
+        requiredPlan: 'premium',
       },
     ])
   })
 
-  it('reads markdown content by slug from the public table', async () => {
-    const single = vi.fn().mockResolvedValue({
-      data: { content_markdown: '# markdown' },
+  it('loads markdown content from the protected edge function', async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      data: {
+        contentMarkdown: '# markdown',
+      },
       error: null,
     })
-    const thirdEq = vi.fn(() => ({ single }))
-    const secondEq = vi.fn(() => ({ eq: thirdEq }))
-    const firstEq = vi.fn(() => ({ eq: secondEq }))
-    const select = vi.fn(() => ({ eq: firstEq }))
-    const from = vi.fn(() => ({ select }))
 
-    mockedGetBrowserSupabaseClient.mockReturnValue({
-      from,
+    mockedGetBrowserAuthSupabaseClient.mockReturnValue({
+      functions: {
+        invoke,
+      },
     } as never)
 
     await expect(getCatalogContent('atelie-orbita')).resolves.toBe('# markdown')
 
-    expect(from).toHaveBeenCalledWith('catalog_prompts')
-    expect(select).toHaveBeenCalledWith('content_markdown')
-    expect(firstEq).toHaveBeenCalledWith('slug', 'atelie-orbita')
-    expect(secondEq).toHaveBeenCalledWith('is_public', true)
-    expect(thirdEq).toHaveBeenCalledWith('is_active', true)
-  })
-
-  it('falls back to the legacy catalog schema when poster columns are not available', async () => {
-    const activeLegacyOrder = vi.fn().mockResolvedValue({
-      data: [
-        {
-          slug: 'taskly-hero',
-          title: 'Taskly',
-          type_label: 'Productivity',
-          preview_url: 'https://example.com/taskly.gif',
-          preview_kind: 'image',
-          is_active: true,
-          is_public: true,
-          sort_order: 1,
-        },
-      ],
-      error: null,
-    })
-    const activeLegacySecondEq = vi.fn(() => ({ order: activeLegacyOrder }))
-    const activeLegacyFirstEq = vi.fn(() => ({ eq: activeLegacySecondEq }))
-    const fullOrder = vi.fn().mockResolvedValue({
-      data: null,
-      error: {
-        message: 'column catalog_prompts.poster_url does not exist',
+    expect(invoke).toHaveBeenCalledWith('catalog-content', {
+      body: {
+        slug: 'atelie-orbita',
       },
     })
-    const fullSecondEq = vi.fn(() => ({ order: fullOrder }))
-    const fullFirstEq = vi.fn(() => ({ eq: fullSecondEq }))
-    const select = vi
-      .fn()
-      .mockImplementationOnce(() => ({ eq: fullFirstEq }))
-      .mockImplementationOnce(() => ({ eq: activeLegacyFirstEq }))
-    const from = vi.fn(() => ({ select }))
-
-    mockedGetBrowserSupabaseClient.mockReturnValue({
-      from,
-    } as never)
-
-    await expect(refreshCatalogMetadata()).resolves.toEqual([
-      {
-        slug: 'taskly-hero',
-        title: 'Taskly',
-        typeLabel: 'Productivity',
-        posterUrl: '/motionsites-posters/taskly-hero.webp',
-        animatedPreviewUrl: '/motionsites-previews/taskly-hero.gif',
-        animatedPreviewKind: 'image',
-        previewWidth: 800,
-        previewHeight: 592,
-        isPublic: true,
-      },
-    ])
-
-    expect(select).toHaveBeenNthCalledWith(
-      1,
-      'slug, title, type_label, reference_lookup, poster_url, preview_url, preview_kind, preview_width, preview_height, is_active, is_public, sort_order',
-    )
-    expect(select).toHaveBeenNthCalledWith(
-      2,
-      'slug, title, type_label, preview_url, preview_kind, is_active, is_public, sort_order',
-    )
   })
 })

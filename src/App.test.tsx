@@ -1,10 +1,15 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { usePremiumAccess } from './auth/usePremiumAccess'
 import { CATALOG_CACHE_KEY } from './catalog/cache'
 import { getCatalogContent, refreshCatalogMetadata } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
-import type { CatalogCardItem } from './types'
+import type { CatalogCardItem, PremiumAccessState } from './types'
+
+vi.mock('./auth/usePremiumAccess', () => ({
+  usePremiumAccess: vi.fn(),
+}))
 
 vi.mock('./catalog/repository', () => ({
   getCatalogContent: vi.fn(),
@@ -15,6 +20,7 @@ vi.mock('./lib/copyTextToClipboard', () => ({
   copyTextToClipboard: vi.fn(),
 }))
 
+const mockedUsePremiumAccess = vi.mocked(usePremiumAccess)
 const mockedRefreshCatalogMetadata = vi.mocked(refreshCatalogMetadata)
 const mockedGetCatalogContent = vi.mocked(getCatalogContent)
 const mockedCopy = vi.mocked(copyTextToClipboard)
@@ -31,6 +37,7 @@ const catalogItems: CatalogCardItem[] = [
     previewWidth: 1200,
     previewHeight: 1600,
     isPublic: true,
+    requiredPlan: null,
   },
   {
     slug: 'nexora-hero',
@@ -42,6 +49,7 @@ const catalogItems: CatalogCardItem[] = [
     previewWidth: 1280,
     previewHeight: 720,
     isPublic: true,
+    requiredPlan: 'premium',
   },
   {
     slug: 'price-calculator',
@@ -53,16 +61,34 @@ const catalogItems: CatalogCardItem[] = [
     previewWidth: null,
     previewHeight: null,
     isPublic: true,
+    requiredPlan: null,
   },
 ]
 
+function mockPremiumAccess(accessState: PremiumAccessState) {
+  mockedUsePremiumAccess.mockReturnValue({
+    accessState,
+    errorMessage: null,
+    isLoading: false,
+    refresh: vi.fn(),
+    signOut: vi.fn(),
+    userEmail: accessState.isAuthenticated ? 'user@example.com' : null,
+  })
+}
+
 beforeEach(() => {
   mockedRefreshCatalogMetadata.mockResolvedValue(catalogItems)
+  mockPremiumAccess({
+    isAuthenticated: false,
+    status: 'signed_out',
+    planCode: null,
+  })
   window.localStorage.clear()
 })
 
 afterEach(() => {
   vi.useRealTimers()
+  mockedUsePremiumAccess.mockReset()
   mockedRefreshCatalogMetadata.mockReset()
   mockedGetCatalogContent.mockReset()
   mockedCopy.mockReset()
@@ -76,7 +102,7 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.queryByText('Carregando catalogo publico')).not.toBeInTheDocument()
+    expect(screen.queryByText('Carregando catalogo')).not.toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
@@ -129,13 +155,61 @@ describe('App', () => {
     expect(button).toHaveTextContent('Copiar')
   })
 
+  it('renders premium cards with a pricing link instead of a copy action when access is locked', () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
+    render(<App />)
+
+    const premiumCard = screen.getByRole('heading', {
+      name: 'Nexora Automation',
+      level: 2,
+    }).closest('[role="article"]')
+
+    expect(premiumCard).not.toBeNull()
+    expect(
+      within(premiumCard as HTMLElement).getByRole('link', { name: /ver plano premium/i }),
+    ).toHaveAttribute(
+      'href',
+      '/pricing/?from=nexora-hero',
+    )
+    expect(
+      within(premiumCard as HTMLElement).queryByRole('button', { name: /copiar/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders the copy action for premium cards when the user has active access', () => {
+    mockPremiumAccess({
+      isAuthenticated: true,
+      status: 'active',
+      planCode: 'premium',
+    })
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
+    render(<App />)
+
+    const premiumCard = screen.getByRole('heading', {
+      name: 'Nexora Automation',
+      level: 2,
+    }).closest('[role="article"]')
+
+    expect(premiumCard).not.toBeNull()
+    expect(
+      within(premiumCard as HTMLElement).getByRole('button', {
+        name: /copiar: nexora automation/i,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(premiumCard as HTMLElement).queryByRole('link', { name: /ver plano premium/i }),
+    ).not.toBeInTheDocument()
+  })
+
   it('shows an error state when the markdown fetch fails', async () => {
     mockedGetCatalogContent.mockRejectedValue(new Error('boom'))
     window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
     render(<App />)
 
-    const button = within(screen.getAllByRole('article')[1]).getByRole('button', {
+    const button = within(screen.getAllByRole('article')[2]).getByRole('button', {
       name: /copiar/i,
     })
 
@@ -149,7 +223,7 @@ describe('App', () => {
 
   it('keeps the cached catalog available when the metadata refresh fails', async () => {
     mockedRefreshCatalogMetadata.mockRejectedValue(
-      new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.'),
+      new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.'),
     )
     window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 
@@ -172,13 +246,13 @@ describe('App', () => {
 
   it('shows the blocking error state when refresh fails without cached data', async () => {
     mockedRefreshCatalogMetadata.mockRejectedValue(
-      new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.'),
+      new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.'),
     )
 
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Catalogo publico indisponivel')).toBeInTheDocument()
+      expect(screen.getByText('Catalogo indisponivel')).toBeInTheDocument()
     })
 
     expect(
@@ -187,9 +261,7 @@ describe('App', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText(
-        'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for the public catalog.',
-      ),
+      screen.queryByText('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.'),
     ).not.toBeInTheDocument()
     expect(mockedConsoleError).toHaveBeenCalled()
     expect(screen.queryByRole('article')).not.toBeInTheDocument()
