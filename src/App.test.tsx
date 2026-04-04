@@ -109,6 +109,17 @@ afterEach(() => {
 })
 
 describe('App', () => {
+  it('renders the text "Preços" with correct spelling in header and footer', () => {
+    mockPremiumAccess({
+      isAuthenticated: false,
+      status: 'signed_out',
+      planCode: null,
+    })
+    render(<App />)
+
+    // Ensures the exact string "Preços" (with 'ç') exists in header and footer
+    expect(screen.getAllByText('Preços')).toHaveLength(2)
+  })
   it('starts Google sign in from the header when the visitor clicks Entrar', async () => {
     render(<App />)
 

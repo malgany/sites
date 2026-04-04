@@ -51,6 +51,14 @@ beforeEach(() => {
 })
 
 describe('PricingPage', () => {
+  it('renders the title with the exact text "PAGUE 1 VEZ É SUA PRA SEMPRE"', () => {
+    render(<PricingPage />)
+    
+    const heading = screen.getByRole('heading', { level: 1 })
+    // toHaveTextContent with regex handles collapsed whitespace correctly
+    expect(heading).toHaveTextContent(/PAGUE 1 VEZ\s*É\s+SUA PRA SEMPRE/)
+  })
+
   it('starts Google login when the visitor tries to buy while signed out', async () => {
     window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
 
