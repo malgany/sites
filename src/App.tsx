@@ -351,32 +351,26 @@ function App() {
                 aria-label="Principal"
                 className="flex shrink-0 items-center gap-2 text-sm sm:gap-3"
               >
+                <a
+                  href={pricingHref}
+                  className="inline-flex items-center rounded-[8px] px-2.5 py-2 font-medium text-[var(--secondary)] transition hover:text-[var(--foreground)] sm:px-3"
+                >
+                  Preços
+                </a>
                 <button
                   type="button"
                   onClick={() => {
                     void handleAuthAction()
                   }}
                   disabled={isAccessLoading || authActionState !== 'idle'}
-                  className="inline-flex items-center rounded-[8px] bg-[var(--surface-lowest)] px-4 py-2.5 font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-high)] disabled:cursor-wait disabled:opacity-70"
+                  className="inline-flex items-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-4 py-2.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92 sm:px-5 disabled:cursor-wait disabled:opacity-70"
                 >
                   {authButtonLabel}
                 </button>
-                <a
-                  href={pricingHref}
-                  className="inline-flex items-center rounded-[8px] px-2.5 py-2 font-medium text-[var(--secondary)] transition hover:text-[var(--foreground)] sm:px-3"
-                >
-                  Precos
-                </a>
-                <a
-                  href={pricingHref}
-                  className="inline-flex items-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-4 py-2.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92 sm:px-5"
-                >
-                  {upgradeCtaLabel}
-                </a>
               </nav>
             </div>
 
-            <div className="mx-auto flex w-full max-w-[49rem] flex-col items-center text-center">
+            <div className="mx-auto flex w-full max-w-[49rem] flex-col items-center text-center pb-16 lg:pb-32">
               <h1 className="mt-4 max-w-[13ch] text-[clamp(2.45rem,8vw,4.8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
                 Destrave seus
                 <span className="block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
@@ -385,16 +379,10 @@ function App() {
                 de design com IA
               </h1>
 
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-                <a
-                  href="#component-grid-panel"
-                  className="inline-flex items-center justify-center rounded-[8px] bg-[var(--surface-high)] px-6 py-3.5 text-base font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-highest)]"
-                >
-                  Explorar prompts
-                </a>
+              <div className="mt-8 flex flex-col items-center justify-center">
                 <a
                   href={pricingHref}
-                  className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-6 py-3.5 text-base font-medium text-[var(--on-primary)] transition hover:opacity-92"
+                  className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-8 py-4 text-lg font-bold text-[var(--on-primary)] transition hover:opacity-92 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   {upgradeCtaLabel}
                 </a>
