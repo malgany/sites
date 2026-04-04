@@ -1,14 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPremiumCheckoutSession, requestMagicLink } from './auth/api'
+import { createPremiumCheckoutSession, signInWithGoogle } from './auth/api'
 import { usePremiumAccess } from './auth/usePremiumAccess'
-import { assignBrowserLocation } from './lib/browserNavigation'
 import { PricingPage } from './PricingPage'
+import { assignBrowserLocation } from './lib/browserNavigation'
 import type { PremiumAccessState } from './types'
 
 vi.mock('./auth/api', () => ({
   createPremiumCheckoutSession: vi.fn(),
-  requestMagicLink: vi.fn(),
+  signInWithGoogle: vi.fn(),
 }))
 
 vi.mock('./auth/usePremiumAccess', () => ({
@@ -20,11 +20,11 @@ vi.mock('./lib/browserNavigation', () => ({
 }))
 
 const mockedCreatePremiumCheckoutSession = vi.mocked(createPremiumCheckoutSession)
-const mockedRequestMagicLink = vi.mocked(requestMagicLink)
+const mockedSignInWithGoogle = vi.mocked(signInWithGoogle)
 const mockedUsePremiumAccess = vi.mocked(usePremiumAccess)
 const mockedAssignBrowserLocation = vi.mocked(assignBrowserLocation)
 
-function mockAccess(accessState: PremiumAccessState) {
+function mockPremiumAccess(accessState: PremiumAccessState) {
   mockedUsePremiumAccess.mockReturnValue({
     accessState,
     errorMessage: null,
@@ -36,61 +36,78 @@ function mockAccess(accessState: PremiumAccessState) {
 }
 
 beforeEach(() => {
-  window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
   mockedCreatePremiumCheckoutSession.mockReset()
-  mockedRequestMagicLink.mockReset()
+  mockedSignInWithGoogle.mockReset()
+  mockedUsePremiumAccess.mockReset()
   mockedAssignBrowserLocation.mockReset()
-  mockAccess({
+  mockedCreatePremiumCheckoutSession.mockResolvedValue('https://checkout.stripe.test/session')
+  mockedSignInWithGoogle.mockResolvedValue(undefined)
+  mockPremiumAccess({
     isAuthenticated: false,
     status: 'signed_out',
     planCode: null,
   })
+  window.history.replaceState({}, '', '/pricing/')
 })
 
 describe('PricingPage', () => {
-  it('sends a magic link and preserves the source slug in the next path', async () => {
-    mockedRequestMagicLink.mockResolvedValue(undefined)
+  it('starts Google login when the visitor tries to buy while signed out', async () => {
+    window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
 
     render(<PricingPage />)
 
-    fireEvent.change(screen.getByLabelText(/seu e-mail/i), {
-      target: { value: 'user@example.com' },
-    })
-    fireEvent.submit(screen.getByRole('button', { name: /receber magic link/i }))
+    expect(screen.getByRole('heading', { name: /pague 1 vez/i, level: 1 })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /entrar com google/i }))
 
     await waitFor(() => {
-      expect(mockedRequestMagicLink).toHaveBeenCalledWith(
-        'user@example.com',
-        '/pricing/?from=nexora-hero',
+      expect(mockedSignInWithGoogle).toHaveBeenCalledWith(
+        '/pricing/?from=nexora-hero&intent=checkout',
       )
     })
-
-    expect(screen.getByText(/link enviado para user@example.com/i)).toBeInTheDocument()
+    expect(mockedCreatePremiumCheckoutSession).not.toHaveBeenCalled()
   })
 
-  it('starts checkout for an authenticated account without active access', async () => {
-    mockAccess({
+  it('opens Stripe checkout when the visitor is already authenticated', async () => {
+    mockPremiumAccess({
       isAuthenticated: true,
       status: 'pending',
       planCode: null,
     })
-    mockedCreatePremiumCheckoutSession.mockResolvedValue('https://checkout.stripe.test')
+    window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalicio/i }))
+    fireEvent.click(screen.getByRole('button', { name: /ir para pagamento/i }))
 
     await waitFor(() => {
       expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
     })
-
     expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
-      'https://checkout.stripe.test',
+      'https://checkout.stripe.test/session',
     )
   })
 
-  it('shows the active-access state instead of the checkout button when premium is already enabled', () => {
-    mockAccess({
+  it('continues to checkout automatically after returning authenticated with checkout intent', async () => {
+    mockPremiumAccess({
+      isAuthenticated: true,
+      status: 'pending',
+      planCode: null,
+    })
+    window.history.replaceState({}, '', '/pricing/?from=nexora-hero&intent=checkout')
+
+    render(<PricingPage />)
+
+    await waitFor(() => {
+      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
+    })
+    expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
+      'https://checkout.stripe.test/session',
+    )
+  })
+
+  it('sends premium users back to the catalog', async () => {
+    mockPremiumAccess({
       isAuthenticated: true,
       status: 'active',
       planCode: 'premium',
@@ -98,13 +115,11 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    expect(screen.getByText(/premium ativo nesta conta/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /confirmar acesso/i })).toHaveAttribute(
-      'href',
-      '/payment-success/',
-    )
-    expect(
-      screen.queryByRole('button', { name: /comprar acesso vitalicio/i }),
-    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /abrir catalogo premium/i }))
+
+    await waitFor(() => {
+      expect(mockedAssignBrowserLocation).toHaveBeenCalledWith('/')
+    })
+    expect(mockedCreatePremiumCheckoutSession).not.toHaveBeenCalled()
   })
 })

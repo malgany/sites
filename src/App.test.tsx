@@ -1,11 +1,16 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { signInWithGoogle } from './auth/api'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import { CATALOG_CACHE_KEY } from './catalog/cache'
 import { getCatalogContent, refreshCatalogMetadata } from './catalog/repository'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
 import type { CatalogCardItem, PremiumAccessState } from './types'
+
+vi.mock('./auth/api', () => ({
+  signInWithGoogle: vi.fn(),
+}))
 
 vi.mock('./auth/usePremiumAccess', () => ({
   usePremiumAccess: vi.fn(),
@@ -21,6 +26,7 @@ vi.mock('./lib/copyTextToClipboard', () => ({
 }))
 
 const mockedUsePremiumAccess = vi.mocked(usePremiumAccess)
+const mockedSignInWithGoogle = vi.mocked(signInWithGoogle)
 const mockedRefreshCatalogMetadata = vi.mocked(refreshCatalogMetadata)
 const mockedGetCatalogContent = vi.mocked(getCatalogContent)
 const mockedCopy = vi.mocked(copyTextToClipboard)
@@ -66,18 +72,23 @@ const catalogItems: CatalogCardItem[] = [
 ]
 
 function mockPremiumAccess(accessState: PremiumAccessState) {
+  const signOut = vi.fn().mockResolvedValue(undefined)
+
   mockedUsePremiumAccess.mockReturnValue({
     accessState,
     errorMessage: null,
     isLoading: false,
     refresh: vi.fn(),
-    signOut: vi.fn(),
+    signOut,
     userEmail: accessState.isAuthenticated ? 'user@example.com' : null,
   })
+
+  return { signOut }
 }
 
 beforeEach(() => {
   mockedRefreshCatalogMetadata.mockResolvedValue(catalogItems)
+  mockedSignInWithGoogle.mockResolvedValue(undefined)
   mockPremiumAccess({
     isAuthenticated: false,
     status: 'signed_out',
@@ -89,6 +100,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   mockedUsePremiumAccess.mockReset()
+  mockedSignInWithGoogle.mockReset()
   mockedRefreshCatalogMetadata.mockReset()
   mockedGetCatalogContent.mockReset()
   mockedCopy.mockReset()
@@ -97,6 +109,32 @@ afterEach(() => {
 })
 
 describe('App', () => {
+  it('starts Google sign in from the header when the visitor clicks Entrar', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /entrar/i }))
+
+    await waitFor(() => {
+      expect(mockedSignInWithGoogle).toHaveBeenCalledWith('/')
+    })
+  })
+
+  it('signs out from the header when the authenticated user clicks Sair', async () => {
+    const { signOut } = mockPremiumAccess({
+      isAuthenticated: true,
+      status: 'pending',
+      planCode: null,
+    })
+
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /sair/i }))
+
+    await waitFor(() => {
+      expect(signOut).toHaveBeenCalledTimes(1)
+    })
+  })
+
   it('renders the cached catalog immediately and refreshes metadata in the background', async () => {
     window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
 

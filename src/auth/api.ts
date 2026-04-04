@@ -1,5 +1,6 @@
 import { getBrowserAuthSupabaseClient } from './client'
 import { getAuthCallbackUrl } from './redirects'
+import { assignBrowserLocation } from '../lib/browserNavigation'
 
 type CreateCheckoutSessionResponse = {
   checkoutUrl: string
@@ -20,13 +21,41 @@ export async function requestMagicLink(email: string, nextPath: string) {
   }
 }
 
-export async function exchangeMagicLinkCode(code: string) {
+export async function signInWithGoogle(nextPath: string) {
+  const authClient = getBrowserAuthSupabaseClient()
+  const { data, error } = await authClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      queryParams: {
+        prompt: 'select_account',
+      },
+      redirectTo: getAuthCallbackUrl(nextPath),
+      skipBrowserRedirect: true,
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message || 'Could not start Google sign in.')
+  }
+
+  if (!data?.url) {
+    throw new Error('Google sign in did not return a redirect URL.')
+  }
+
+  assignBrowserLocation(data.url)
+}
+
+export async function exchangeAuthCode(code: string) {
   const authClient = getBrowserAuthSupabaseClient()
   const { error } = await authClient.auth.exchangeCodeForSession(code)
 
   if (error) {
-    throw new Error(error.message || 'Could not confirm the magic link.')
+    throw new Error(error.message || 'Could not confirm the auth session.')
   }
+}
+
+export async function exchangeMagicLinkCode(code: string) {
+  await exchangeAuthCode(code)
 }
 
 export async function createPremiumCheckoutSession(sourceSlug?: string | null) {

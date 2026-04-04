@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { exchangeMagicLinkCode } from './auth/api'
+import { exchangeAuthCode } from './auth/api'
 import { getBrowserAuthSupabaseClient } from './auth/client'
 import { getDefaultPostAuthPath, normalizeNextPath } from './auth/redirects'
 import logoImage from './assets/logo.png'
@@ -39,7 +39,7 @@ export function AuthCallbackPage() {
       const code = searchParams.get('code')?.trim()
 
       if (code) {
-        await exchangeMagicLinkCode(code)
+        await exchangeAuthCode(code)
 
         if (!isCancelled) {
           replaceBrowserLocation(nextPath)
@@ -55,7 +55,7 @@ export function AuthCallbackPage() {
       }
 
       if (!data.session?.user) {
-        throw new Error('O link de acesso nao e mais valido. Solicite um novo magic link.')
+        throw new Error('Nao foi possivel restaurar sua sessao. Tente entrar novamente.')
       }
 
       if (!isCancelled) {
@@ -72,7 +72,7 @@ export function AuthCallbackPage() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel concluir o login por magic link.',
+          : 'Nao foi possivel concluir o login agora.',
       )
     })
 
@@ -103,21 +103,21 @@ export function AuthCallbackPage() {
                 auth callback
               </p>
               <h1 className="mt-5 text-[clamp(2rem,6vw,4rem)] leading-[0.92] font-black tracking-[-0.06em]">
-                {errorMessage ? 'NAO FOI POSSIVEL ENTRAR' : 'CONFIRMANDO SEU LOGIN'}
+                {errorMessage ? 'NAO FOI POSSIVEL ENTRAR' : 'CONFIRMANDO LOGIN'}
               </h1>
               <p className="mx-auto mt-5 max-w-[32rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
                 {errorMessage
                   ? errorMessage
-                  : 'Validando o magic link e restaurando a sessao antes de voltar para a pagina de pricing.'}
+                  : 'Restaurando sua sessao e voltando para a pagina anterior.'}
               </p>
 
               {errorMessage ? (
                 <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                   <a
-                    href="/pricing/"
+                    href={nextPath}
                     className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92"
                   >
-                    Solicitar novo magic link
+                    Tentar novamente
                   </a>
                   <a
                     href="/"

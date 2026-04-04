@@ -11,6 +11,7 @@ export function getBrowserAuthSupabaseClient() {
       auth: {
         autoRefreshToken: true,
         detectSessionInUrl: false,
+        flowType: 'pkce',
         persistSession: true,
         storageKey: 'prompt-archive-auth',
       },

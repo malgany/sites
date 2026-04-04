@@ -1,9 +1,5 @@
-import {
-  startTransition,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { startTransition, useEffect, useRef, useState } from 'react'
+import { signInWithGoogle } from './auth/api'
 import { hasActivePremiumAccess } from './auth/access'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import logoImage from './assets/logo.png'
@@ -28,6 +24,16 @@ const CATALOG_REFRESH_ERROR_MESSAGE =
   'Nao foi possivel atualizar o catalogo. Exibindo a ultima versao salva.'
 const CATALOG_BLOCKING_ERROR_MESSAGE =
   'O catalogo esta temporariamente indisponivel. Tente novamente em instantes.'
+
+function getCurrentAppPath() {
+  if (typeof window === 'undefined') {
+    return '/'
+  }
+
+  return window.location.search
+    ? `${window.location.pathname}${window.location.search}`
+    : window.location.pathname
+}
 
 function getCopyState(copiedId: string | null, itemSlug: string) {
   if (copiedId === itemSlug) {
@@ -83,9 +89,12 @@ function getCatalogStatusMessage(
 
 function App() {
   const pricingHref = getCatalogPricingHref()
-  const { accessState } = usePremiumAccess()
+  const {
+    accessState,
+    isLoading: isAccessLoading,
+    signOut,
+  } = usePremiumAccess()
   const [initialCachedCatalog] = useState<CatalogCardItem[]>(() => loadCachedCatalog())
-
   const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>(
     initialCachedCatalog,
   )
@@ -98,6 +107,10 @@ function App() {
     getCatalogGridColumnCount(
       typeof window === 'undefined' ? Number.NaN : window.innerWidth,
     ),
+  )
+  const [authActionError, setAuthActionError] = useState<string | null>(null)
+  const [authActionState, setAuthActionState] = useState<'idle' | 'signing_in' | 'signing_out'>(
+    'idle',
   )
   const [visibleCount, setVisibleCount] = useState(() =>
     initialCachedCatalog.length
@@ -215,6 +228,39 @@ function App() {
     }
   }
 
+  async function handleAuthAction() {
+    if (isAccessLoading || authActionState !== 'idle') {
+      return
+    }
+
+    setAuthActionError(null)
+
+    if (accessState.isAuthenticated) {
+      setAuthActionState('signing_out')
+
+      try {
+        await signOut()
+      } catch (error) {
+        console.error('Could not sign out.', error)
+        setAuthActionError('Nao foi possivel sair agora.')
+      } finally {
+        setAuthActionState('idle')
+      }
+
+      return
+    }
+
+    setAuthActionState('signing_in')
+
+    try {
+      await signInWithGoogle(getCurrentAppPath())
+    } catch (error) {
+      console.error('Could not start Google sign in.', error)
+      setAuthActionError('Nao foi possivel abrir o login agora.')
+      setAuthActionState('idle')
+    }
+  }
+
   const filteredItems = catalogItems
   const supportsIntersectionObserver = typeof IntersectionObserver !== 'undefined'
   const effectiveVisibleCount = supportsIntersectionObserver
@@ -228,6 +274,14 @@ function App() {
   const hasCatalogItems = catalogItems.length > 0
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
   const upgradeCtaLabel = hasPremiumAccess ? 'Premium Ativo' : 'Acesso Ilimitado'
+  const authButtonLabel =
+    authActionState === 'signing_in'
+      ? 'Entrando...'
+      : authActionState === 'signing_out'
+        ? 'Saindo...'
+        : accessState.isAuthenticated
+          ? 'Sair'
+          : 'Entrar'
   const catalogStatusMessage = getCatalogStatusMessage(
     catalogRefreshState,
     hasCatalogItems,
@@ -297,11 +351,21 @@ function App() {
                 aria-label="Principal"
                 className="flex shrink-0 items-center gap-2 text-sm sm:gap-3"
               >
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleAuthAction()
+                  }}
+                  disabled={isAccessLoading || authActionState !== 'idle'}
+                  className="inline-flex items-center rounded-[8px] bg-[var(--surface-lowest)] px-4 py-2.5 font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-high)] disabled:cursor-wait disabled:opacity-70"
+                >
+                  {authButtonLabel}
+                </button>
                 <a
                   href={pricingHref}
                   className="inline-flex items-center rounded-[8px] px-2.5 py-2 font-medium text-[var(--secondary)] transition hover:text-[var(--foreground)] sm:px-3"
                 >
-                  Preços
+                  Precos
                 </a>
                 <a
                   href={pricingHref}
@@ -335,6 +399,10 @@ function App() {
                   {upgradeCtaLabel}
                 </a>
               </div>
+
+              {authActionError ? (
+                <p className="mt-4 text-sm text-[#8f1d1d]">{authActionError}</p>
+              ) : null}
             </div>
           </div>
         </header>
@@ -432,7 +500,7 @@ function App() {
                 href={pricingHref}
                 className="inline-flex items-center rounded-[8px] bg-[var(--surface-lowest)] px-4 py-2 text-sm font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-high)]"
               >
-                {hasPremiumAccess ? 'Premium Ativo' : 'Preços'}
+                {hasPremiumAccess ? 'Premium Ativo' : 'Precos'}
               </a>
               <a
                 href="#top"

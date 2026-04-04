@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { exchangeMagicLinkCode } from './auth/api'
+import { exchangeAuthCode } from './auth/api'
 import { AuthCallbackPage } from './AuthCallbackPage'
 import { replaceBrowserLocation } from './lib/browserNavigation'
 
 vi.mock('./auth/api', () => ({
-  exchangeMagicLinkCode: vi.fn(),
+  exchangeAuthCode: vi.fn(),
 }))
 
 vi.mock('./auth/client', () => ({
@@ -25,32 +25,32 @@ vi.mock('./lib/browserNavigation', () => ({
   replaceBrowserLocation: vi.fn(),
 }))
 
-const mockedExchangeMagicLinkCode = vi.mocked(exchangeMagicLinkCode)
+const mockedExchangeAuthCode = vi.mocked(exchangeAuthCode)
 const mockedReplaceBrowserLocation = vi.mocked(replaceBrowserLocation)
 
 beforeEach(() => {
-  mockedExchangeMagicLinkCode.mockReset()
+  mockedExchangeAuthCode.mockReset()
   mockedReplaceBrowserLocation.mockReset()
   window.history.replaceState(
     {},
     '',
-    '/auth/callback/?code=magic-code&next=%2Fpricing%2F%3Ffrom%3Dnexora-hero',
+    '/auth/callback/?code=oauth-code&next=%2Fpricing%2F%3Ffrom%3Dnexora-hero',
   )
 })
 
 describe('AuthCallbackPage', () => {
   it('exchanges the auth code and redirects back to the requested pricing page', async () => {
-    mockedExchangeMagicLinkCode.mockResolvedValue(undefined)
+    mockedExchangeAuthCode.mockResolvedValue(undefined)
 
     render(<AuthCallbackPage />)
 
     await waitFor(() => {
-      expect(mockedExchangeMagicLinkCode).toHaveBeenCalledWith('magic-code')
+      expect(mockedExchangeAuthCode).toHaveBeenCalledWith('oauth-code')
     })
 
     expect(mockedReplaceBrowserLocation).toHaveBeenCalledWith(
       '/pricing/?from=nexora-hero',
     )
-    expect(screen.getByText(/confirmando seu login/i)).toBeInTheDocument()
+    expect(screen.getByText(/confirmando login/i)).toBeInTheDocument()
   })
 })

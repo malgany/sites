@@ -99,11 +99,11 @@ export function PaymentSuccessPage() {
                   ? 'O webhook ja marcou seu usuario como premium. Agora os cards bloqueados no catalogo voltam a exibir o botao de copia.'
                   : isPendingWebhook || isLoading
                     ? 'Aguardando o webhook consolidar o pagamento e atualizar a linha de acesso desta conta.'
-                    : hasRevokedPremiumAccess(accessState)
+                  : hasRevokedPremiumAccess(accessState)
                       ? 'Seu usuario esta autenticado, mas o premium foi revogado. Gere um novo checkout se precisar reativar.'
-                      : accessState.isAuthenticated
+                    : accessState.isAuthenticated
                         ? 'Voce esta logado, mas ainda nao existe uma liberacao premium ativa para esta conta.'
-                        : 'Abra o magic link no mesmo e-mail usado antes do checkout para consultar a liberacao do premium.'}
+                        : 'Entre na mesma conta usada antes de iniciar o checkout para consultar a liberacao do premium.'}
               </p>
 
               {userEmail ? (

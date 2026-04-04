@@ -1,12 +1,6 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import {
-  canStartPremiumCheckout,
-  hasActivePremiumAccess,
-  hasPendingPremiumActivation,
-  hasRevokedPremiumAccess,
-} from './auth/access'
-import { createPremiumCheckoutSession, requestMagicLink } from './auth/api'
-import { getCurrentPricingPath } from './auth/redirects'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPremiumCheckoutSession, signInWithGoogle } from './auth/api'
+import { hasActivePremiumAccess } from './auth/access'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import logoImage from './assets/logo.png'
 import { assignBrowserLocation } from './lib/browserNavigation'
@@ -15,6 +9,8 @@ type FeatureItem = {
   label: string
   emphasis?: boolean
 }
+
+const CHECKOUT_INTENT = 'checkout'
 
 function CheckIcon() {
   return (
@@ -42,8 +38,31 @@ const freeBenefits: FeatureItem[] = [
 const premiumBenefits: FeatureItem[] = [
   { label: 'Tudo do plano Free', emphasis: true },
   { label: 'Acesso aos cards exclusivos marcados como premium' },
-  { label: 'Liberacao automatica por webhook apos o pagamento' },
+  { label: 'Pagamento unico com acesso vitalicio' },
 ]
+
+function normalizeSourceSlug(value: string | null) {
+  return value && value.trim().length > 0 ? value.trim() : null
+}
+
+function hasCheckoutIntent(search: string) {
+  return new URLSearchParams(search).get('intent') === CHECKOUT_INTENT
+}
+
+function buildPricingPath(sourceSlug: string | null, intent?: string | null) {
+  const searchParams = new URLSearchParams()
+
+  if (sourceSlug) {
+    searchParams.set('from', sourceSlug)
+  }
+
+  if (intent) {
+    searchParams.set('intent', intent)
+  }
+
+  const search = searchParams.toString()
+  return search ? `/pricing/?${search}` : '/pricing/'
+}
 
 function FeatureList({ items }: { items: FeatureItem[] }) {
   return (
@@ -60,146 +79,129 @@ function FeatureList({ items }: { items: FeatureItem[] }) {
   )
 }
 
-function getSourceSlug(search: string) {
-  const sourceSlug = new URLSearchParams(search).get('from')?.trim()
-  return sourceSlug || null
-}
-
-function getStatusCopy(
-  isLoading: boolean,
-  accessState: ReturnType<typeof usePremiumAccess>['accessState'],
-) {
-  if (isLoading) {
-    return {
-      title: 'Verificando sua sessao',
-      body: 'Conferindo se voce ja tem login valido e qual o estado atual do premium.',
-      buttonLabel: null,
-    }
-  }
-
-  if (!accessState.isAuthenticated) {
-    return {
-      title: 'Entre com seu e-mail antes de pagar',
-      body: 'O login conecta a compra a uma conta real e evita liberar o premium no e-mail errado.',
-      buttonLabel: 'Receber magic link',
-    }
-  }
-
-  if (hasActivePremiumAccess(accessState)) {
-    return {
-      title: 'Premium ativo nesta conta',
-      body: 'Seu acesso ja esta liberado. Voce pode voltar ao catalogo e copiar os cards premium.',
-      buttonLabel: null,
-    }
-  }
-
-  if (hasPendingPremiumActivation(accessState)) {
-    return {
-      title: 'Pagamento em andamento',
-      body: 'Abra um novo checkout ou aguarde a confirmacao do webhook para o premium ficar ativo.',
-      buttonLabel: 'Finalizar pagamento',
-    }
-  }
-
-  if (hasRevokedPremiumAccess(accessState)) {
-    return {
-      title: 'Acesso revogado',
-      body: 'Este login ja teve premium revogado. Voce pode gerar um novo checkout para regularizar.',
-      buttonLabel: 'Regularizar acesso',
-    }
-  }
-
-  return {
-    title: 'Conta pronta para checkout',
-    body: 'Seu login ja esta confirmado. O proximo passo e abrir o Stripe Checkout desta conta.',
-    buttonLabel: 'Comprar acesso vitalicio',
-  }
-}
-
 export function PricingPage() {
-  const { accessState, errorMessage, isLoading, signOut, userEmail } = usePremiumAccess()
-  const [email, setEmail] = useState('')
-  const [magicLinkSentTo, setMagicLinkSentTo] = useState<string | null>(null)
-  const [magicLinkError, setMagicLinkError] = useState<string | null>(null)
-  const [checkoutError, setCheckoutError] = useState<string | null>(null)
-  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false)
-  const [isStartingCheckout, setIsStartingCheckout] = useState(false)
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { accessState, isLoading: isAccessLoading } = usePremiumAccess()
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
+  const [actionState, setActionState] = useState<'idle' | 'signing_in' | 'starting_checkout'>(
+    'idle',
+  )
+  const autoCheckoutStartedRef = useRef(false)
   const sourceSlug = useMemo(
-    () => (typeof window === 'undefined' ? null : getSourceSlug(window.location.search)),
+    () =>
+      typeof window === 'undefined'
+        ? null
+        : normalizeSourceSlug(new URLSearchParams(window.location.search).get('from')),
     [],
   )
-
-  const statusCopy = getStatusCopy(isLoading, accessState)
-  const showCheckoutAction = canStartPremiumCheckout(accessState) && !isLoading
+  const shouldContinueCheckout = useMemo(
+    () => (typeof window === 'undefined' ? false : hasCheckoutIntent(window.location.search)),
+    [],
+  )
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
-  const sourceNote = sourceSlug
-    ? `Origem do upgrade: ${sourceSlug}. Esse parametro sera enviado junto com a Checkout Session.`
-    : 'Se voce veio de um card premium, o slug de origem entra automaticamente na Checkout Session.'
+  const isActionPending = isAccessLoading || actionState !== 'idle'
+  const checkoutResumePath = useMemo(
+    () => buildPricingPath(sourceSlug, CHECKOUT_INTENT),
+    [sourceSlug],
+  )
 
-  async function handleRequestMagicLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const normalizedEmail = email.trim().toLowerCase()
-
-    if (!normalizedEmail) {
-      setMagicLinkError('Digite um e-mail valido para receber o magic link.')
-      return
-    }
-
-    setIsSendingMagicLink(true)
-    setMagicLinkError(null)
-    setCheckoutError(null)
+  async function startGoogleLogin() {
+    setActionErrorMessage(null)
+    setActionState('signing_in')
 
     try {
-      await requestMagicLink(normalizedEmail, getCurrentPricingPath())
-      setMagicLinkSentTo(normalizedEmail)
+      await signInWithGoogle(checkoutResumePath)
     } catch (error) {
-      setMagicLinkError(
-        error instanceof Error
-          ? error.message
-          : 'Nao foi possivel enviar o magic link agora.',
-      )
-    } finally {
-      setIsSendingMagicLink(false)
+      console.error('Could not start Google sign in from pricing.', error)
+      setActionErrorMessage('Nao foi possivel abrir o login agora.')
+      setActionState('idle')
     }
   }
 
-  async function handleCheckout() {
-    setIsStartingCheckout(true)
-    setCheckoutError(null)
+  async function startCheckout(options?: { clearIntentOnError?: boolean }) {
+    setActionErrorMessage(null)
+    setActionState('starting_checkout')
 
     try {
       const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
       assignBrowserLocation(checkoutUrl)
     } catch (error) {
-      setCheckoutError(
-        error instanceof Error
-          ? error.message
-          : 'Nao foi possivel abrir o checkout agora.',
-      )
-      setIsStartingCheckout(false)
+      console.error('Could not start premium checkout.', error)
+
+      if (options?.clearIntentOnError && typeof window !== 'undefined') {
+        window.history.replaceState({}, '', buildPricingPath(sourceSlug))
+      }
+
+      setActionErrorMessage('Nao foi possivel iniciar o pagamento agora.')
+      setActionState('idle')
     }
   }
 
-  async function handleSignOut() {
-    setIsSigningOut(true)
-
-    try {
-      await signOut()
-      setMagicLinkSentTo(null)
-      setMagicLinkError(null)
-      setCheckoutError(null)
-    } catch (error) {
-      setCheckoutError(
-        error instanceof Error
-          ? error.message
-          : 'Nao foi possivel encerrar a sessao agora.',
-      )
-    } finally {
-      setIsSigningOut(false)
+  useEffect(() => {
+    if (
+      autoCheckoutStartedRef.current ||
+      !shouldContinueCheckout ||
+      isAccessLoading ||
+      !accessState.isAuthenticated ||
+      hasPremiumAccess
+    ) {
+      return
     }
+
+    autoCheckoutStartedRef.current = true
+
+    void (async () => {
+      setActionErrorMessage(null)
+      setActionState('starting_checkout')
+
+      try {
+        const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
+        assignBrowserLocation(checkoutUrl)
+      } catch (error) {
+        console.error('Could not resume premium checkout.', error)
+        if (typeof window !== 'undefined') {
+          window.history.replaceState({}, '', buildPricingPath(sourceSlug))
+        }
+        setActionErrorMessage('Nao foi possivel iniciar o pagamento agora.')
+        setActionState('idle')
+      }
+    })()
+  }, [
+    accessState.isAuthenticated,
+    hasPremiumAccess,
+    isAccessLoading,
+    shouldContinueCheckout,
+    sourceSlug,
+  ])
+
+  async function handlePremiumAction() {
+    if (isActionPending) {
+      return
+    }
+
+    if (hasPremiumAccess) {
+      assignBrowserLocation('/')
+      return
+    }
+
+    if (!accessState.isAuthenticated) {
+      await startGoogleLogin()
+      return
+    }
+
+    await startCheckout()
   }
+
+  const premiumCtaLabel = isAccessLoading
+    ? 'Carregando...'
+    : actionState === 'signing_in'
+      ? 'Abrindo Google...'
+      : actionState === 'starting_checkout'
+        ? 'Abrindo pagamento...'
+        : hasPremiumAccess
+          ? 'Abrir catalogo premium'
+          : accessState.isAuthenticated
+            ? 'Ir para pagamento'
+            : 'Entrar com Google'
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--foreground)]">
@@ -240,40 +242,24 @@ export function PricingPage() {
         </header>
 
         <section className="mx-auto flex w-full max-w-[1160px] flex-1 flex-col justify-center py-10 sm:py-14">
-          <div className="mx-auto max-w-[56rem] text-center">
-            <p className="text-[0.72rem] font-semibold tracking-[0.26em] text-[var(--secondary)] uppercase">
-              login + checkout + webhook
-            </p>
-            <h1 className="mx-auto mt-6 max-w-[16ch] text-[clamp(2rem,8vw,5.4rem)] leading-[0.9] font-black tracking-[-0.07em]">
+          <div className="mx-auto max-w-[52rem] text-center">
+            <h1 className="mx-auto mt-6 max-w-[15ch] text-[clamp(2rem,8vw,5.5rem)] leading-[0.9] font-black tracking-[-0.07em]">
               PAGUE 1 VEZ
-              <span className="mt-2 block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
-                ENTRE COM O MESMO E-MAIL
+              <span className="block whitespace-nowrap tracking-normal">
+                <span className="text-[#ff3b8a]">E</span>
+                <span className="bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
+                  {' SUA PRA SEMPRE'}
+                </span>
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-[44rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
-              O premium do v1 usa magic link antes do checkout. A compra fica ligada a
-              conta autenticada e o acesso so abre quando o webhook confirmar o
-              pagamento.
+            <p className="mx-auto mt-6 max-w-[42rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
+              Como os planos de assinatura podem ser instaveis, oferecemos
+              apenas planos vitalicios, ideais para freelancers, designers
+              individuais e pequenas equipes.
             </p>
           </div>
 
-          <div className="mx-auto mt-10 flex w-full max-w-[980px] flex-wrap items-center justify-center gap-3 rounded-[8px] bg-[var(--surface-low)] px-5 py-4 text-center text-[0.82rem] font-medium text-[var(--secondary)]">
-            <span className="rounded-full bg-[var(--surface-lowest)] px-4 py-2 text-[var(--foreground)]">
-              1. Entrar por e-mail
-            </span>
-            <span className="rounded-full bg-[var(--surface-lowest)] px-4 py-2 text-[var(--foreground)]">
-              2. Abrir Stripe Checkout
-            </span>
-            <span className="rounded-full bg-[var(--surface-lowest)] px-4 py-2 text-[var(--foreground)]">
-              3. Liberar premium via webhook
-            </span>
-          </div>
-
-          <div className="mx-auto mt-4 w-full max-w-[980px] rounded-[8px] bg-[var(--surface-low)] px-5 py-4 text-center text-sm text-[var(--secondary)]">
-            {sourceNote}
-          </div>
-
-          <div className="mx-auto mt-8 w-full max-w-[980px] rounded-[8px] bg-[var(--surface-low)] p-3 sm:p-4 lg:p-5">
+          <div className="mx-auto mt-12 w-full max-w-[980px] rounded-[8px] bg-[var(--surface-low)] p-3 sm:p-4 lg:p-5">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]">
               <section className="flex h-full flex-col rounded-[8px] bg-[var(--surface-lowest)] px-6 py-7 text-center sm:px-7 sm:py-8 lg:px-8 lg:py-10">
                 <div className="flex flex-col items-center">
@@ -281,8 +267,8 @@ export function PricingPage() {
                     Free
                   </h2>
                   <p className="mt-4 max-w-[24rem] text-sm leading-6 text-[var(--secondary)] md:min-h-[6.5rem]">
-                    Entrada livre para explorar a vitrine, assistir aos previews e copiar
-                    tudo o que continuar aberto para visitantes.
+                    Entrada livre para explorar a vitrine, assistir aos previews
+                    e copiar tudo o que continuar aberto para visitantes.
                   </p>
                   <p className="mt-6 text-[3.15rem] leading-none font-black tracking-[-0.08em]">
                     R$ 0
@@ -306,126 +292,27 @@ export function PricingPage() {
                   </h2>
                   <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--secondary)] md:min-h-[6.5rem]">
                     O upgrade concentra tudo o que ja esta livre e abre os cards
-                    exclusivos, com acesso conectado a uma conta real.
+                    exclusivos do acervo em um pagamento unico.
                   </p>
                   <p className="mt-6 text-[3.15rem] leading-none font-black tracking-[-0.08em]">
                     R$ 59,90
                   </p>
                 </div>
 
-                <div className="mt-8 rounded-[8px] bg-[var(--surface-low)] px-5 py-5 text-left">
-                  <p className="text-[0.72rem] font-semibold tracking-[0.24em] text-[var(--secondary)] uppercase">
-                    Estado atual
-                  </p>
-                  <h3 className="mt-3 text-[1.3rem] leading-[1] font-black tracking-[-0.05em] text-[var(--foreground)]">
-                    {statusCopy.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-[var(--secondary)]">
-                    {statusCopy.body}
-                  </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handlePremiumAction()
+                  }}
+                  disabled={isActionPending}
+                  className="mt-8 inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {premiumCtaLabel}
+                </button>
 
-                  {userEmail ? (
-                    <p className="mt-4 text-sm font-medium text-[var(--foreground)]">
-                      Sessao atual: {userEmail}
-                    </p>
-                  ) : null}
-
-                  {magicLinkSentTo ? (
-                    <p className="mt-4 rounded-[8px] bg-[var(--surface-lowest)] px-4 py-3 text-sm text-[var(--foreground)]">
-                      Link enviado para {magicLinkSentTo}. Abra o e-mail e volte por ele.
-                    </p>
-                  ) : null}
-
-                  {errorMessage ? (
-                    <p className="mt-4 rounded-[8px] bg-[#fff0f0] px-4 py-3 text-sm text-[#8f1d1d]">
-                      {errorMessage}
-                    </p>
-                  ) : null}
-
-                  {magicLinkError ? (
-                    <p className="mt-4 rounded-[8px] bg-[#fff0f0] px-4 py-3 text-sm text-[#8f1d1d]">
-                      {magicLinkError}
-                    </p>
-                  ) : null}
-
-                  {checkoutError ? (
-                    <p className="mt-4 rounded-[8px] bg-[#fff0f0] px-4 py-3 text-sm text-[#8f1d1d]">
-                      {checkoutError}
-                    </p>
-                  ) : null}
-
-                  {!accessState.isAuthenticated && !isLoading ? (
-                    <form className="mt-5 space-y-4" onSubmit={handleRequestMagicLink}>
-                      <label className="block">
-                        <span className="text-[0.74rem] font-semibold tracking-[0.22em] text-[var(--secondary)] uppercase">
-                          Seu e-mail
-                        </span>
-                        <input
-                          type="email"
-                          name="email"
-                          value={email}
-                          autoComplete="email"
-                          placeholder="voce@dominio.com"
-                          onChange={(event) => setEmail(event.currentTarget.value)}
-                          className="mt-3 w-full border-0 border-b-2 border-[var(--ghost-border)] bg-transparent px-0 py-3 text-base text-[var(--foreground)] outline-none transition focus:border-[var(--foreground)]"
-                        />
-                      </label>
-
-                      <button
-                        type="submit"
-                        disabled={isSendingMagicLink}
-                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        {isSendingMagicLink ? 'Enviando link...' : 'Receber magic link'}
-                      </button>
-                    </form>
-                  ) : null}
-
-                  {showCheckoutAction ? (
-                    <div className="mt-5 space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleCheckout()
-                        }}
-                        disabled={isStartingCheckout}
-                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        {isStartingCheckout
-                          ? 'Abrindo checkout...'
-                          : statusCopy.buttonLabel ?? 'Abrir checkout'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleSignOut()
-                        }}
-                        disabled={isSigningOut}
-                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-[var(--surface-lowest)] px-5 py-3.5 font-medium text-[var(--foreground)] transition hover:bg-[var(--surface)] disabled:cursor-wait disabled:opacity-70"
-                      >
-                        {isSigningOut ? 'Saindo...' : 'Entrar com outro e-mail'}
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {hasPremiumAccess ? (
-                    <div className="mt-5 space-y-3">
-                      <a
-                        href="/payment-success/"
-                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 text-center font-semibold text-[var(--on-primary)] transition hover:opacity-92"
-                      >
-                        Confirmar acesso
-                      </a>
-                      <a
-                        href="/"
-                        className="inline-flex w-full items-center justify-center rounded-[8px] bg-[var(--surface-lowest)] px-5 py-3.5 font-medium text-[var(--foreground)] transition hover:bg-[var(--surface)]"
-                      >
-                        Voltar ao catalogo premium
-                      </a>
-                    </div>
-                  ) : null}
-                </div>
+                {actionErrorMessage ? (
+                  <p className="mt-4 text-sm text-[#8f1d1d]">{actionErrorMessage}</p>
+                ) : null}
 
                 <FeatureList items={premiumBenefits} />
               </section>
