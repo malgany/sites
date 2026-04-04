@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPremiumCheckoutSession, signInWithGoogle } from './auth/api'
 import { usePremiumAccess } from './auth/usePremiumAccess'
+import { trackMetaEvent } from './lib/metaPixel'
 import { PricingPage } from './PricingPage'
 import { assignBrowserLocation } from './lib/browserNavigation'
 import type { PremiumAccessState } from './types'
@@ -19,8 +20,13 @@ vi.mock('./lib/browserNavigation', () => ({
   assignBrowserLocation: vi.fn(),
 }))
 
+vi.mock('./lib/metaPixel', () => ({
+  trackMetaEvent: vi.fn(),
+}))
+
 const mockedCreatePremiumCheckoutSession = vi.mocked(createPremiumCheckoutSession)
 const mockedSignInWithGoogle = vi.mocked(signInWithGoogle)
+const mockedTrackMetaEvent = vi.mocked(trackMetaEvent)
 const mockedUsePremiumAccess = vi.mocked(usePremiumAccess)
 const mockedAssignBrowserLocation = vi.mocked(assignBrowserLocation)
 
@@ -40,6 +46,7 @@ beforeEach(() => {
   mockedSignInWithGoogle.mockReset()
   mockedUsePremiumAccess.mockReset()
   mockedAssignBrowserLocation.mockReset()
+  mockedTrackMetaEvent.mockReset()
   mockedCreatePremiumCheckoutSession.mockResolvedValue('https://checkout.stripe.test/session')
   mockedSignInWithGoogle.mockResolvedValue(undefined)
   mockPremiumAccess({
@@ -91,9 +98,15 @@ describe('PricingPage', () => {
     await waitFor(() => {
       expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
     })
-    expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
-      'https://checkout.stripe.test/session',
-    )
+    expect(mockedTrackMetaEvent).toHaveBeenCalledWith('InitiateCheckout', {
+      currency: 'BRL',
+      value: 59.9,
+    })
+    await waitFor(() => {
+      expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
+        'https://checkout.stripe.test/session',
+      )
+    })
   })
 
   it('continues to checkout automatically after returning authenticated with checkout intent', async () => {
@@ -109,9 +122,15 @@ describe('PricingPage', () => {
     await waitFor(() => {
       expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
     })
-    expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
-      'https://checkout.stripe.test/session',
-    )
+    expect(mockedTrackMetaEvent).toHaveBeenCalledWith('InitiateCheckout', {
+      currency: 'BRL',
+      value: 59.9,
+    })
+    await waitFor(() => {
+      expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
+        'https://checkout.stripe.test/session',
+      )
+    })
   })
 
   it('sends premium users back to the catalog', async () => {

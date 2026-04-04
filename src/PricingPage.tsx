@@ -12,6 +12,7 @@ type FeatureItem = {
 }
 
 const CHECKOUT_INTENT = 'checkout'
+const META_PIXEL_REDIRECT_DELAY_MS = 150
 
 function CheckIcon() {
   return (
@@ -63,6 +64,12 @@ function buildPricingPath(sourceSlug: string | null, intent?: string | null) {
 
   const search = searchParams.toString()
   return search ? `/pricing/?${search}` : '/pricing/'
+}
+
+function waitForMetaPixelFlush() {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, META_PIXEL_REDIRECT_DELAY_MS)
+  })
 }
 
 function FeatureList({ items }: { items: FeatureItem[] }) {
@@ -125,6 +132,7 @@ export function PricingPage() {
     try {
       const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
       trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
+      await waitForMetaPixelFlush()
       assignBrowserLocation(checkoutUrl)
     } catch (error) {
       console.error('Could not start premium checkout.', error)
@@ -158,6 +166,7 @@ export function PricingPage() {
       try {
         const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
         trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
+        await waitForMetaPixelFlush()
         assignBrowserLocation(checkoutUrl)
       } catch (error) {
         console.error('Could not resume premium checkout.', error)

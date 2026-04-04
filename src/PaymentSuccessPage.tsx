@@ -10,10 +10,16 @@ import { trackMetaEvent } from './lib/metaPixel'
 
 const MAX_AUTO_REFRESH_ATTEMPTS = 5
 const META_PURCHASE_TRACKED_KEY = 'prompt-archive-meta-purchase-tracked'
+const PREMIUM_PRICE_BRL = 59.9
 
 function getSourceSlug(search: string) {
   const sourceSlug = new URLSearchParams(search).get('source_slug')?.trim()
   return sourceSlug || null
+}
+
+function getCheckoutSessionId(search: string) {
+  const checkoutSessionId = new URLSearchParams(search).get('session_id')?.trim()
+  return checkoutSessionId || null
 }
 
 export function PaymentSuccessPage() {
@@ -22,6 +28,10 @@ export function PaymentSuccessPage() {
   const [isRefreshingNow, setIsRefreshingNow] = useState(false)
   const sourceSlug = useMemo(
     () => (typeof window === 'undefined' ? null : getSourceSlug(window.location.search)),
+    [],
+  )
+  const checkoutSessionId = useMemo(
+    () => (typeof window === 'undefined' ? null : getCheckoutSessionId(window.location.search)),
     [],
   )
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
@@ -47,6 +57,28 @@ export function PaymentSuccessPage() {
   useEffect(() => {
     if (
       typeof window === 'undefined' ||
+      !checkoutSessionId
+    ) {
+      return
+    }
+
+    const trackedPurchaseKey = `${META_PURCHASE_TRACKED_KEY}:${checkoutSessionId}`
+
+    if (window.sessionStorage.getItem(trackedPurchaseKey) === '1') {
+      return
+    }
+
+    trackMetaEvent('Purchase', {
+      currency: 'BRL',
+      value: PREMIUM_PRICE_BRL,
+    })
+    window.sessionStorage.setItem(trackedPurchaseKey, '1')
+  }, [checkoutSessionId])
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      checkoutSessionId ||
       !hasPremiumAccess ||
       window.sessionStorage.getItem(META_PURCHASE_TRACKED_KEY) === '1'
     ) {
@@ -55,10 +87,10 @@ export function PaymentSuccessPage() {
 
     trackMetaEvent('Purchase', {
       currency: 'BRL',
-      value: 59.9,
+      value: PREMIUM_PRICE_BRL,
     })
     window.sessionStorage.setItem(META_PURCHASE_TRACKED_KEY, '1')
-  }, [hasPremiumAccess])
+  }, [checkoutSessionId, hasPremiumAccess])
 
   async function handleRefresh() {
     setIsRefreshingNow(true)
