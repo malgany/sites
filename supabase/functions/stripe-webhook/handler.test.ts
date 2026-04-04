@@ -175,4 +175,24 @@ describe('stripe-webhook handler', () => {
       'pi_123',
     )
   })
+
+  it('revokes premium access for refund.created events', async () => {
+    const { handler, service } = createHandler({
+      id: 'evt_refund_created',
+      type: 'refund.created',
+      data: {
+        object: {
+          payment_intent: 'pi_123',
+        },
+      },
+    })
+
+    const response = await handler(createStripeWebhookRequest())
+
+    expect(response.status).toBe(200)
+    expect(service.userAccessUpdateEq).toHaveBeenCalledWith(
+      'stripe_payment_intent_id',
+      'pi_123',
+    )
+  })
 })

@@ -88,6 +88,7 @@ async function processStripeEvent(
     case 'checkout.session.completed':
       await activatePremiumAccess(serviceClient, event)
       return
+    case 'refund.created':
     case 'charge.dispute.created':
     case 'charge.refunded':
       await revokePremiumAccess(serviceClient, event)
