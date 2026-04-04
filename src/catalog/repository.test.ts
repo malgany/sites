@@ -166,8 +166,19 @@ describe('catalog repository', () => {
       },
       error: null,
     })
+    const getSession = vi.fn().mockResolvedValue({
+      data: {
+        session: {
+          access_token: 'token-123',
+        },
+      },
+      error: null,
+    })
 
     mockedGetBrowserAuthSupabaseClient.mockReturnValue({
+      auth: {
+        getSession,
+      },
       functions: {
         invoke,
       },
@@ -178,6 +189,9 @@ describe('catalog repository', () => {
     expect(invoke).toHaveBeenCalledWith('catalog-content', {
       body: {
         slug: 'atelie-orbita',
+      },
+      headers: {
+        Authorization: 'Bearer token-123',
       },
     })
   })

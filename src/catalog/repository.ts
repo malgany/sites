@@ -167,10 +167,24 @@ export async function refreshCatalogMetadata() {
 
 export async function getCatalogContent(slug: string) {
   const supabase = await getBrowserAuthSupabaseClient()
+  const sessionResponse = await supabase.auth.getSession()
+
+  if (sessionResponse.error) {
+    throw new Error(`Could not load the current auth session: ${sessionResponse.error.message}`)
+  }
+
+  const accessToken = sessionResponse.data.session?.access_token?.trim()
   const response = await supabase.functions.invoke<CatalogContentResponse>('catalog-content', {
     body: {
       slug,
     },
+    ...(accessToken
+      ? {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      : {}),
   })
 
   if (response.error || !response.data?.contentMarkdown) {

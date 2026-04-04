@@ -6,6 +6,25 @@ type CreateCheckoutSessionResponse = {
   checkoutUrl: string
 }
 
+async function getAuthFunctionHeaders() {
+  const authClient = getBrowserAuthSupabaseClient()
+  const { data, error } = await authClient.auth.getSession()
+
+  if (error) {
+    throw new Error(error.message || 'Could not load the current auth session.')
+  }
+
+  const accessToken = data.session?.access_token?.trim()
+
+  if (!accessToken) {
+    throw new Error('Authentication required.')
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  }
+}
+
 export async function requestMagicLink(email: string, nextPath: string) {
   const authClient = getBrowserAuthSupabaseClient()
   const { error } = await authClient.auth.signInWithOtp({
@@ -60,12 +79,14 @@ export async function exchangeMagicLinkCode(code: string) {
 
 export async function createPremiumCheckoutSession(sourceSlug?: string | null) {
   const authClient = getBrowserAuthSupabaseClient()
+  const headers = await getAuthFunctionHeaders()
   const { data, error } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
     'create-checkout-session',
     {
       body: {
         sourceSlug: sourceSlug?.trim() || null,
       },
+      headers,
     },
   )
 
