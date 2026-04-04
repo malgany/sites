@@ -34,6 +34,7 @@ coverage
 
 # Temporary browser data
 .tmp-edge/
+supabase/.temp/
 
 # Specific unversioned files
 docs/

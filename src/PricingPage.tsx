@@ -246,7 +246,7 @@ export function PricingPage() {
             <h1 className="mx-auto mt-6 max-w-[15ch] text-[clamp(2rem,8vw,5.5rem)] leading-[0.9] font-black tracking-[-0.07em]">
               PAGUE 1 VEZ
               <span className="block whitespace-nowrap tracking-normal">
-                <span className="text-[#ff3b8a]">E</span>
+                <span className="text-[#ff3b8a]">É</span>
                 <span className="bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
                   {' SUA PRA SEMPRE'}
                 </span>
