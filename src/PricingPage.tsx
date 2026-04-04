@@ -4,6 +4,7 @@ import { hasActivePremiumAccess } from './auth/access'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import logoImage from './assets/logo.png'
 import { assignBrowserLocation } from './lib/browserNavigation'
+import { trackMetaEvent } from './lib/metaPixel'
 
 type FeatureItem = {
   label: string
@@ -123,6 +124,7 @@ export function PricingPage() {
 
     try {
       const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
+      trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
       assignBrowserLocation(checkoutUrl)
     } catch (error) {
       console.error('Could not start premium checkout.', error)
@@ -155,6 +157,7 @@ export function PricingPage() {
 
       try {
         const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
+        trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
         assignBrowserLocation(checkoutUrl)
       } catch (error) {
         console.error('Could not resume premium checkout.', error)

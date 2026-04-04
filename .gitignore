@@ -34,6 +34,7 @@ coverage
 
 # Temporary browser data
 .tmp-edge/
+.playwright-mcp/
 supabase/.temp/
 
 # Specific unversioned files

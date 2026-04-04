@@ -6,8 +6,10 @@ import {
 } from './auth/access'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import logoImage from './assets/logo.png'
+import { trackMetaEvent } from './lib/metaPixel'
 
 const MAX_AUTO_REFRESH_ATTEMPTS = 5
+const META_PURCHASE_TRACKED_KEY = 'prompt-archive-meta-purchase-tracked'
 
 function getSourceSlug(search: string) {
   const sourceSlug = new URLSearchParams(search).get('source_slug')?.trim()
@@ -41,6 +43,22 @@ export function PaymentSuccessPage() {
 
     return () => window.clearTimeout(timer)
   }, [isPendingWebhook, refresh, refreshAttempts])
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !hasPremiumAccess ||
+      window.sessionStorage.getItem(META_PURCHASE_TRACKED_KEY) === '1'
+    ) {
+      return
+    }
+
+    trackMetaEvent('Purchase', {
+      currency: 'BRL',
+      value: 59.9,
+    })
+    window.sessionStorage.setItem(META_PURCHASE_TRACKED_KEY, '1')
+  }, [hasPremiumAccess])
 
   async function handleRefresh() {
     setIsRefreshingNow(true)
