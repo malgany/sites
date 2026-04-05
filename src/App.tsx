@@ -14,6 +14,11 @@ import {
 } from './lib/distributeCatalogColumns'
 import type { CatalogCardItem } from './types'
 
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void
+  }
+}
 const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
 const INITIAL_RENDER_COUNT = 24
@@ -223,6 +228,12 @@ function App() {
       const content = await getCatalogContent(item.slug)
       const didCopy = await copyTextToClipboard(content)
       setCopiedId(didCopy ? item.slug : `${ERROR_PREFIX}${item.slug}`)
+
+      if (didCopy && typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'copy_layout', {
+          layout_slug: item.slug,
+        })
+      }
     } catch {
       setCopiedId(`${ERROR_PREFIX}${item.slug}`)
     }
