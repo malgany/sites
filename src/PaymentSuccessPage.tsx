@@ -71,6 +71,7 @@ export function PaymentSuccessPage() {
     trackMetaEvent('Purchase', {
       currency: 'BRL',
       value: PREMIUM_PRICE_BRL,
+      transaction_id: checkoutSessionId,
     })
     window.sessionStorage.setItem(trackedPurchaseKey, '1')
   }, [checkoutSessionId])

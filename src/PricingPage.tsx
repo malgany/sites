@@ -131,7 +131,7 @@ export function PricingPage() {
 
     try {
       const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
-      trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
+      trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9, num_items: 1 })
       await waitForMetaPixelFlush()
       assignBrowserLocation(checkoutUrl)
     } catch (error) {
@@ -145,6 +145,15 @@ export function PricingPage() {
       setActionState('idle')
     }
   }
+
+  useEffect(() => {
+    trackMetaEvent('ViewContent', {
+      content_name: 'Plano Premium',
+      content_type: 'product',
+      value: 59.9,
+      currency: 'BRL',
+    })
+  }, [])
 
   useEffect(() => {
     if (
@@ -165,7 +174,7 @@ export function PricingPage() {
 
       try {
         const checkoutUrl = await createPremiumCheckoutSession(sourceSlug)
-        trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9 })
+        trackMetaEvent('InitiateCheckout', { currency: 'BRL', value: 59.9, num_items: 1 })
         await waitForMetaPixelFlush()
         assignBrowserLocation(checkoutUrl)
       } catch (error) {
@@ -309,6 +318,9 @@ export function PricingPage() {
                   <p className="mt-6 text-[3.15rem] leading-none font-black tracking-[-0.08em]">
                     R$ 59,90
                   </p>
+                  <p className="mt-1 text-xs text-[var(--secondary)]">
+                    pagamento único • acesso vitalício
+                  </p>
                 </div>
 
                 <button
@@ -328,6 +340,42 @@ export function PricingPage() {
 
                 <FeatureList items={premiumBenefits} />
               </section>
+            </div>
+          </div>
+
+          {/* Trust badges */}
+          <div className="mx-auto mt-8 flex max-w-[980px] flex-col items-center gap-4">
+            {/* Payment methods */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--surface-high)] bg-[var(--surface-lowest)] px-3 py-1.5 text-xs font-medium text-[var(--secondary)]">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" aria-hidden="true">
+                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/>
+                </svg>
+                Cartão de crédito
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--surface-high)] bg-[var(--surface-lowest)] px-3 py-1.5 text-xs font-medium text-[var(--secondary)]">
+                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1zm3 8V5.5a3 3 0 1 0-6 0V9h6z" clipRule="evenodd"/>
+                </svg>
+                Pagamento seguro
+              </span>
+            </div>
+
+            {/* Security + guarantee */}
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[var(--secondary)]">
+              <span className="inline-flex items-center gap-1.5">
+                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9z" clipRule="evenodd"/>
+                </svg>
+                Processado com segurança via Stripe
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5z" clipRule="evenodd"/>
+                </svg>
+                Garantia de 7 dias — dinheiro de volta
+              </span>
             </div>
           </div>
         </section>

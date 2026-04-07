@@ -80,8 +80,9 @@ async function callStripeApi<T>(
     const message =
       typeof payload.error === 'object' &&
       payload.error !== null &&
-      typeof payload.error.message === 'string'
-        ? payload.error.message
+      'message' in payload.error &&
+      typeof (payload.error as Record<string, unknown>).message === 'string'
+        ? (payload.error as Record<string, unknown>).message as string
         : `Stripe request failed with status ${response.status}.`
 
     throw new Error(message)
@@ -131,6 +132,7 @@ export async function createStripeCheckoutSession(options: {
   formData.set('customer', options.customerId)
   formData.set('line_items[0][price]', options.priceId)
   formData.set('line_items[0][quantity]', '1')
+  formData.set('locale', 'pt-BR')
   formData.set('metadata[plan_code]', 'premium')
   formData.set('metadata[user_id]', options.userId)
   formData.set('mode', 'payment')

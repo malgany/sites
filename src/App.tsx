@@ -23,7 +23,6 @@ const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
 const INITIAL_RENDER_COUNT = 24
 const RENDER_BATCH_SIZE = 12
-const CATALOG_LOADING_MESSAGE = 'Carregando a lista de cards.'
 const CATALOG_REFRESHING_MESSAGE = 'Atualizando catalogo.'
 const CATALOG_REFRESH_ERROR_MESSAGE =
   'Nao foi possivel atualizar o catalogo. Exibindo a ultima versao salva.'
@@ -284,7 +283,7 @@ function App() {
   )
   const hasCatalogItems = catalogItems.length > 0
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
-  const upgradeCtaLabel = hasPremiumAccess ? 'Premium Ativo' : 'Acesso Ilimitado'
+  const upgradeCtaLabel = hasPremiumAccess ? '✓ Premium Ativo' : 'Acesso Vitalício — R$ 59,90'
   const authButtonLabel =
     authActionState === 'signing_in'
       ? 'Entrando...'
@@ -382,7 +381,11 @@ function App() {
             </div>
 
             <div className="mx-auto flex w-full max-w-[49rem] flex-col items-center text-center pb-16 lg:pb-32">
-              <h1 className="mt-4 max-w-[13ch] text-[clamp(2.45rem,8vw,4.8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
+              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/20 bg-[var(--primary)]/8 px-3 py-1 text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">
+                Para devs e designers React + Tailwind
+              </span>
+
+              <h1 className="mt-5 max-w-[13ch] text-[clamp(2.45rem,8vw,4.8rem)] leading-[0.9] font-black tracking-[-0.07em] text-[var(--foreground)] uppercase">
                 Destrave seus
                 <span className="block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
                   superpoderes
@@ -390,13 +393,33 @@ function App() {
                 de design com IA
               </h1>
 
-              <div className="mt-8 flex flex-col items-center justify-center">
+              <p className="mt-5 max-w-[38ch] text-[clamp(0.95rem,2.2vw,1.1rem)] leading-relaxed text-[var(--secondary)]">
+                Biblioteca de prompts de UI prontos para montar interfaces React&nbsp;+&nbsp;Tailwind
+                em minutos — sem partir do zero.
+              </p>
+
+              {catalogItems.length > 0 && (
+                <p className="mt-3 text-sm text-[var(--secondary)]">
+                  <span className="font-semibold text-[var(--foreground)]">{catalogItems.length}+ prompts</span>{' '}
+                  prontos para copiar e usar no seu projeto
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <a
                   href={pricingHref}
-                  className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-8 py-4 text-lg font-bold text-[var(--on-primary)] transition hover:opacity-92 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-8 py-4 text-lg font-bold text-[var(--on-primary)] transition hover:opacity-92 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap"
                 >
                   {upgradeCtaLabel}
                 </a>
+                {!hasPremiumAccess && (
+                  <a
+                    href="#component-grid-panel"
+                    className="inline-flex items-center justify-center rounded-[8px] border border-[var(--surface-high)] bg-transparent px-6 py-4 text-base font-medium text-[var(--secondary)] transition hover:text-[var(--foreground)] hover:border-[var(--secondary)]"
+                  >
+                    Explorar grátis ↓
+                  </a>
+                )}
               </div>
 
               {authActionError ? (
@@ -410,6 +433,14 @@ function App() {
           id="component-grid-panel"
           className="relative z-10 -mt-4 rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:-mt-6 sm:px-6 sm:py-8 lg:-mt-20"
         >
+          <div className="mx-auto mb-4 flex max-w-[1136px] items-center gap-3">
+            <hr className="flex-1 border-[var(--surface-high)]" />
+            <span className="text-xs font-medium text-[var(--secondary)] uppercase tracking-widest whitespace-nowrap">
+              Prévia gratuita do catálogo
+            </span>
+            <hr className="flex-1 border-[var(--surface-high)]" />
+          </div>
+
           <div className="mx-auto mt-2 flex max-w-[1136px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="min-h-5 text-sm text-[var(--secondary)]">
               {catalogStatusMessage}
@@ -423,13 +454,19 @@ function App() {
           </div>
 
           {!hasCatalogItems && catalogRefreshState === 'refreshing' ? (
-            <div className="mx-auto mt-8 max-w-[1136px] rounded-[8px] bg-[var(--surface-lowest)] px-6 py-12 text-center">
-              <p className="text-lg font-semibold tracking-[-0.03em] text-[var(--foreground)]">
-                Carregando catalogo
-              </p>
-              <p className="mt-2 text-sm text-[var(--secondary)]">
-                {CATALOG_LOADING_MESSAGE}
-              </p>
+            <div className="mx-auto mt-3 grid max-w-[1136px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Carregando catálogo">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col overflow-hidden rounded-[1.5rem] border border-black/8 bg-[var(--surface-lowest)] animate-pulse">
+                  <div className="aspect-[4/3] w-full bg-[var(--surface-high)]" />
+                  <div className="flex items-end justify-between gap-3 px-3 py-4">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-4 w-3/4 rounded bg-[var(--surface-high)]" />
+                      <div className="h-3 w-1/2 rounded bg-[var(--surface-high)]" />
+                    </div>
+                    <div className="h-8 w-20 rounded-full bg-[var(--surface-high)]" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : !hasCatalogItems && catalogRefreshState === 'error' ? (
             <div className="mx-auto mt-8 max-w-[1136px] rounded-[8px] bg-[#fff0f0] px-6 py-12 text-center">

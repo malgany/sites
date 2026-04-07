@@ -99,35 +99,35 @@
     "previewHeight": 567,
     "sourceUrl": "https://motionsites.ai/assets/hero-buzzentic-preview-CbopM29R.gif"
   },
-  "fluxo-neural-automacao-ia": {
-    "previewKind": "image",
-    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
-    "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif",
-    "posterUrl": "/card-posters/fluxo-neural-automacao-ia.webp",
-    "previewWidth": 480,
-    "previewHeight": 338,
-    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/fluxo-neural-automacao-ia/preview-gif-20260402-225127-3c9c23.gif"
-  },
   "atelie-orbita": {
     "previewKind": "image",
-    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif",
+    "previewUrl": "/motionsites-previews/atelie-orbita.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif",
-    "posterUrl": "/card-posters/atelie-orbita.webp",
-    "previewWidth": 480,
-    "previewHeight": 339,
-    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/atelie-orbita/preview-gif-20260402-201043-7a6984.gif"
+    "animatedPreviewUrl": "/motionsites-previews/atelie-orbita.gif",
+    "posterUrl": "/motionsites-posters/atelie-orbita.webp",
+    "previewWidth": 800,
+    "previewHeight": 582,
+    "sourceUrl": "https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif"
+  },
+  "fluxo-neural-automacao-ia": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/fluxo-neural-automacao-ia.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/fluxo-neural-automacao-ia.gif",
+    "posterUrl": "/motionsites-posters/fluxo-neural-automacao-ia.webp",
+    "previewWidth": 800,
+    "previewHeight": 563,
+    "sourceUrl": "https://motionsites.ai/assets/hero-synapse-ai-preview-BjBuH68i.gif"
   },
   "asme-vidro-liquido": {
     "previewKind": "image",
-    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
+    "previewUrl": "/motionsites-previews/asme-vidro-liquido.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif",
-    "posterUrl": "/card-posters/asme-vidro-liquido.webp",
-    "previewWidth": 480,
-    "previewHeight": 334,
-    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/preview-gif-20260403-023750-517571.gif"
+    "animatedPreviewUrl": "/motionsites-previews/asme-vidro-liquido.gif",
+    "posterUrl": "/motionsites-posters/asme-vidro-liquido.webp",
+    "previewWidth": 800,
+    "previewHeight": 582,
+    "sourceUrl": "https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif"
   },
   "automation-machines-hero": {
     "previewKind": "image",
@@ -158,6 +158,16 @@
     "previewWidth": 800,
     "previewHeight": 564,
     "sourceUrl": "https://motionsites.ai/assets/hero-bloom-ai-preview-g6RcYLTl.gif"
+  },
+  "codenest-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/codenest-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/codenest-hero.gif",
+    "posterUrl": "/motionsites-posters/codenest-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 576,
+    "sourceUrl": "https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif"
   },
   "datacore-booking-hero": {
     "previewKind": "image",
@@ -231,23 +241,23 @@
   },
   "mindloop-workspace": {
     "previewKind": "image",
-    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
+    "previewUrl": "/motionsites-previews/mindloop-workspace.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif",
-    "posterUrl": "/card-posters/mindloop-workspace.webp",
-    "previewWidth": 480,
-    "previewHeight": 339,
-    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-workspace/preview-gif-20260403-030148-f99d3f.gif"
+    "animatedPreviewUrl": "/motionsites-previews/mindloop-workspace.gif",
+    "posterUrl": "/motionsites-posters/mindloop-workspace.webp",
+    "previewWidth": 800,
+    "previewHeight": 651,
+    "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-preview-BR8xW6xW.gif"
   },
   "mindloop-operacao-unificada": {
     "previewKind": "image",
-    "previewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
+    "previewUrl": "/motionsites-previews/mindloop-operacao-unificada.gif",
     "animatedPreviewKind": "image",
-    "animatedPreviewUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif",
-    "posterUrl": "/card-posters/mindloop-operacao-unificada.webp",
-    "previewWidth": 480,
-    "previewHeight": 337,
-    "sourceUrl": "https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/preview-gif-20260403-040300-ebeca2.gif"
+    "animatedPreviewUrl": "/motionsites-previews/mindloop-operacao-unificada.gif",
+    "posterUrl": "/motionsites-posters/mindloop-operacao-unificada.webp",
+    "previewWidth": 455,
+    "previewHeight": 800,
+    "sourceUrl": "https://motionsites.ai/assets/hero-mindloop-landing-preview-Bqnstohr.gif"
   },
   "neuralyn-hero": {
     "previewKind": "image",
@@ -349,6 +359,16 @@
     "previewHeight": 581,
     "sourceUrl": "https://motionsites.ai/assets/hero-terra-preview-BFjrCr7T.gif"
   },
+  "transform-data-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/transform-data-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/transform-data-hero.gif",
+    "posterUrl": "/motionsites-posters/transform-data-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 592,
+    "sourceUrl": "https://motionsites.ai/assets/hero-transform-data-preview-Cx5OU29N.gif"
+  },
   "velorah-hero": {
     "previewKind": "image",
     "previewUrl": "/motionsites-previews/velorah-hero.gif",
@@ -388,5 +408,45 @@
     "previewWidth": 604,
     "previewHeight": 476,
     "sourceUrl": "https://motionsites.ai/assets/hero-vortex-studio-preview-BQyvwopD.gif"
+  },
+  "orbis-nft-landing": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/orbis-nft-landing.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/orbis-nft-landing.gif",
+    "posterUrl": "/motionsites-posters/orbis-nft-landing.webp",
+    "previewWidth": 452,
+    "previewHeight": 800,
+    "sourceUrl": "https://motionsites.ai/assets/hero-orbis-nft-preview-C3wvh77a.gif"
+  },
+  "yacht-club-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/yacht-club-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/yacht-club-hero.gif",
+    "posterUrl": "/motionsites-posters/yacht-club-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 579,
+    "sourceUrl": "https://motionsites.ai/assets/hero-yacht-club-preview-BXyoIjIf.gif"
+  },
+  "innovation-landing": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/innovation-landing.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/innovation-landing.gif",
+    "posterUrl": "/motionsites-posters/innovation-landing.webp",
+    "previewWidth": 447,
+    "previewHeight": 800,
+    "sourceUrl": "https://motionsites.ai/assets/hero-innovation-preview-BerBJHh1.gif"
+  },
+  "vex-ventures-hero": {
+    "previewKind": "image",
+    "previewUrl": "/motionsites-previews/vex-ventures-hero.gif",
+    "animatedPreviewKind": "image",
+    "animatedPreviewUrl": "/motionsites-previews/vex-ventures-hero.gif",
+    "posterUrl": "/motionsites-posters/vex-ventures-hero.webp",
+    "previewWidth": 800,
+    "previewHeight": 603,
+    "sourceUrl": "https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif"
   }
 }
