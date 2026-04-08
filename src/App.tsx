@@ -7,6 +7,7 @@ import { loadCachedCatalog, storeCachedCatalog } from './catalog/cache'
 import { getCatalogContent, refreshCatalogMetadata } from './catalog/repository'
 import { ComponentCard } from './components/ComponentCard'
 import { getCatalogPricingHref } from './lib/catalogAccess'
+import { getCatalogOfferStats } from './lib/catalogOfferStats'
 import { copyTextToClipboard } from './lib/copyTextToClipboard'
 import {
   distributeCatalogItemsAcrossColumns,
@@ -281,9 +282,11 @@ function App() {
     visibleItems,
     gridColumnCount,
   )
+  const catalogOfferStats = getCatalogOfferStats(catalogItems)
   const hasCatalogItems = catalogItems.length > 0
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
-  const upgradeCtaLabel = hasPremiumAccess ? '✓ Premium Ativo' : 'Acesso Vitalício - R$ 59,90'
+  const upgradeCtaLabel =
+    hasPremiumAccess ? 'Premium ativo' : 'Comprar acesso vitalicio - R$ 59,90'
   const authButtonLabel =
     authActionState === 'signing_in'
       ? 'Entrando...'
@@ -394,15 +397,30 @@ function App() {
               </h1>
 
               <p className="mt-5 max-w-[42ch] text-[clamp(0.95rem,2.2vw,1.1rem)] leading-relaxed text-[var(--secondary)]">
-                Crie layouts impressionantes sem perder tempo reinventando a roda.
+                Acesse prompts prontos para acelerar landing pages e secoes em
+                React + Tailwind, com mais velocidade para estruturar layout,
+                copy e direcao visual sem partir do zero.
               </p>
 
-              {catalogItems.length > 0 && (
-                <p className="mt-3 text-sm text-[var(--secondary)]">
-                  <span className="font-semibold text-[var(--foreground)]">{catalogItems.length}+ prompts</span>{' '}
-                  prontos para copiar e usar no seu projeto
-                </p>
+              {catalogOfferStats.totalCount > 0 && (
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-left text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--secondary)] sm:text-xs">
+                  <span className="rounded-full bg-[var(--surface-low)] px-3 py-2 text-[var(--foreground)]">
+                    {catalogOfferStats.totalCount} prompts prontos para React + Tailwind
+                  </span>
+                  <span className="rounded-full bg-[var(--surface-low)] px-3 py-2">
+                    {catalogOfferStats.premiumCount} prompts premium exclusivos
+                  </span>
+                  <span className="rounded-full bg-[var(--surface-low)] px-3 py-2">
+                    {catalogOfferStats.freeCount} exemplos livres para explorar antes de comprar
+                  </span>
+                </div>
               )}
+
+              <p className="mt-4 max-w-[42rem] text-sm leading-6 text-[var(--secondary)]">
+                Use nos seus projetos React + Tailwind. Acelere projetos proprios
+                e de clientes com uma previa gratuita do acervo e um premium que
+                destrava mais variedade quando o free deixar de ser suficiente.
+              </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <a
@@ -432,10 +450,34 @@ function App() {
           id="component-grid-panel"
           className="relative z-10 -mt-4 rounded-[8px] bg-[var(--surface-low)] px-5 py-6 sm:-mt-6 sm:px-6 sm:py-8 lg:-mt-20"
         >
+          <div className="mx-auto mb-5 max-w-[1136px] rounded-[8px] bg-[var(--surface-lowest)] px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-[46rem]">
+                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[var(--secondary)]">
+                  Free para validar. Premium para acelerar.
+                </p>
+                <h2 className="mt-2 text-[1.45rem] leading-[1.02] font-black tracking-[-0.05em] text-[var(--foreground)] sm:text-[1.8rem]">
+                  Explore a vitrine, entenda o formato e suba para o premium quando
+                  quiser mais repertorio e menos tempo no rascunho.
+                </h2>
+              </div>
+              <div className="grid gap-2 text-sm text-[var(--secondary)] sm:grid-cols-2">
+                <p className="rounded-[8px] bg-[var(--surface-low)] px-4 py-3">
+                  Free: explore cards abertos, veja previews e teste o formato antes
+                  de decidir.
+                </p>
+                <p className="rounded-[8px] bg-[var(--surface-low)] px-4 py-3">
+                  Premium: destrave prompts exclusivos para montar paginas e secoes
+                  com mais variedade e menos retrabalho.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="mx-auto mb-4 flex max-w-[1136px] items-center gap-3">
             <hr className="flex-1 border-[var(--surface-high)]" />
             <span className="text-xs font-medium text-[var(--secondary)] uppercase tracking-widest whitespace-nowrap">
-              Prévia gratuita do catálogo
+              Previa gratuita do acervo
             </span>
             <hr className="flex-1 border-[var(--surface-high)]" />
           </div>

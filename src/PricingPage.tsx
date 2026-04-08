@@ -1,18 +1,74 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { createPremiumCheckoutSession, signInWithGoogle } from './auth/api'
 import { hasActivePremiumAccess } from './auth/access'
 import { usePremiumAccess } from './auth/usePremiumAccess'
 import logoImage from './assets/logo.png'
+import { loadCachedCatalog, storeCachedCatalog } from './catalog/cache'
+import { refreshCatalogMetadata } from './catalog/repository'
 import { assignBrowserLocation } from './lib/browserNavigation'
+import { getCatalogOfferStats } from './lib/catalogOfferStats'
 import { trackMetaEvent } from './lib/metaPixel'
+import type { CatalogCardItem } from './types'
 
 type FeatureItem = {
   label: string
   emphasis?: boolean
 }
 
+type FaqItem = {
+  answer: string
+  question: string
+}
+
 const CHECKOUT_INTENT = 'checkout'
 const META_PIXEL_REDIRECT_DELAY_MS = 150
+
+const freeBenefits: FeatureItem[] = [
+  { label: 'Explore a vitrine e veja previews antes de comprar' },
+  { label: 'Entenda o formato dos prompts e teste a proposta' },
+  { label: 'Use o free como amostra, nao como acervo completo' },
+]
+
+const premiumBenefits: FeatureItem[] = [
+  { label: 'Prompts premium para SaaS, AI, Agency, Hero, Pricing e CTA', emphasis: true },
+  { label: 'Mais repertorio para estruturar layout, copy e direcao visual' },
+  { label: 'Pensado para projetos proprios e de clientes' },
+  { label: 'Pagamento unico com acesso vitalicio' },
+]
+
+const proofPoints = [
+  'Para devs e designers que querem acelerar paginas React + Tailwind.',
+  'Para quem ja sabe o que quer construir, mas nao quer sair do zero toda vez.',
+  'Para transformar exploracao visual em execucao mais rapida.',
+]
+
+const faqItems: readonly FaqItem[] = [
+  {
+    question: 'O que exatamente eu recebo ao comprar?',
+    answer:
+      'Voce recebe acesso ao acervo premium de prompts estruturados do catalogo. O foco e acelerar a criacao de paginas e secoes em React + Tailwind com mais clareza de estrutura, copy e direcao visual.',
+  },
+  {
+    question: 'Isso e codigo pronto?',
+    answer:
+      'Nao. O produto nao e uma biblioteca plug-and-play de componentes finais. Sao prompts organizados para guiar a geracao e adaptacao do resultado no seu fluxo de trabalho.',
+  },
+  {
+    question: 'Como uso esses prompts no meu fluxo?',
+    answer:
+      'Voce explora o catalogo, escolhe um prompt, copia o conteudo e usa no seu processo com Claude, ChatGPT ou outra IA para montar e iterar a pagina que precisa.',
+  },
+  {
+    question: 'Isso serve para projetos React + Tailwind?',
+    answer:
+      'Sim. A oferta e posicionada para paginas e secoes nesse stack, com foco em landing pages, heroes, pricing, CTAs e variacoes comuns de produtos digitais.',
+  },
+  {
+    question: 'O pagamento e unico?',
+    answer:
+      'Sim. O acesso e vitalicio e o pagamento acontece uma vez, sem mensalidade recorrente.',
+  },
+]
 
 function CheckIcon() {
   return (
@@ -30,18 +86,6 @@ function CheckIcon() {
     </svg>
   )
 }
-
-const freeBenefits: FeatureItem[] = [
-  { label: 'Acesso aos cards free publicados' },
-  { label: 'Preview animado de toda a vitrine' },
-  { label: 'Copia imediata do markdown liberado' },
-]
-
-const premiumBenefits: FeatureItem[] = [
-  { label: 'Tudo do plano Free', emphasis: true },
-  { label: 'Acesso aos cards exclusivos marcados como premium' },
-  { label: 'Pagamento único com acesso vitalício' },
-]
 
 function normalizeSourceSlug(value: string | null) {
   return value && value.trim().length > 0 ? value.trim() : null
@@ -72,7 +116,7 @@ function waitForMetaPixelFlush() {
   })
 }
 
-function FeatureList({ items }: { items: FeatureItem[] }) {
+function FeatureList({ items }: { items: readonly FeatureItem[] }) {
   return (
     <ul className="mt-8 space-y-3 text-left text-sm leading-6 text-[var(--secondary)]">
       {items.map((item) => (
@@ -93,6 +137,7 @@ export function PricingPage() {
   const [actionState, setActionState] = useState<'idle' | 'signing_in' | 'starting_checkout'>(
     'idle',
   )
+  const [catalogItems, setCatalogItems] = useState<CatalogCardItem[]>(() => loadCachedCatalog())
   const autoCheckoutStartedRef = useRef(false)
   const sourceSlug = useMemo(
     () =>
@@ -111,6 +156,32 @@ export function PricingPage() {
     () => buildPricingPath(sourceSlug, CHECKOUT_INTENT),
     [sourceSlug],
   )
+  const catalogOfferStats = getCatalogOfferStats(catalogItems)
+
+  useEffect(() => {
+    let isCancelled = false
+
+    void (async () => {
+      try {
+        const items = await refreshCatalogMetadata()
+
+        if (isCancelled) {
+          return
+        }
+
+        storeCachedCatalog(items)
+        startTransition(() => {
+          setCatalogItems(items)
+        })
+      } catch (error) {
+        console.error('Could not refresh catalog stats for pricing.', error)
+      }
+    })()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   async function startGoogleLogin() {
     setActionErrorMessage(null)
@@ -220,9 +291,7 @@ export function PricingPage() {
         ? 'Abrindo pagamento...'
         : hasPremiumAccess
           ? 'Abrir catalogo premium'
-          : accessState.isAuthenticated
-            ? 'Ir para pagamento'
-            : 'Obter acesso Premium'
+          : 'Comprar acesso vitalicio'
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--surface)] text-[var(--foreground)]">
@@ -263,21 +332,34 @@ export function PricingPage() {
         </header>
 
         <section className="mx-auto flex w-full max-w-[1160px] flex-1 flex-col justify-center py-10 sm:py-14">
-          <div className="mx-auto max-w-[52rem] text-center">
-            <h1 className="mx-auto mt-6 max-w-[15ch] text-[clamp(2rem,8vw,5.5rem)] leading-[0.9] font-black tracking-[-0.07em]">
-              PAGUE 1 VEZ
-              <span className="block whitespace-nowrap tracking-normal">
-                <span className="text-[#ff3b8a]">É</span>
-                <span className="bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
-                  {' SUA PRA SEMPRE'}
-                </span>
+          <div className="mx-auto max-w-[56rem] text-center">
+            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-[var(--secondary)]">
+              React + Tailwind sem mensalidade
+            </p>
+            <h1 className="mx-auto mt-5 max-w-[12ch] text-[clamp(2.2rem,8vw,5.2rem)] leading-[0.9] font-black tracking-[-0.07em]">
+              Pague uma vez.
+              <span className="block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
+                Tenha acesso vitalicio.
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-[42rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
-              Como os planos de assinatura podem ser instaveis, oferecemos
-              apenas planos vitalicios, ideais para freelancers, designers
-              individuais e pequenas equipes.
+            <p className="mx-auto mt-6 max-w-[44rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
+              Destrave o acervo premium de prompts para React + Tailwind e
+              acelere a criacao de paginas e secoes sem mensalidade.
             </p>
+
+            {catalogOfferStats.totalCount > 0 ? (
+              <div className="mx-auto mt-6 flex max-w-[52rem] flex-wrap items-center justify-center gap-2 text-left text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--secondary)] sm:text-xs">
+                <span className="rounded-full bg-[var(--surface-low)] px-3 py-2 text-[var(--foreground)]">
+                  {catalogOfferStats.totalCount} prompts prontos para React + Tailwind
+                </span>
+                <span className="rounded-full bg-[var(--surface-low)] px-3 py-2">
+                  {catalogOfferStats.premiumCount} prompts premium exclusivos
+                </span>
+                <span className="rounded-full bg-[var(--surface-low)] px-3 py-2">
+                  {catalogOfferStats.freeCount} exemplos livres para explorar antes de comprar
+                </span>
+              </div>
+            ) : null}
           </div>
 
           <div className="mx-auto mt-12 w-full max-w-[980px] rounded-[8px] bg-[var(--surface-low)] p-3 sm:p-4 lg:p-5">
@@ -288,8 +370,8 @@ export function PricingPage() {
                     Free
                   </h2>
                   <p className="mt-4 max-w-[24rem] text-sm leading-6 text-[var(--secondary)] md:min-h-[6.5rem]">
-                    Entrada livre para explorar a vitrine, assistir aos previews
-                    e copiar tudo o que continuar aberto para visitantes.
+                    Use o free como amostra para explorar a vitrine, ver previews
+                    e entender como os prompts funcionam antes da compra.
                   </p>
                   <p className="mt-6 text-[3.15rem] leading-none font-black tracking-[-0.08em]">
                     R$ 0
@@ -300,7 +382,7 @@ export function PricingPage() {
                   href="/"
                   className="mt-8 inline-flex w-full items-center justify-center rounded-[8px] bg-[var(--surface-low)] px-5 py-3.5 font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-high)]"
                 >
-                  Continuar no catalogo
+                  Explorar a previa gratuita
                 </a>
 
                 <FeatureList items={freeBenefits} />
@@ -312,8 +394,8 @@ export function PricingPage() {
                     Premium
                   </h2>
                   <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--secondary)] md:min-h-[6.5rem]">
-                    O upgrade concentra tudo o que ja esta livre e abre os cards
-                    exclusivos do acervo em um pagamento único.
+                    Destrave prompts premium para SaaS, AI, Agency, Hero, Pricing
+                    e CTA, e ganhe mais repertorio para construir sem sair do zero.
                   </p>
                   <p className="mt-6 text-[3.15rem] leading-none font-black tracking-[-0.08em]">
                     R$ 59,90
@@ -340,38 +422,62 @@ export function PricingPage() {
             </div>
           </div>
 
-          {/* Trust badges */}
-          <div className="mx-auto mt-8 flex max-w-[980px] flex-col items-center gap-4">
-            {/* Payment methods */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--surface-high)] bg-[var(--surface-lowest)] px-3 py-1.5 text-xs font-medium text-[var(--secondary)]">
-                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" aria-hidden="true">
-                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-                Cartão de crédito
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--surface-high)] bg-[var(--surface-lowest)] px-3 py-1.5 text-xs font-medium text-[var(--secondary)]">
-                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1zm3 8V5.5a3 3 0 1 0-6 0V9h6z" clipRule="evenodd" />
-                </svg>
-                Pagamento seguro
-              </span>
+          <section className="mx-auto mt-8 grid w-full max-w-[980px] gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+            <div className="rounded-[8px] bg-[var(--surface-low)] px-6 py-6 sm:px-7">
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[var(--secondary)]">
+                Para quem isso encaixa melhor
+              </p>
+              <div className="mt-4 grid gap-3">
+                {proofPoints.map((point) => (
+                  <p
+                    key={point}
+                    className="rounded-[8px] bg-[var(--surface-lowest)] px-4 py-3 text-sm leading-6 text-[var(--secondary)]"
+                  >
+                    {point}
+                  </p>
+                ))}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-medium text-[var(--secondary)]">
+                <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
+                  Stripe
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
+                  Pix e cartao
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
+                  Pagamento unico
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
+                  Acesso vitalicio
+                </span>
+              </div>
             </div>
 
-            {/* Security + guarantee */}
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[var(--secondary)]">
-              <span className="inline-flex items-center gap-1.5">
-                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9z" clipRule="evenodd" />
-                </svg>
-                Processado com segurança via Stripe
-              </span>
-
+            <div className="rounded-[8px] bg-[var(--surface-low)] px-6 py-6 sm:px-7">
+              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[var(--secondary)]">
+                FAQ de compra
+              </p>
+              <div className="mt-4 space-y-3">
+                {faqItems.map((item) => (
+                  <div
+                    key={item.question}
+                    className="rounded-[8px] bg-[var(--surface-lowest)] px-4 py-4"
+                  >
+                    <h3 className="text-sm font-semibold text-[var(--foreground)]">
+                      {item.question}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-[var(--secondary)]">
+                      {item.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </section>
         </section>
       </div>
     </main>
   )
 }
+

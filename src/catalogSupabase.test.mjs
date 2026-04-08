@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  applyPromptMediaLinksToMarkdown,
   buildCatalogUpsertPayload,
   getMotionSitesLookupSlug,
   getMissingCatalogColumnName,
@@ -9,6 +10,73 @@ import {
 } from '../scripts/lib/catalog-supabase.mjs'
 
 describe('catalog supabase helpers', () => {
+  it('replaces prompt video links using the configured media link for the same slug', () => {
+    const markdown = `
+      <video src="https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260407-050552-19f892.mp4"></video>
+    `
+
+    const updated = applyPromptMediaLinksToMarkdown({
+      markdown,
+      promptMediaLink: {
+        mp4Url:
+          'https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260403-022529-eac753.mp4',
+      },
+      slug: 'asme-vidro-liquido',
+    })
+
+    expect(updated).toContain(
+      'https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260403-022529-eac753.mp4',
+    )
+    expect(updated).not.toContain(
+      'https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260407-050552-19f892.mp4',
+    )
+  })
+
+  it('matches multi-section prompt videos by section key when links are configured', () => {
+    const markdown = `
+      hero: https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-hero-20260407-001111-aaaaaa.mp4
+      mission: https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-mission-20260407-001112-bbbbbb.mp4
+      solution: https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-solution-20260407-001113-cccccc.mp4
+      cta: https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-cta-20260407-001114-dddddd.mp4
+    `
+
+    const updated = applyPromptMediaLinksToMarkdown({
+      markdown,
+      promptMediaLink: {
+        mp4Url:
+          'https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4',
+        videos: {
+          hero: {
+            mp4Url:
+              'https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-hero-20260403-031801-a91f2a.mp4',
+          },
+          mission: {
+            mp4Url:
+              'https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-mission-20260403-031818-b57c4d.mp4',
+          },
+          solution: {
+            mp4Url:
+              'https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-solution-20260403-031833-f04d91.mp4',
+          },
+          cta: {
+            mp4Url:
+              'https://d39qrw7a9vnyeo.cloudfront.net/cards/mindloop-operacao-unificada/prompt-video-cta-20260403-031850-c7318b.mp4',
+          },
+        },
+      },
+      slug: 'mindloop-operacao-unificada',
+    })
+
+    expect(updated).toContain('prompt-video-hero-20260403-031801-a91f2a.mp4')
+    expect(updated).toContain('prompt-video-mission-20260403-031818-b57c4d.mp4')
+    expect(updated).toContain('prompt-video-solution-20260403-031833-f04d91.mp4')
+    expect(updated).toContain('prompt-video-cta-20260403-031850-c7318b.mp4')
+    expect(updated).not.toContain('prompt-video-hero-20260407-001111-aaaaaa.mp4')
+    expect(updated).not.toContain('prompt-video-mission-20260407-001112-bbbbbb.mp4')
+    expect(updated).not.toContain('prompt-video-solution-20260407-001113-cccccc.mp4')
+    expect(updated).not.toContain('prompt-video-cta-20260407-001114-dddddd.mp4')
+  })
+
   it('normalizes reference lookup fields and falls back to the catalog title', () => {
     expect(
       normalizeCatalogReferenceLookup(
@@ -225,6 +293,44 @@ describe('catalog supabase helpers', () => {
     expect(getMotionSitesLookupSlug({ slug: 'fallback', referenceLookup: {} })).toBe(
       'fallback',
     )
+  })
+
+  it('applies prompt media links while building the sync upsert payload', () => {
+    const payload = buildCatalogUpsertPayload({
+      item: {
+        slug: 'asme-vidro-liquido',
+        title: 'Asme Vidro Liquido',
+        typeLabel: 'Landing',
+        sortOrder: 10,
+        visibility: 'public',
+        isActive: true,
+        isPublic: true,
+        requiredPlan: null,
+        publishedAt: '2026-04-01T10:00:00.000Z',
+        posterUrl: null,
+        previewUrl: null,
+        previewKind: 'image',
+        previewWidth: null,
+        previewHeight: null,
+        referenceLookup: {},
+      },
+      localPreviewOverride: null,
+      promptMediaLink: {
+        mp4Url:
+          'https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260403-022529-eac753.mp4',
+      },
+      promptText:
+        'video: https://d39qrw7a9vnyeo.cloudfront.net/cards/asme-vidro-liquido/prompt-video-20260407-050552-19f892.mp4',
+      resolvedPreviewKind: 'image',
+      resolvedPreviewUrl: null,
+      siteEntry: {
+        id: 'asme-vidro-liquido',
+        previewKind: 'image',
+      },
+    })
+
+    expect(payload.content_markdown).toContain('prompt-video-20260403-022529-eac753.mp4')
+    expect(payload.content_markdown).not.toContain('prompt-video-20260407-050552-19f892.mp4')
   })
 
   it('detects missing catalog columns from both PostgREST error formats', () => {

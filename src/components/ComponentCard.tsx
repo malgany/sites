@@ -5,6 +5,7 @@ import {
   type FocusEvent,
   type RefObject,
 } from 'react'
+import { getCatalogPreviewSiteUrl } from '../catalog/previewSiteLinks'
 import { getCatalogCardLayout } from '../lib/catalogCardLayout'
 import { isPremiumCatalogItem } from '../lib/catalogAccess'
 import type {
@@ -365,6 +366,7 @@ export function ComponentCard({
 
   const isPremium = isPremiumCatalogItem(item)
   const isPremiumLocked = isPremium && !hasPremiumAccess
+  const previewSiteUrl = getCatalogPreviewSiteUrl(item.slug)
   const buttonLabel =
     isPremiumLocked
       ? 'Premium'
@@ -426,6 +428,19 @@ export function ComponentCard({
           onMediaReady={setLayout}
           shouldLoadAnimation={shouldLoadAnimation}
         />
+        {previewSiteUrl ? (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-end p-3">
+            <a
+              href={previewSiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Ver preview do site: ${item.title}`}
+              className="pointer-events-auto inline-flex items-center rounded-[8px] border border-black/10 bg-white/86 px-3 py-1.5 text-[0.72rem] font-semibold tracking-[0.08em] text-[var(--foreground)] uppercase shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-sm transition md:translate-y-1 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+            >
+              Ver preview
+            </a>
+          </div>
+        ) : null}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(0,0,0,0.08)_100%)]" />
       </div>
 

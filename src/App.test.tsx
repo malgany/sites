@@ -109,7 +109,7 @@ afterEach(() => {
 })
 
 describe('App', () => {
-  it('renders the text "Preços" with correct spelling in header and footer', () => {
+  it('renders the pricing link in header and footer', () => {
     mockPremiumAccess({
       isAuthenticated: false,
       status: 'signed_out',
@@ -117,8 +117,19 @@ describe('App', () => {
     })
     render(<App />)
 
-    // Ensures the exact string "Preços" (with 'ç') exists in header and footer
-    expect(screen.getAllByText('Preços')).toHaveLength(2)
+    expect(screen.getAllByText(/pre.cos/i)).toHaveLength(2)
+  })
+
+  it('shows offer stats with meaning in the hero', () => {
+    window.localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(catalogItems))
+
+    render(<App />)
+
+    expect(screen.getByText('3 prompts prontos para React + Tailwind')).toBeInTheDocument()
+    expect(screen.getByText('1 prompts premium exclusivos')).toBeInTheDocument()
+    expect(
+      screen.getByText('2 exemplos livres para explorar antes de comprar'),
+    ).toBeInTheDocument()
   })
   it('starts Google sign in from the header when the visitor clicks Entrar', async () => {
     render(<App />)

@@ -114,4 +114,44 @@ describe('ComponentCard', () => {
     expect(screen.getByRole('button', { name: /copiar: atelie orbita/i })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /ver plano premium/i })).not.toBeInTheDocument()
   })
+
+  it('renders the site preview link when the card slug has a configured preview url', () => {
+    render(
+      <ComponentCard
+        hasPremiumAccess={false}
+        item={{
+          ...baseItem,
+          slug: 'orbis-nft-landing',
+          title: 'Orbis NFT',
+        }}
+        copyState="idle"
+        onCopy={vi.fn()}
+        pricingHref="/pricing/?from=orbis-nft-landing"
+      />,
+    )
+
+    const previewLink = screen.getByRole('link', { name: /ver preview do site: orbis nft/i })
+
+    expect(previewLink).toHaveAttribute(
+      'href',
+      'https://orbit-glass-showcase.lovable.app/',
+    )
+    expect(previewLink).toHaveAttribute('target', '_blank')
+    expect(previewLink.getAttribute('rel')).toContain('noopener')
+    expect(previewLink.getAttribute('rel')).toContain('noreferrer')
+  })
+
+  it('does not render the site preview link when the card slug has no configured preview', () => {
+    render(
+      <ComponentCard
+        hasPremiumAccess={false}
+        item={baseItem}
+        copyState="idle"
+        onCopy={vi.fn()}
+        pricingHref="/pricing/?from=atelie-orbita"
+      />,
+    )
+
+    expect(screen.queryByRole('link', { name: /ver preview do site/i })).not.toBeInTheDocument()
+  })
 })

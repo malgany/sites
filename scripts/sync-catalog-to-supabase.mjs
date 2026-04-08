@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import rawLocalPreviewOverrides from '../src/catalog/local-preview-overrides.json' with { type: 'json' }
+import rawPromptMediaLinks from '../src/catalog/prompt-media-links.json' with { type: 'json' }
 import { getAssetExtension, inferPreviewKindFromUrl, normalizeLookupValue, slugToStorageBasename } from './lib/catalog-sync-utils.mjs'
 import {
   buildCatalogUpsertPayload,
@@ -52,6 +53,7 @@ const promptMap = await fetchMotionSitesPromptMap({
 })
 const motionSitesCatalog = snapshot.items
 const localPreviewOverrides = rawLocalPreviewOverrides
+const promptMediaLinks = rawPromptMediaLinks
 
 const summary = {
   deactivated: [],
@@ -88,6 +90,7 @@ for (const item of catalogInventory) {
 
   const previewAsset = await resolvePreviewAsset(siteEntry)
   const localPreviewOverride = localPreviewOverrides[item.slug] ?? null
+  const promptMediaLink = promptMediaLinks[item.slug] ?? null
   let previewUrl = item.previewUrl ?? null
   let previewKind = item.previewKind ?? siteEntry.previewKind
 
@@ -108,6 +111,7 @@ for (const item of catalogInventory) {
   const upsertPayload = buildCatalogUpsertPayload({
     item,
     localPreviewOverride,
+    promptMediaLink,
     promptText: promptDetails.promptText,
     resolvedPreviewKind: previewKind,
     resolvedPreviewUrl: previewUrl,

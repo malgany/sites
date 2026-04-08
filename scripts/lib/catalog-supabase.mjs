@@ -17,6 +17,7 @@ const VALID_PREFERRED_SOURCES = new Set([
   'lovable_templates',
   'motion_videos',
 ])
+const PROMPT_VIDEO_URL_REGEX = /https?:\/\/[^\s)"']+?\.mp4(?:\?[^\s)"']*)?/gi
 
 function trimString(value) {
   if (typeof value !== 'string') {
@@ -35,6 +36,164 @@ function normalizeKeywordList(value) {
   return Array.from(
     new Set(value.map((entry) => trimString(entry)).filter(Boolean)),
   )
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function normalizePromptMediaUrl(value) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+
+  if (!trimmed) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(trimmed)
+
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return null
+    }
+
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+function collectPromptMediaTargets(promptMediaLink) {
+  if (!promptMediaLink || typeof promptMediaLink !== 'object') {
+    return {
+      byKey: new Map(),
+      ordered: [],
+    }
+  }
+
+  const ordered = []
+  const orderedSet = new Set()
+  const byKey = new Map()
+  const addTarget = (url) => {
+    if (!url || orderedSet.has(url)) {
+      return
+    }
+
+    orderedSet.add(url)
+    ordered.push(url)
+  }
+
+  addTarget(normalizePromptMediaUrl(promptMediaLink.mp4Url))
+
+  const rawVideos =
+    typeof promptMediaLink.videos === 'object' && promptMediaLink.videos !== null
+      ? promptMediaLink.videos
+      : null
+
+  if (!rawVideos) {
+    return {
+      byKey,
+      ordered,
+    }
+  }
+
+  const preferredOrder = ['hero', 'mission', 'solution', 'cta']
+  const remainingKeys = Object.keys(rawVideos)
+    .filter((key) => !preferredOrder.includes(key))
+    .sort((left, right) => left.localeCompare(right))
+  const orderedKeys = [...preferredOrder, ...remainingKeys]
+
+  for (const key of orderedKeys) {
+    const videoEntry =
+      typeof rawVideos[key] === 'object' && rawVideos[key] !== null
+        ? rawVideos[key]
+        : null
+
+    const videoUrl = normalizePromptMediaUrl(videoEntry?.mp4Url)
+
+    if (!videoUrl) {
+      continue
+    }
+
+    byKey.set(key, videoUrl)
+    addTarget(videoUrl)
+  }
+
+  return {
+    byKey,
+    ordered,
+  }
+}
+
+export function applyPromptMediaLinksToMarkdown({
+  markdown,
+  promptMediaLink,
+  slug,
+}) {
+  if (typeof markdown !== 'string' || !markdown.trim()) {
+    return markdown
+  }
+
+  const { byKey, ordered } = collectPromptMediaTargets(promptMediaLink)
+
+  if (!ordered.length) {
+    return markdown
+  }
+
+  const slugPattern = new RegExp(`/cards/${escapeRegex(slug)}/prompt-video-`, 'i')
+  const sourceUrls = Array.from(new Set(markdown.match(PROMPT_VIDEO_URL_REGEX) ?? [])).filter(
+    (url) => slugPattern.test(url),
+  )
+
+  if (!sourceUrls.length) {
+    return markdown
+  }
+
+  const replacements = new Map()
+  const defaultTarget = ordered[0]
+
+  if (ordered.length === 1) {
+    for (const sourceUrl of sourceUrls) {
+      replacements.set(sourceUrl, defaultTarget)
+    }
+  } else {
+    const unresolved = []
+    const usedTargets = new Set()
+
+    for (const sourceUrl of sourceUrls) {
+      const keyMatch = sourceUrl.match(/prompt-video-([a-z0-9]+)-/i)
+      const key = keyMatch?.[1]?.toLowerCase() ?? null
+      const matchedTarget = key ? byKey.get(key) ?? null : null
+
+      if (!matchedTarget) {
+        unresolved.push(sourceUrl)
+        continue
+      }
+
+      replacements.set(sourceUrl, matchedTarget)
+      usedTargets.add(matchedTarget)
+    }
+
+    const remainingTargets = ordered.filter((target) => !usedTargets.has(target))
+
+    unresolved.forEach((sourceUrl, index) => {
+      replacements.set(
+        sourceUrl,
+        remainingTargets[index] ?? defaultTarget,
+      )
+    })
+  }
+
+  let updatedMarkdown = markdown
+
+  for (const [sourceUrl, targetUrl] of replacements) {
+    updatedMarkdown = updatedMarkdown.split(sourceUrl).join(targetUrl)
+  }
+
+  return updatedMarkdown
 }
 
 export function normalizeCatalogReferenceLookup(value, fallbackTitle = null) {
@@ -193,6 +352,7 @@ export async function loadCatalogInventory({ supabase }) {
 export function buildCatalogUpsertPayload({
   item,
   localPreviewOverride,
+  promptMediaLink,
   promptText,
   resolvedPreviewKind,
   resolvedPreviewUrl,
@@ -203,11 +363,17 @@ export function buildCatalogUpsertPayload({
   const localPreviewKind =
     localPreviewOverride?.animatedPreviewKind ?? localPreviewOverride?.previewKind ?? null
 
+  const promptMarkdown = applyPromptMediaLinksToMarkdown({
+    markdown: promptText,
+    promptMediaLink,
+    slug: item.slug,
+  })
+
   return {
     slug: item.slug,
     title: item.title,
     type_label: item.typeLabel,
-    content_markdown: promptText,
+    content_markdown: promptMarkdown,
     is_active: item.isActive ?? true,
     is_public: item.isPublic,
     poster_url: localPreviewOverride?.posterUrl ?? item.posterUrl ?? null,
@@ -226,7 +392,7 @@ export function buildCatalogUpsertPayload({
     ),
     sort_order: item.sortOrder,
     source_file_name: `motionsites:${siteEntry.id}`,
-    source_hash: createSourceHash(promptText),
+    source_hash: createSourceHash(promptMarkdown),
   }
 }
 
