@@ -381,7 +381,7 @@ function App() {
             </div>
 
             <div className="mx-auto flex w-full max-w-[49rem] flex-col items-center text-center pb-16 lg:pb-32">
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/20 bg-[var(--primary)]/8 px-3 py-1 text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">
+              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/20 bg-transparent px-3 py-1 text-xs font-semibold text-[var(--primary)] uppercase tracking-wide">
                 Para devs e designers React + Tailwind
               </span>
 
@@ -393,9 +393,8 @@ function App() {
                 de design com IA
               </h1>
 
-              <p className="mt-5 max-w-[38ch] text-[clamp(0.95rem,2.2vw,1.1rem)] leading-relaxed text-[var(--secondary)]">
-                Biblioteca de prompts de UI prontos para montar interfaces React&nbsp;+&nbsp;Tailwind
-                em minutos — sem partir do zero.
+              <p className="mt-5 max-w-[42ch] text-[clamp(0.95rem,2.2vw,1.1rem)] leading-relaxed text-[var(--secondary)]">
+                Crie layouts impressionantes sem perder tempo reinventando a roda.
               </p>
 
               {catalogItems.length > 0 && (
