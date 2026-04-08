@@ -283,7 +283,7 @@ function App() {
   )
   const hasCatalogItems = catalogItems.length > 0
   const hasPremiumAccess = hasActivePremiumAccess(accessState)
-  const upgradeCtaLabel = hasPremiumAccess ? '✓ Premium Ativo' : 'Acesso Vitalício — R$ 59,90'
+  const upgradeCtaLabel = hasPremiumAccess ? '✓ Premium Ativo' : 'Acesso Vitalício - R$ 59,90'
   const authButtonLabel =
     authActionState === 'signing_in'
       ? 'Entrando...'
