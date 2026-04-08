@@ -117,7 +117,7 @@ describe('App', () => {
     })
     render(<App />)
 
-    expect(screen.getAllByText(/pre.cos/i)).toHaveLength(2)
+    expect(screen.getAllByText('Preços')).toHaveLength(2)
   })
 
   it('shows offer stats with meaning in the hero', () => {
@@ -125,11 +125,7 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.getByText('3 prompts prontos para React + Tailwind')).toBeInTheDocument()
-    expect(screen.getByText('1 prompts premium exclusivos')).toBeInTheDocument()
-    expect(
-      screen.getByText('2 exemplos livres para explorar antes de comprar'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('3 prompts • 1 premium exclusivos • acesso vitalício')).toBeInTheDocument()
   })
   it('starts Google sign in from the header when the visitor clicks Entrar', async () => {
     render(<App />)

@@ -52,7 +52,7 @@ describe('PaymentSuccessPage', () => {
     render(<PaymentSuccessPage />)
 
     expect(screen.getByText(/premium liberado/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /abrir catalogo premium/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /abrir catálogo premium/i })).toHaveAttribute(
       'href',
       '/',
     )
@@ -69,7 +69,7 @@ describe('PaymentSuccessPage', () => {
 
     expect(screen.getByText(/confirmando seu pagamento/i)).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: /abrir catalogo premium/i }),
+      screen.queryByRole('link', { name: /abrir catálogo premium/i }),
     ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /verificar novamente/i }))
@@ -89,6 +89,7 @@ describe('PaymentSuccessPage', () => {
     expect(mockedTrackMetaEvent).toHaveBeenCalledWith('Purchase', {
       currency: 'BRL',
       value: 59.9,
+      transaction_id: 'cs_test_123',
     })
   })
 })

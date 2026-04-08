@@ -188,7 +188,7 @@ export function PaymentSuccessPage() {
                       href="/"
                       className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92"
                     >
-                      Abrir catalogo premium
+                      Abrir catálogo premium
                     </a>
                     <a
                       href="/pricing/"
