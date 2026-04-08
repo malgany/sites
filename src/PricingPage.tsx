@@ -337,9 +337,9 @@ export function PricingPage() {
               React + Tailwind sem mensalidade
             </p>
             <h1 className="mx-auto mt-5 max-w-[12ch] text-[clamp(2.2rem,8vw,5.2rem)] leading-[0.9] font-black tracking-[-0.07em]">
-              Pague uma vez.
+              Pague uma vez
               <span className="block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
-                Tenha acesso vitalício.
+                Tenha acesso vitalício
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-[44rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
