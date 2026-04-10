@@ -104,6 +104,13 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
       const stripePremiumPriceId = getPremiumPriceId(deps, purchaseOption)
       const siteUrl = deps.getRequiredEnv('SITE_URL')
 
+      console.log('Creating checkout session:', {
+        purchaseOption,
+        priceId: stripePremiumPriceId,
+        siteUrl,
+        userId: user.id,
+      })
+
       let customerId = accessLookup.data?.stripe_customer_id ?? null
 
       if (!customerId) {
