@@ -6,24 +6,7 @@ type CreateCheckoutSessionResponse = {
   checkoutUrl: string
 }
 
-async function getAuthFunctionHeaders() {
-  const authClient = getBrowserAuthSupabaseClient()
-  const { data, error } = await authClient.auth.getSession()
 
-  if (error) {
-    throw new Error(error.message || 'Could not load the current auth session.')
-  }
-
-  const accessToken = data.session?.access_token?.trim()
-
-  if (!accessToken) {
-    throw new Error('Authentication required.')
-  }
-
-  return {
-    Authorization: `Bearer ${accessToken}`,
-  }
-}
 
 export async function requestMagicLink(email: string, nextPath: string) {
   const authClient = getBrowserAuthSupabaseClient()

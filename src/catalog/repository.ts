@@ -173,7 +173,7 @@ export async function getCatalogContent(slug: string) {
     throw new Error(`Could not load the current auth session: ${sessionResponse.error.message}`)
   }
 
-  const accessToken = sessionResponse.data.session?.access_token?.trim()
+
   const response = await supabase.functions.invoke<CatalogContentResponse>('catalog-content', {
     body: {
       slug,
