@@ -80,10 +80,14 @@ drop policy if exists "Public can read published catalog prompts" on public.cata
 create table if not exists public.user_access (
   user_id uuid primary key references auth.users (id) on delete cascade,
   plan_code text not null default 'premium',
+  purchase_option text,
   status text not null default 'pending',
+  billing_status text,
   stripe_customer_id text,
   stripe_checkout_session_id text,
   stripe_payment_intent_id text,
+  stripe_subscription_id text,
+  stripe_subscription_schedule_id text,
   source_slug text,
   granted_at timestamptz,
   revoked_at timestamptz,
@@ -95,7 +99,13 @@ alter table public.user_access
 add column if not exists plan_code text not null default 'premium';
 
 alter table public.user_access
+add column if not exists purchase_option text;
+
+alter table public.user_access
 add column if not exists status text not null default 'pending';
+
+alter table public.user_access
+add column if not exists billing_status text;
 
 alter table public.user_access
 add column if not exists stripe_customer_id text;
@@ -105,6 +115,12 @@ add column if not exists stripe_checkout_session_id text;
 
 alter table public.user_access
 add column if not exists stripe_payment_intent_id text;
+
+alter table public.user_access
+add column if not exists stripe_subscription_id text;
+
+alter table public.user_access
+add column if not exists stripe_subscription_schedule_id text;
 
 alter table public.user_access
 add column if not exists source_slug text;
@@ -142,6 +158,26 @@ begin
     add constraint user_access_status_check
     check (status in ('pending', 'active', 'revoked'));
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'user_access_purchase_option_check'
+  ) then
+    alter table public.user_access
+    add constraint user_access_purchase_option_check
+    check (purchase_option in ('one_time', 'installments_10'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'user_access_billing_status_check'
+  ) then
+    alter table public.user_access
+    add constraint user_access_billing_status_check
+    check (billing_status in ('pending', 'active', 'delinquent', 'completed', 'canceled'));
+  end if;
 end;
 $$;
 
@@ -152,6 +188,14 @@ where stripe_checkout_session_id is not null;
 create unique index if not exists user_access_payment_intent_id_idx
 on public.user_access (stripe_payment_intent_id)
 where stripe_payment_intent_id is not null;
+
+create unique index if not exists user_access_subscription_id_idx
+on public.user_access (stripe_subscription_id)
+where stripe_subscription_id is not null;
+
+create unique index if not exists user_access_subscription_schedule_id_idx
+on public.user_access (stripe_subscription_schedule_id)
+where stripe_subscription_schedule_id is not null;
 
 drop trigger if exists set_user_access_updated_at on public.user_access;
 

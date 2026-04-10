@@ -39,6 +39,27 @@ function createServiceClient(accessRow: Record<string, unknown> | null) {
   }
 }
 
+function createEnvGetter(overrides?: Record<string, string>) {
+  return vi.fn((name: string) => {
+    const values = {
+      SITE_URL: 'https://prompt.test',
+      STRIPE_PREMIUM_INSTALLMENTS_10_PRICE_ID: 'price_installments',
+      STRIPE_PREMIUM_ONE_TIME_PRICE_ID: 'price_one_time',
+      STRIPE_PREMIUM_PRICE_ID: 'price_fallback',
+      STRIPE_SECRET_KEY: 'sk_test',
+      ...overrides,
+    }
+
+    const value = values[name as keyof typeof values]
+
+    if (!value) {
+      throw new Error(`Missing ${name}.`)
+    }
+
+    return value
+  })
+}
+
 describe('create-checkout-session handler', () => {
   it('rejects unauthenticated requests', async () => {
     const handler = createCreateCheckoutSessionHandler({
@@ -61,7 +82,7 @@ describe('create-checkout-session handler', () => {
     })
   })
 
-  it('creates a pending premium record and returns the checkout url', async () => {
+  it('creates a pending one-time checkout and stores the selected purchase option', async () => {
     const service = createServiceClient(null)
     const createStripeCustomer = vi.fn().mockResolvedValue({
       id: 'cus_123',
@@ -79,26 +100,13 @@ describe('create-checkout-session handler', () => {
           email: 'user@example.com',
           id: 'user-123',
         }),
-      getRequiredEnv: vi.fn((name: string) => {
-        if (name === 'STRIPE_SECRET_KEY') {
-          return 'sk_test'
-        }
-
-        if (name === 'STRIPE_PREMIUM_PRICE_ID') {
-          return 'price_123'
-        }
-
-        if (name === 'SITE_URL') {
-          return 'https://prompt.test'
-        }
-
-        return ''
-      }),
+      getRequiredEnv: createEnvGetter(),
     })
 
     const response = await handler(
       new Request('https://example.com/create-checkout-session', {
         body: JSON.stringify({
+          purchaseOption: 'one_time',
           sourceSlug: 'nexora-hero',
         }),
         headers: {
@@ -120,7 +128,8 @@ describe('create-checkout-session handler', () => {
     })
     expect(createStripeCheckoutSession).toHaveBeenCalledWith({
       customerId: 'cus_123',
-      priceId: 'price_123',
+      priceId: 'price_one_time',
+      purchaseOption: 'one_time',
       secretKey: 'sk_test',
       siteUrl: 'https://prompt.test',
       sourceSlug: 'nexora-hero',
@@ -128,7 +137,9 @@ describe('create-checkout-session handler', () => {
     })
     expect(service.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
+        billing_status: 'pending',
         plan_code: 'premium',
+        purchase_option: 'one_time',
         source_slug: 'nexora-hero',
         status: 'pending',
         stripe_checkout_session_id: 'cs_123',
@@ -138,6 +149,96 @@ describe('create-checkout-session handler', () => {
       {
         onConflict: 'user_id',
       },
+    )
+  })
+
+  it('uses the installments price id for the recurring checkout option', async () => {
+    const service = createServiceClient({
+      stripe_customer_id: 'cus_existing',
+      status: 'pending',
+    })
+    const createStripeCheckoutSession = vi.fn().mockResolvedValue({
+      id: 'cs_installments',
+      url: 'https://checkout.stripe.test/installments',
+    })
+    const handler = createCreateCheckoutSessionHandler({
+      createServiceClient: () => service.client,
+      createStripeCheckoutSession,
+      createStripeCustomer: vi.fn(),
+      createUserClient: () =>
+        createUserClient({
+          email: 'user@example.com',
+          id: 'user-123',
+        }),
+      getRequiredEnv: createEnvGetter(),
+    })
+
+    const response = await handler(
+      new Request('https://example.com/create-checkout-session', {
+        body: JSON.stringify({
+          purchaseOption: 'installments_10',
+          sourceSlug: 'nexora-hero',
+        }),
+        headers: {
+          Authorization: 'Bearer token',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(createStripeCheckoutSession).toHaveBeenCalledWith({
+      customerId: 'cus_existing',
+      priceId: 'price_installments',
+      purchaseOption: 'installments_10',
+      secretKey: 'sk_test',
+      siteUrl: 'https://prompt.test',
+      sourceSlug: 'nexora-hero',
+      userId: 'user-123',
+    })
+  })
+
+  it('falls back to STRIPE_PREMIUM_PRICE_ID for one-time checkout during rollout', async () => {
+    const service = createServiceClient(null)
+    const createStripeCheckoutSession = vi.fn().mockResolvedValue({
+      id: 'cs_123',
+      url: 'https://checkout.stripe.test/session',
+    })
+    const handler = createCreateCheckoutSessionHandler({
+      createServiceClient: () => service.client,
+      createStripeCheckoutSession,
+      createStripeCustomer: vi.fn().mockResolvedValue({
+        id: 'cus_123',
+      }),
+      createUserClient: () =>
+        createUserClient({
+          email: 'user@example.com',
+          id: 'user-123',
+        }),
+      getRequiredEnv: createEnvGetter({
+        STRIPE_PREMIUM_ONE_TIME_PRICE_ID: '',
+      }),
+    })
+
+    const response = await handler(
+      new Request('https://example.com/create-checkout-session', {
+        body: JSON.stringify({
+          purchaseOption: 'one_time',
+        }),
+        headers: {
+          Authorization: 'Bearer token',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(createStripeCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        priceId: 'price_fallback',
+      }),
     )
   })
 })

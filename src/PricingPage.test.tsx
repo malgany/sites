@@ -106,47 +106,58 @@ beforeEach(() => {
 })
 
 describe('PricingPage', () => {
-  it('renders the new positioning headline and offer stats', async () => {
+  it('renders the original positioning with the installment option selected by default', async () => {
     render(<PricingPage />)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /pague uma vez\.\s*tenha acesso vitalício\./i,
+      /pague uma vez\s*tenha acesso vitalicio/i,
     )
     expect(
       await screen.findByText('3 prompts prontos para React + Tailwind'),
     ).toBeInTheDocument()
     expect(screen.getByText('1 prompts premium exclusivos')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /10x de r\$ 5,99/i })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /pagar a vista/i })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    )
+    expect(screen.getByText('R$ 5,99')).toBeInTheDocument()
+    expect(screen.getAllByText('10x').length).toBeGreaterThan(0)
   })
 
-  it('starts Google login when the visitor tries to buy while signed out', async () => {
+  it('starts Google login with the chosen one-time option when signed out', async () => {
     window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalício/i }))
+    fireEvent.click(screen.getByRole('switch', { name: /pagar a vista/i }))
+    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalicio/i }))
 
     await waitFor(() => {
       expect(mockedSignInWithGoogle).toHaveBeenCalledWith(
-        '/pricing/?from=nexora-hero&intent=checkout',
+        '/pricing/?from=nexora-hero&purchase_option=one_time&intent=checkout',
       )
     })
     expect(mockedCreatePremiumCheckoutSession).not.toHaveBeenCalled()
   })
 
-  it('opens Stripe checkout when the visitor is already authenticated', async () => {
+  it('opens Stripe checkout for the one-time option when already authenticated', async () => {
     mockPremiumAccess({
       isAuthenticated: true,
       status: 'pending',
       planCode: null,
     })
-    window.history.replaceState({}, '', '/pricing/?from=nexora-hero')
+    window.history.replaceState({}, '', '/pricing/?from=nexora-hero&purchase_option=one_time')
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalício/i }))
+    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalicio/i }))
 
     await waitFor(() => {
-      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
+      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith({
+        purchaseOption: 'one_time',
+        sourceSlug: 'nexora-hero',
+      })
     })
     expect(mockedTrackMetaEvent).toHaveBeenCalledWith('InitiateCheckout', {
       currency: 'BRL',
@@ -160,23 +171,59 @@ describe('PricingPage', () => {
     })
   })
 
-  it('continues to checkout automatically after returning authenticated with checkout intent', async () => {
+  it('opens Stripe checkout for installments with the recurring amount', async () => {
     mockPremiumAccess({
       isAuthenticated: true,
       status: 'pending',
       planCode: null,
     })
-    window.history.replaceState({}, '', '/pricing/?from=nexora-hero&intent=checkout')
+    window.history.replaceState(
+      {},
+      '',
+      '/pricing/?from=nexora-hero',
+    )
 
     render(<PricingPage />)
 
+    fireEvent.click(screen.getByRole('button', { name: /10x de r\$ 5,99/i }))
+
     await waitFor(() => {
-      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith('nexora-hero')
+      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith({
+        purchaseOption: 'installments_10',
+        sourceSlug: 'nexora-hero',
+      })
     })
     expect(mockedTrackMetaEvent).toHaveBeenCalledWith('InitiateCheckout', {
       currency: 'BRL',
       num_items: 1,
-      value: 59.9,
+      value: 5.99,
+    })
+  })
+
+  it('continues to checkout automatically after auth using the selected purchase option', async () => {
+    mockPremiumAccess({
+      isAuthenticated: true,
+      status: 'pending',
+      planCode: null,
+    })
+    window.history.replaceState(
+      {},
+      '',
+      '/pricing/?from=nexora-hero&purchase_option=installments_10&intent=checkout',
+    )
+
+    render(<PricingPage />)
+
+    await waitFor(() => {
+      expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith({
+        purchaseOption: 'installments_10',
+        sourceSlug: 'nexora-hero',
+      })
+    })
+    expect(mockedTrackMetaEvent).toHaveBeenCalledWith('InitiateCheckout', {
+      currency: 'BRL',
+      num_items: 1,
+      value: 5.99,
     })
     await waitFor(() => {
       expect(mockedAssignBrowserLocation).toHaveBeenCalledWith(
@@ -194,7 +241,7 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /abrir catálogo premium/i }))
+    fireEvent.click(screen.getByRole('button', { name: /abrir catalogo premium/i }))
 
     await waitFor(() => {
       expect(mockedAssignBrowserLocation).toHaveBeenCalledWith('/')
@@ -206,8 +253,7 @@ describe('PricingPage', () => {
     render(<PricingPage />)
 
     expect(screen.getByText(/o que exatamente eu recebo ao comprar\?/i)).toBeInTheDocument()
-    expect(screen.getByText(/isso é código pronto\?/i)).toBeInTheDocument()
+    expect(screen.getByText(/isso e codigo pronto\?/i)).toBeInTheDocument()
     expect(screen.getByText(/como uso esses prompts no meu fluxo\?/i)).toBeInTheDocument()
   })
 })
-

@@ -1,5 +1,9 @@
 import { getRequiredEnv } from '../_shared/env.ts'
-import { verifyStripeWebhookEvent } from '../_shared/stripe.ts'
+import {
+  createStripeSubscriptionScheduleFromSubscription,
+  updateStripeSubscriptionSchedule,
+  verifyStripeWebhookEvent,
+} from '../_shared/stripe.ts'
 import { createServiceClient } from '../_shared/supabase.ts'
 import { createStripeWebhookHandler } from './handler.ts'
 
@@ -10,7 +14,9 @@ declare const Deno: {
 Deno.serve(
   createStripeWebhookHandler({
     createServiceClient,
+    createStripeSubscriptionScheduleFromSubscription,
     getRequiredEnv,
+    updateStripeSubscriptionSchedule,
     verifyStripeWebhookEvent,
   }),
 )

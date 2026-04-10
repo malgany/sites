@@ -38,12 +38,18 @@ describe('auth api', () => {
       },
     } as never)
 
-    await expect(createPremiumCheckoutSession('nexora-hero')).resolves.toBe(
+    await expect(
+      createPremiumCheckoutSession({
+        purchaseOption: 'installments_10',
+        sourceSlug: 'nexora-hero',
+      }),
+    ).resolves.toBe(
       'https://checkout.stripe.test/session',
     )
 
     expect(invoke).toHaveBeenCalledWith('create-checkout-session', {
       body: {
+        purchaseOption: 'installments_10',
         sourceSlug: 'nexora-hero',
       },
       headers: {

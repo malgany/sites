@@ -38,6 +38,8 @@ export type CatalogCopyState = 'idle' | 'pending' | 'copied' | 'error'
 
 export type PremiumPlanCode = 'premium'
 
+export type PremiumPurchaseOption = 'one_time' | 'installments_10'
+
 export type PremiumAccessStatus = 'signed_out' | 'pending' | 'active' | 'revoked'
 
 export type PremiumAccessState = {

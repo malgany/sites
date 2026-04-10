@@ -12,6 +12,10 @@ type StripeCheckoutSession = {
   url: string | null
 }
 
+type StripeSubscriptionSchedule = {
+  id: string
+}
+
 export type StripeWebhookEvent = {
   id: string
   type: string
@@ -19,6 +23,8 @@ export type StripeWebhookEvent = {
     object: Record<string, unknown>
   }
 }
+
+export type StripePurchaseOption = 'one_time' | 'installments_10'
 
 function stripTrailingSlash(value: string) {
   return value.endsWith('/') ? value.slice(0, -1) : value
@@ -107,6 +113,7 @@ export async function createStripeCustomer(options: {
 
 export async function createStripeCheckoutSession(options: {
   customerId: string
+  purchaseOption: StripePurchaseOption
   priceId: string
   secretKey: string
   siteUrl: string
@@ -117,6 +124,7 @@ export async function createStripeCheckoutSession(options: {
   const successUrl = new URL('/payment-success/', `${siteUrl}/`)
   const cancelUrl = new URL('/pricing/', `${siteUrl}/`)
   const formData = new URLSearchParams()
+  const mode = options.purchaseOption === 'installments_10' ? 'subscription' : 'payment'
 
   if (options.sourceSlug) {
     successUrl.searchParams.set('source_slug', options.sourceSlug)
@@ -124,6 +132,8 @@ export async function createStripeCheckoutSession(options: {
     formData.set('metadata[source_slug]', options.sourceSlug)
   }
 
+  successUrl.searchParams.set('purchase_option', options.purchaseOption)
+  cancelUrl.searchParams.set('purchase_option', options.purchaseOption)
   successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}')
 
   formData.set('allow_promotion_codes', 'true')
@@ -134,13 +144,65 @@ export async function createStripeCheckoutSession(options: {
   formData.set('line_items[0][quantity]', '1')
   formData.set('locale', 'pt-BR')
   formData.set('metadata[plan_code]', 'premium')
+  formData.set('metadata[purchase_option]', options.purchaseOption)
   formData.set('metadata[user_id]', options.userId)
-  formData.set('mode', 'payment')
+  formData.set('mode', mode)
+  formData.set('submit_type', mode === 'subscription' ? 'subscribe' : 'pay')
   formData.set('success_url', successUrl.toString())
+
+  if (mode === 'subscription') {
+    formData.set('subscription_data[metadata][plan_code]', 'premium')
+    formData.set('subscription_data[metadata][purchase_option]', options.purchaseOption)
+    formData.set('subscription_data[metadata][user_id]', options.userId)
+
+    if (options.sourceSlug) {
+      formData.set('subscription_data[metadata][source_slug]', options.sourceSlug)
+    }
+  }
 
   return callStripeApi<StripeCheckoutSession>(
     options.secretKey,
     '/v1/checkout/sessions',
+    {
+      body: formData,
+    },
+  )
+}
+
+export async function createStripeSubscriptionScheduleFromSubscription(options: {
+  secretKey: string
+  subscriptionId: string
+}) {
+  const formData = new URLSearchParams()
+  formData.set('from_subscription', options.subscriptionId)
+
+  return callStripeApi<StripeSubscriptionSchedule>(
+    options.secretKey,
+    '/v1/subscription_schedules',
+    {
+      body: formData,
+    },
+  )
+}
+
+export async function updateStripeSubscriptionSchedule(options: {
+  priceId: string
+  quantity?: number
+  scheduleId: string
+  secretKey: string
+  startDate: number | string
+}) {
+  const formData = new URLSearchParams()
+  formData.set('end_behavior', 'cancel')
+  formData.set('phases[0][start_date]', String(options.startDate))
+  formData.set('phases[0][items][0][price]', options.priceId)
+  formData.set('phases[0][items][0][quantity]', String(options.quantity ?? 1))
+  formData.set('phases[0][duration][interval]', 'month')
+  formData.set('phases[0][duration][interval_count]', '10')
+
+  return callStripeApi<StripeSubscriptionSchedule>(
+    options.secretKey,
+    `/v1/subscription_schedules/${options.scheduleId}`,
     {
       body: formData,
     },

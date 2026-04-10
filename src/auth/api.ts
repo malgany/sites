@@ -1,6 +1,7 @@
 import { getBrowserAuthSupabaseClient } from './client'
 import { getAuthCallbackUrl } from './redirects'
 import { assignBrowserLocation } from '../lib/browserNavigation'
+import type { PremiumPurchaseOption } from '../types'
 
 type CreateCheckoutSessionResponse = {
   checkoutUrl: string
@@ -77,14 +78,18 @@ export async function exchangeMagicLinkCode(code: string) {
   await exchangeAuthCode(code)
 }
 
-export async function createPremiumCheckoutSession(sourceSlug?: string | null) {
+export async function createPremiumCheckoutSession(options: {
+  purchaseOption: PremiumPurchaseOption
+  sourceSlug?: string | null
+}) {
   const authClient = getBrowserAuthSupabaseClient()
   const headers = await getAuthFunctionHeaders()
   const { data, error } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
     'create-checkout-session',
     {
       body: {
-        sourceSlug: sourceSlug?.trim() || null,
+        purchaseOption: options.purchaseOption,
+        sourceSlug: options.sourceSlug?.trim() || null,
       },
       headers,
     },
