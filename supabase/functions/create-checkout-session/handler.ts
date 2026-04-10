@@ -109,6 +109,7 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
         priceId: stripePremiumPriceId,
         siteUrl,
         userId: user.id,
+        isProduction: siteUrl.includes('prompt-archive.xyz')
       })
 
       let customerId = accessLookup.data?.stripe_customer_id ?? null
