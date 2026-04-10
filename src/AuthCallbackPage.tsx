@@ -51,11 +51,11 @@ export function AuthCallbackPage() {
       const { data, error } = await authClient.auth.getSession()
 
       if (error) {
-        throw new Error(error.message || 'Nao foi possivel validar a sessao atual.')
+        throw new Error(error.message || 'Não foi possível validar a sessão atual.')
       }
 
       if (!data.session?.user) {
-        throw new Error('Nao foi possivel restaurar sua sessao. Tente entrar novamente.')
+        throw new Error('Não foi possível restaurar sua sessão. Tente entrar novamente.')
       }
 
       if (!isCancelled) {
@@ -72,7 +72,7 @@ export function AuthCallbackPage() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Nao foi possivel concluir o login agora.',
+          : 'Não foi possível concluir o login agora.',
       )
     })
 
@@ -102,13 +102,13 @@ export function AuthCallbackPage() {
               <p className="text-[0.72rem] font-semibold tracking-[0.26em] text-[var(--secondary)] uppercase">
                 auth callback
               </p>
-              <h1 className="mt-5 text-[clamp(2rem,6vw,4rem)] leading-[0.92] font-black tracking-[-0.06em]">
-                {errorMessage ? 'NAO FOI POSSIVEL ENTRAR' : 'CONFIRMANDO LOGIN'}
+               <h1 className="mt-5 text-[clamp(2rem,6vw,4rem)] leading-[0.92] font-black tracking-[-0.06em]">
+                {errorMessage ? 'NÃO FOI POSSÍVEL ENTRAR' : 'CONFIRMANDO LOGIN'}
               </h1>
               <p className="mx-auto mt-5 max-w-[32rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
                 {errorMessage
                   ? errorMessage
-                  : 'Restaurando sua sessao e voltando para a pagina anterior.'}
+                  : 'Restaurando sua sessão e voltando para a página anterior.'}
               </p>
 
               {errorMessage ? (
@@ -123,7 +123,7 @@ export function AuthCallbackPage() {
                     href="/"
                     className="inline-flex items-center justify-center rounded-[8px] bg-[var(--surface-low)] px-5 py-3.5 font-medium text-[var(--foreground)] transition hover:bg-[var(--surface-high)]"
                   >
-                    Voltar ao catalogo
+                    Voltar ao catálogo
                   </a>
                 </div>
               ) : (

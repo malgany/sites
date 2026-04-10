@@ -9,10 +9,10 @@ type CreateCheckoutSessionResponse = {
 
 async function getAuthFunctionHeaders() {
   const authClient = getBrowserAuthSupabaseClient()
-  const { data, error } = await authClient.auth.getSession()
+  const { data, error } = await authClient.auth.refreshSession()
 
   if (error) {
-    throw new Error(error.message || 'Could not load the current auth session.')
+    throw new Error(error.message || 'Could not refresh the auth session.')
   }
 
   const accessToken = data.session?.access_token?.trim()

@@ -24,11 +24,11 @@ const ERROR_PREFIX = 'error:'
 const PENDING_PREFIX = 'pending:'
 const INITIAL_RENDER_COUNT = 24
 const RENDER_BATCH_SIZE = 12
-const CATALOG_REFRESHING_MESSAGE = 'Atualizando catalogo.'
+const CATALOG_REFRESHING_MESSAGE = 'Atualizando catálogo.'
 const CATALOG_REFRESH_ERROR_MESSAGE =
-  'Nao foi possivel atualizar o catalogo. Exibindo a ultima versao salva.'
+  'Não foi possível atualizar o catálogo. Exibindo a última versão salva.'
 const CATALOG_BLOCKING_ERROR_MESSAGE =
-  'O catalogo esta temporariamente indisponivel. Tente novamente em instantes.'
+  'O catálogo está temporariamente indisponível. Tente novamente em instantes.'
 
 function getCurrentAppPath() {
   if (typeof window === 'undefined') {
@@ -86,7 +86,7 @@ function getCatalogStatusMessage(
   if (catalogRefreshState === 'error') {
     return hasCachedCatalog
       ? CATALOG_REFRESH_ERROR_MESSAGE
-      : 'Nao foi possivel atualizar o catalogo.'
+      : 'Não foi possível atualizar o catálogo.'
   }
 
   return ''
@@ -253,7 +253,7 @@ function App() {
         await signOut()
       } catch (error) {
         console.error('Could not sign out.', error)
-        setAuthActionError('Nao foi possivel sair agora.')
+        setAuthActionError('Não foi possível sair agora.')
       } finally {
         setAuthActionState('idle')
       }
@@ -267,7 +267,7 @@ function App() {
       await signInWithGoogle(getCurrentAppPath())
     } catch (error) {
       console.error('Could not start Google sign in.', error)
-      setAuthActionError('Nao foi possivel abrir o login agora.')
+      setAuthActionError('Não foi possível abrir o login agora.')
       setAuthActionState('idle')
     }
   }
@@ -402,7 +402,7 @@ function App() {
 
               {catalogOfferStats.totalCount > 0 && (
                 <p className="mt-3 text-[0.85rem] text-[var(--secondary)]">
-                  {catalogOfferStats.totalCount} prompts • {catalogOfferStats.premiumCount} premium exclusivos • acesso vitalício
+                  {catalogOfferStats.totalCount} prompts • {catalogOfferStats.premiumCount} premium exclusivos • acesso vitalício por R$ 59,90
                 </p>
               )}
 
@@ -474,7 +474,7 @@ function App() {
           ) : !hasCatalogItems && catalogRefreshState === 'error' ? (
             <div className="mx-auto mt-8 max-w-[1136px] rounded-[8px] bg-[#fff0f0] px-6 py-12 text-center">
               <p className="text-lg font-semibold tracking-[-0.03em] text-[#8f1d1d]">
-                Catalogo indisponivel
+                Catálogo indisponível
               </p>
               <p className="mt-2 text-sm text-[#8f1d1d]/80">
                 {catalogError ?? CATALOG_BLOCKING_ERROR_MESSAGE}
@@ -523,7 +523,7 @@ function App() {
                 Nenhum prompt encontrado
               </p>
               <p className="mt-2 text-sm text-[var(--secondary)]">
-                Tente outro termo de busca ou aguarde a proxima sincronizacao do catalogo.
+                Tente outro termo de busca ou aguarde a próxima sincronização do catálogo.
               </p>
             </div>
           )}
@@ -532,7 +532,7 @@ function App() {
         <footer className="mt-8 rounded-[8px] bg-[var(--surface-low)] px-5 py-8 sm:px-6 sm:py-10">
           <div className="mx-auto flex max-w-[1136px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm leading-6 text-[var(--secondary)]">
-              React, Tailwind, preview em movimento e copia rapida no mesmo lugar.
+              React, Tailwind, preview em movimento e cópia rápida no mesmo lugar.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <a

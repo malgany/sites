@@ -125,7 +125,7 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.getByText('3 prompts • 1 premium exclusivos • acesso vitalício')).toBeInTheDocument()
+    expect(screen.getByText('3 prompts • 1 premium exclusivos • acesso vitalício por R$ 59,90')).toBeInTheDocument()
   })
   it('starts Google sign in from the header when the visitor clicks Entrar', async () => {
     render(<App />)
@@ -158,12 +158,12 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.queryByText('Carregando catalogo')).not.toBeInTheDocument()
+    expect(screen.queryByText('Carregando catálogo')).not.toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Atelie Orbita', level: 2 }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('article')).toHaveLength(3)
-    expect(screen.getByText('Atualizando catalogo.')).toBeInTheDocument()
+    expect(screen.getByText('Atualizando catálogo.')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(mockedRefreshCatalogMetadata).toHaveBeenCalledTimes(1)
@@ -292,12 +292,12 @@ describe('App', () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          'Nao foi possivel atualizar o catalogo. Exibindo a ultima versao salva.',
+          'Não foi possível atualizar o catálogo. Exibindo a última versão salva.',
         ),
       ).toBeInTheDocument()
     })
 
-    expect(screen.queryByText('Catalogo publico indisponivel')).not.toBeInTheDocument()
+    expect(screen.queryByText('Catálogo público indisponível')).not.toBeInTheDocument()
   })
 
   it('shows the blocking error state when refresh fails without cached data', async () => {
@@ -308,12 +308,12 @@ describe('App', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('Catalogo indisponivel')).toBeInTheDocument()
+      expect(screen.getByText('Catálogo indisponível')).toBeInTheDocument()
     })
 
     expect(
       screen.getByText(
-        'O catalogo esta temporariamente indisponivel. Tente novamente em instantes.',
+        'O catálogo está temporariamente indisponível. Tente novamente em instantes.',
       ),
     ).toBeInTheDocument()
     expect(

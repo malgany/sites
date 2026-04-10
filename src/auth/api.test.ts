@@ -20,7 +20,7 @@ describe('auth api', () => {
       },
       error: null,
     })
-    const getSession = vi.fn().mockResolvedValue({
+    const refreshSession = vi.fn().mockResolvedValue({
       data: {
         session: {
           access_token: 'token-123',
@@ -31,7 +31,7 @@ describe('auth api', () => {
 
     mockedGetBrowserAuthSupabaseClient.mockReturnValue({
       auth: {
-        getSession,
+        refreshSession,
       },
       functions: {
         invoke,

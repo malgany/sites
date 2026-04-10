@@ -52,8 +52,8 @@ describe('PaymentSuccessPage', () => {
     render(<PaymentSuccessPage />)
 
     expect(screen.getByText(/premium liberado/i)).toBeInTheDocument()
-    expect(screen.getByText(/opcao escolhida: 10x de r\$ 5,99/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /abrir catalogo premium/i })).toHaveAttribute(
+    expect(screen.getByText(/opção escolhida: 10x de r\$ 5,99/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /abrir catálogo premium/i })).toHaveAttribute(
       'href',
       '/',
     )
@@ -69,9 +69,9 @@ describe('PaymentSuccessPage', () => {
     render(<PaymentSuccessPage />)
 
     expect(screen.getByText(/confirmando seu pagamento/i)).toBeInTheDocument()
-    expect(screen.getByText(/primeira cobranca confirmar o parcelado/i)).toBeInTheDocument()
+    expect(screen.getByText(/primeira cobrança confirmar o parcelado/i)).toBeInTheDocument()
     expect(
-      screen.queryByRole('link', { name: /abrir catalogo premium/i }),
+      screen.queryByRole('link', { name: /abrir catálogo premium/i }),
     ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /verificar novamente/i }))

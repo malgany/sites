@@ -37,14 +37,14 @@ function getPurchaseValue(purchaseOption: PremiumPurchaseOption) {
 
 function getPendingMessage(purchaseOption: PremiumPurchaseOption) {
   return purchaseOption === 'installments_10'
-    ? 'Aguardando a primeira cobranca confirmar o parcelado de 10 ciclos e atualizar o acesso desta conta.'
+    ? 'Aguardando a primeira cobrança confirmar o parcelado de 10 ciclos e atualizar o acesso desta conta.'
     : 'Aguardando o webhook consolidar o pagamento e atualizar a linha de acesso desta conta.'
 }
 
 function getSuccessMessage(purchaseOption: PremiumPurchaseOption) {
   return purchaseOption === 'installments_10'
-    ? 'A primeira cobranca do plano 10x foi confirmada. O premium ja pode ser usado e o restante do parcelado seguira na Stripe ate o encerramento automatico.'
-    : 'O webhook ja marcou seu usuario como premium. Agora os cards bloqueados no catalogo voltam a exibir o botao de copia.'
+    ? 'A primeira cobrança do plano 10x foi confirmada. O premium já pode ser usado e o restante do parcelado seguirá na Stripe até o encerramento automático.'
+    : 'O webhook já marcou seu usuário como premium. Agora os cards bloqueados no catálogo voltam a exibir o botão de cópia.'
 }
 
 export function PaymentSuccessPage() {
@@ -167,7 +167,7 @@ export function PaymentSuccessPage() {
                     : hasRevokedPremiumAccess(accessState)
                       ? 'ACESSO REVOGADO'
                       : accessState.isAuthenticated
-                        ? 'SESSAO AUTENTICADA'
+                        ? 'SESSÃO AUTENTICADA'
                         : 'ENTRE NA MESMA CONTA'}
               </h1>
 
@@ -177,15 +177,15 @@ export function PaymentSuccessPage() {
                   : isPendingWebhook || isLoading
                     ? getPendingMessage(purchaseOption)
                     : hasRevokedPremiumAccess(accessState)
-                      ? 'Seu usuario esta autenticado, mas o premium foi revogado. Gere um novo checkout se precisar reativar.'
+                      ? 'Seu usuário está autenticado, mas o premium foi revogado. Gere um novo checkout se precisar reativar.'
                       : accessState.isAuthenticated
-                        ? 'Voce esta logado, mas ainda nao existe uma liberacao premium ativa para esta conta.'
-                        : 'Entre na mesma conta usada antes de iniciar o checkout para consultar a liberacao do premium.'}
+                        ? 'Você está logado, mas ainda não existe uma liberação premium ativa para esta conta.'
+                        : 'Entre na mesma conta usada antes de iniciar o checkout para consultar a liberação do premium.'}
               </p>
 
               <p className="mt-4 text-sm font-medium text-[var(--foreground)]">
-                Opcao escolhida:{' '}
-                {purchaseOption === 'installments_10' ? '10x de R$ 5,99' : 'Pagamento unico'}
+                Opção escolhida:{' '}
+                {purchaseOption === 'installments_10' ? '10x de R$ 5,99' : 'Pagamento único'}
               </p>
 
               {userEmail ? (
@@ -208,7 +208,7 @@ export function PaymentSuccessPage() {
 
               {isPendingWebhook ? (
                 <p className="mt-5 rounded-[8px] bg-[var(--surface-low)] px-4 py-3 text-sm text-[var(--foreground)]">
-                  Tentativas automaticas de confirmacao: {Math.min(refreshAttempts, MAX_AUTO_REFRESH_ATTEMPTS)} de {MAX_AUTO_REFRESH_ATTEMPTS}
+                  Tentativas automáticas de confirmação: {Math.min(refreshAttempts, MAX_AUTO_REFRESH_ATTEMPTS)} de {MAX_AUTO_REFRESH_ATTEMPTS}
                 </p>
               ) : null}
 
@@ -219,7 +219,7 @@ export function PaymentSuccessPage() {
                       href="/"
                       className="inline-flex items-center justify-center rounded-[8px] bg-[linear-gradient(135deg,var(--primary),var(--primary-container))] px-5 py-3.5 font-semibold text-[var(--on-primary)] transition hover:opacity-92"
                     >
-                      Abrir catalogo premium
+                      Abrir catálogo premium
                     </a>
                     <a
                       href="/pricing/"

@@ -110,14 +110,13 @@ describe('PricingPage', () => {
     render(<PricingPage />)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /pague uma vez\s*tenha acesso vitalicio/i,
+      /pague uma vez\s*tenha acesso vitalício/i,
     )
     expect(
       await screen.findByText('3 prompts prontos para React + Tailwind'),
     ).toBeInTheDocument()
     expect(screen.getByText('1 prompts premium exclusivos')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /10x de r\$ 5,99/i })).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: /pagar a vista/i })).toHaveAttribute(
+    expect(screen.getByRole('switch', { name: /pagar à vista/i })).toHaveAttribute(
       'aria-checked',
       'false',
     )
@@ -130,8 +129,8 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('switch', { name: /pagar a vista/i }))
-    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalicio/i }))
+    fireEvent.click(screen.getByRole('switch', { name: /pagar à vista/i }))
+    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalício/i }))
 
     await waitFor(() => {
       expect(mockedSignInWithGoogle).toHaveBeenCalledWith(
@@ -151,7 +150,7 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalicio/i }))
+    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalício/i }))
 
     await waitFor(() => {
       expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith({
@@ -185,7 +184,7 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /10x de r\$ 5,99/i }))
+    fireEvent.click(screen.getByRole('button', { name: /comprar acesso vitalício/i }))
 
     await waitFor(() => {
       expect(mockedCreatePremiumCheckoutSession).toHaveBeenCalledWith({
@@ -241,7 +240,7 @@ describe('PricingPage', () => {
 
     render(<PricingPage />)
 
-    fireEvent.click(screen.getByRole('button', { name: /abrir catalogo premium/i }))
+    fireEvent.click(screen.getByRole('button', { name: /abrir catálogo premium/i }))
 
     await waitFor(() => {
       expect(mockedAssignBrowserLocation).toHaveBeenCalledWith('/')
@@ -253,7 +252,7 @@ describe('PricingPage', () => {
     render(<PricingPage />)
 
     expect(screen.getByText(/o que exatamente eu recebo ao comprar\?/i)).toBeInTheDocument()
-    expect(screen.getByText(/isso e codigo pronto\?/i)).toBeInTheDocument()
+    expect(screen.getByText(/isso é código pronto\?/i)).toBeInTheDocument()
     expect(screen.getByText(/como uso esses prompts no meu fluxo\?/i)).toBeInTheDocument()
   })
 })

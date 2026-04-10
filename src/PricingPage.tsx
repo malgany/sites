@@ -29,40 +29,40 @@ const INSTALLMENTS_10_PRICE_BRL = 5.99
 const freeBenefits: FeatureItem[] = [
   { label: 'Explore a vitrine e veja previews antes de comprar' },
   { label: 'Entenda o formato dos prompts e teste a proposta' },
-  { label: 'Use o free como amostra, nao como acervo completo' },
+  { label: 'Use o free como amostra, não como acervo completo' },
 ]
 
 const proofPoints = [
-  'Para devs e designers que querem acelerar paginas React + Tailwind.',
-  'Para quem ja sabe o que quer construir, mas nao quer sair do zero toda vez.',
-  'Para transformar exploracao visual em execucao mais rapida.',
+  'Para devs e designers que querem acelerar páginas React + Tailwind.',
+  'Para quem já sabe o que quer construir, mas não quer sair do zero toda vez.',
+  'Para transformar exploração visual em execução mais rápida.',
 ]
 
 const faqItems: readonly FaqItem[] = [
   {
     question: 'O que exatamente eu recebo ao comprar?',
     answer:
-      'Voce recebe acesso ao acervo premium de prompts estruturados do catalogo. O foco e acelerar a criacao de paginas e secoes em React + Tailwind com mais clareza de estrutura, copy e direcao visual.',
+      'Você recebe acesso ao acervo premium de prompts estruturados do catálogo. O foco é acelerar a criação de páginas e seções em React + Tailwind com mais clareza de estrutura, copy e direção visual.',
   },
   {
-    question: 'Isso e codigo pronto?',
+    question: 'Isso é código pronto?',
     answer:
-      'Nao. O produto nao e uma biblioteca plug-and-play de componentes finais. Sao prompts organizados para guiar a geracao e adaptacao do resultado no seu fluxo de trabalho.',
+      'Não. O produto não é uma biblioteca plug-and-play de componentes finais. São prompts organizados para guiar a geração e adaptação do resultado no seu fluxo de trabalho.',
   },
   {
     question: 'Como uso esses prompts no meu fluxo?',
     answer:
-      'Voce explora o catalogo, escolhe um prompt, copia o conteudo e usa no seu processo com Claude, ChatGPT ou outra IA para montar e iterar a pagina que precisa.',
+      'Você explora o catálogo, escolhe um prompt, copia o conteúdo e usa no seu processo com Claude, ChatGPT ou outra IA para montar e iterar a página que precisa.',
   },
   {
     question: 'Isso serve para projetos React + Tailwind?',
     answer:
-      'Sim. A oferta e posicionada para paginas e secoes nesse stack, com foco em landing pages, heroes, pricing, CTAs e variacoes comuns de produtos digitais.',
+      'Sim. A oferta é posicionada para páginas e seções nesse stack, com foco em landing pages, heroes, pricing, CTAs e variações comuns de produtos digitais.',
   },
   {
-    question: 'Como funciona a cobranca?',
+    question: 'Como funciona a cobrança?',
     answer:
-      'Voce pode escolher pagamento unico de R$ 59,90 com acesso vitalicio ou 10x de R$ 5,99. No parcelado, a cobranca encerra automaticamente depois do decimo ciclo e o acesso permanece ativo ao final.',
+      'Você pode escolher pagamento único de R$ 59,90 com acesso vitalício ou 10x de R$ 5,99. No parcelado, a cobrança encerra automaticamente depois do décimo ciclo e o acesso permanece ativo ao final.',
   },
 ]
 
@@ -119,13 +119,13 @@ function getPurchaseOptionButtonLabel(
   }
 
   if (options.hasPremiumAccess) {
-    return 'Abrir catalogo premium'
+    return 'Abrir catálogo premium'
   }
 
   if (options.pendingPurchaseOption !== purchaseOption || options.actionState === 'idle') {
     return purchaseOption === 'installments_10'
-      ? 'Comprar acesso vitalicio'
-      : 'Comprar acesso vitalicio'
+      ? 'Comprar acesso vitalício'
+      : 'Comprar acesso vitalício'
   }
 
   return options.actionState === 'signing_in'
@@ -174,13 +174,13 @@ function FeatureList({ items }: { items: readonly FeatureItem[] }) {
 function getPremiumBenefits(purchaseOption: PremiumPurchaseOption): FeatureItem[] {
   return [
     { label: 'Prompts premium para SaaS, AI, Agency, Hero, Pricing e CTA', emphasis: true },
-    { label: 'Mais repertorio para estruturar layout, copy e direcao visual' },
-    { label: 'Pensado para projetos proprios e de clientes' },
+    { label: 'Mais repertório para estruturar layout, copy e direção visual' },
+    { label: 'Pensado para projetos próprios e de clientes' },
     {
       label:
         purchaseOption === 'installments_10'
-          ? 'Acesso vitalicio'
-          : 'Pagamento unico com acesso vitalicio',
+          ? 'Acesso vitalício'
+          : 'Pagamento único com acesso vitalício',
     },
   ]
 }
@@ -256,7 +256,7 @@ export function PricingPage() {
       await signInWithGoogle(buildPricingPath(sourceSlug, purchaseOption, CHECKOUT_INTENT))
     } catch (error) {
       console.error('Could not start Google sign in from pricing.', error)
-      setActionErrorMessage('Nao foi possivel abrir o login agora.')
+      setActionErrorMessage('Não foi possível abrir o login agora.')
       setActionState('idle')
       setPendingPurchaseOption(null)
     }
@@ -294,7 +294,7 @@ export function PricingPage() {
         window.history.replaceState({}, '', buildPricingPath(sourceSlug, purchaseOption))
       }
 
-      setActionErrorMessage('Nao foi possivel iniciar o pagamento agora.')
+      setActionErrorMessage('Não foi possível iniciar o pagamento agora.')
       setActionState('idle')
       setPendingPurchaseOption(null)
     }
@@ -399,7 +399,7 @@ export function PricingPage() {
                 <path d="M19 12H5" />
                 <path d="M12 19l-7-7 7-7" />
               </svg>
-              Voltar ao catalogo
+              Voltar ao catálogo
             </a>
           </div>
         </header>
@@ -412,12 +412,12 @@ export function PricingPage() {
             <h1 className="mx-auto mt-5 max-w-[12ch] text-[clamp(2.2rem,8vw,5.2rem)] leading-[0.9] font-black tracking-[-0.07em]">
               Pague uma vez
               <span className="block bg-gradient-to-r from-[#FF3B8A] via-[#9B51E0] to-[#2F80ED] bg-clip-text text-transparent">
-                Tenha acesso vitalicio
+                Tenha acesso vitalício
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-[44rem] text-sm leading-6 text-[var(--secondary)] sm:text-base">
               Destrave o acervo premium de prompts para React + Tailwind e
-              acelere a criacao de paginas e secoes sem mensalidade.
+              acelere a criação de páginas e seções sem mensalidade.
             </p>
 
             {catalogOfferStats.totalCount > 0 ? (
@@ -469,7 +469,7 @@ export function PricingPage() {
                   href="/"
                   className="mt-8 inline-flex w-full items-center justify-center rounded-[8px] bg-[var(--surface-low)] px-5 py-3.5 font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-high)]"
                 >
-                  Explorar a previa gratuita
+                  Explorar a prévia gratuita
                 </a>
 
                 <FeatureList items={freeBenefits} />
@@ -482,12 +482,12 @@ export function PricingPage() {
                   </h2>
                   <p className="mt-4 max-w-[28rem] text-sm leading-6 text-[var(--secondary)] md:min-h-[6.5rem]">
                     Destrave prompts premium para SaaS, AI, Agency, Hero, Pricing
-                    e CTA, e ganhe mais repertorio para construir sem sair do zero.
+                    e CTA, e ganhe mais repertório para construir sem sair do zero.
                   </p>
                   <div className="mt-6 flex w-full max-w-[24rem] items-center justify-between rounded-[8px] bg-[var(--surface-low)] px-4 py-3 text-left">
                     <div>
                       <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--secondary)]">
-                        Pagar a vista
+                        Pagar à vista
                       </p>
                       <p className="mt-1 text-xs text-[var(--secondary)]">
                         {selectedPurchaseOption === 'one_time' ? 'Ativado' : 'Desativado'}
@@ -497,7 +497,7 @@ export function PricingPage() {
                       type="button"
                       role="switch"
                       aria-checked={selectedPurchaseOption === 'one_time'}
-                      aria-label="Pagar a vista"
+                      aria-label="Pagar à vista"
                       onClick={() => {
                         const nextPurchaseOption =
                           selectedPurchaseOption === 'one_time'
@@ -580,13 +580,13 @@ export function PricingPage() {
                   Stripe
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
-                  Pix e cartao
+                  Pix e cartão
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
-                  {selectedPurchaseOption === 'one_time' ? 'Pagamento unico' : '10x'}
+                  {selectedPurchaseOption === 'one_time' ? 'Pagamento único' : '10x'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-[var(--surface-lowest)] px-3 py-2">
-                  Acesso vitalicio
+                  Acesso vitalício
                 </span>
               </div>
             </div>
