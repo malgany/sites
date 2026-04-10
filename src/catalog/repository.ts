@@ -178,13 +178,6 @@ export async function getCatalogContent(slug: string) {
     body: {
       slug,
     },
-    ...(accessToken
-      ? {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      : {}),
   })
 
   if (response.error || !response.data?.contentMarkdown) {

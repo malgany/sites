@@ -79,14 +79,12 @@ export async function exchangeMagicLinkCode(code: string) {
 
 export async function createPremiumCheckoutSession(sourceSlug?: string | null) {
   const authClient = getBrowserAuthSupabaseClient()
-  const headers = await getAuthFunctionHeaders()
   const { data, error } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
     'create-checkout-session',
     {
       body: {
         sourceSlug: sourceSlug?.trim() || null,
       },
-      headers,
     },
   )
 
