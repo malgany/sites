@@ -166,10 +166,8 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
     } catch (error) {
       console.error('Could not create checkout session.', error)
       return jsonResponse(500, {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Could not create checkout session.',
+        error: error instanceof Error ? error.message : 'Could not create checkout session.',
+        details: error instanceof Error ? error.stack : undefined,
       })
     }
   }

@@ -254,9 +254,12 @@ export function PricingPage() {
 
     try {
       await signInWithGoogle(buildPricingPath(sourceSlug, purchaseOption, CHECKOUT_INTENT))
-    } catch (error) {
-      console.error('Could not start Google sign in from pricing.', error)
-      setActionErrorMessage('Não foi possível abrir o login agora.')
+    } catch (err) {
+      console.error('Premium action error:', err)
+      setActionErrorMessage(
+        err instanceof Error ? err.message : 'Não foi possível iniciar o pagamento agora.',
+      )
+    } finally {
       setActionState('idle')
       setPendingPurchaseOption(null)
     }
@@ -294,7 +297,9 @@ export function PricingPage() {
         window.history.replaceState({}, '', buildPricingPath(sourceSlug, purchaseOption))
       }
 
-      setActionErrorMessage('Não foi possível iniciar o pagamento agora.')
+      setActionErrorMessage(
+        error instanceof Error ? error.message : 'Não foi possível iniciar o pagamento agora.',
+      )
       setActionState('idle')
       setPendingPurchaseOption(null)
     }
