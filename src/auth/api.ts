@@ -82,7 +82,7 @@ export async function createPremiumCheckoutSession(options: {
 }) {
   const authClient = getBrowserAuthSupabaseClient()
   await ensureAuthSession()
-  const { data, error, status } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
+  const { data, error } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
     'create-checkout-session',
     {
       body: {
@@ -93,9 +93,7 @@ export async function createPremiumCheckoutSession(options: {
   )
 
   if (error) {
-    // Attempt to extract more specific error from response if available
-    const errorMessage = (error as any).context?.message || error.message || 'Could not create the checkout session.'
-    throw new Error(`${errorMessage} (Status: ${status})`)
+    throw new Error(error.message || 'Could not create the checkout session.')
   }
 
   if (!data?.checkoutUrl) {

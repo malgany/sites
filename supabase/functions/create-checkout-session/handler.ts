@@ -62,27 +62,26 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
     }
 
     try {
-      const userClient = deps.createUserClient(request.headers.get('Authorization'))
+      const authHeader = request.headers.get('Authorization')
+      console.log('Step 1: Authenticating user...')
+      const userClient = deps.createUserClient(authHeader)
       const {
         data: { user },
         error: userError,
       } = await userClient.auth.getUser()
 
       if (userError || !user) {
+        console.error('Auth error:', userError)
         return jsonResponse(401, {
-          error: 'Authentication required.',
+          error: 'Authentication required. Logged in?',
         })
       }
 
-      if (!user.email) {
-        return jsonResponse(400, {
-          error: 'Authenticated users must have an e-mail before checkout.',
-        })
-      }
-
+      console.log(`Step 2: Looking up access for user ${user.id}...`)
       const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
       const purchaseOption = normalizePurchaseOption(body.purchaseOption)
       const sourceSlug = normalizeSourceSlug(body.sourceSlug)
+      
       const serviceClient = deps.createServiceClient()
       const accessLookup = await serviceClient
         .from('user_access')
@@ -91,7 +90,8 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
         .maybeSingle()
 
       if (accessLookup.error) {
-        throw new Error(accessLookup.error.message)
+        console.error('Database lookup error:', accessLookup.error)
+        throw new Error(`DB Lookup: ${accessLookup.error.message}`)
       }
 
       if (accessLookup.data?.status === 'active') {
@@ -104,25 +104,25 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
       const stripePremiumPriceId = getPremiumPriceId(deps, purchaseOption)
       const siteUrl = deps.getRequiredEnv('SITE_URL')
 
-      console.log('Creating checkout session:', {
+      console.log('Step 3: Preparing Stripe details...', {
         purchaseOption,
         priceId: stripePremiumPriceId,
         siteUrl,
-        userId: user.id,
-        isProduction: siteUrl.includes('prompt-archive.xyz')
       })
 
       let customerId = accessLookup.data?.stripe_customer_id ?? null
 
       if (!customerId) {
+        console.log('Step 3a: Creating new Stripe customer...')
         const customer = await deps.createStripeCustomer({
-          email: user.email,
+          email: user.email!,
           secretKey: stripeSecretKey,
           userId: user.id,
         })
         customerId = customer.id
       }
 
+      console.log('Step 4: Creating Stripe checkout session...')
       const checkoutSession = await deps.createStripeCheckoutSession({
         customerId,
         purchaseOption,
@@ -137,6 +137,7 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
         throw new Error('Stripe checkout session did not return a URL.')
       }
 
+      console.log('Step 5: Updating user access in database...')
       const accessUpsert = await serviceClient.from('user_access').upsert(
         {
           user_id: user.id,
@@ -158,14 +159,16 @@ export function createCreateCheckoutSessionHandler(deps: CreateCheckoutSessionDe
       )
 
       if (accessUpsert.error) {
-        throw new Error(accessUpsert.error.message)
+        console.error('Database upsert error:', accessUpsert.error)
+        throw new Error(`DB Upsert: ${accessUpsert.error.message}`)
       }
 
+      console.log('Success: Checkout session created.')
       return jsonResponse(200, {
         checkoutUrl: checkoutSession.url,
       })
     } catch (error) {
-      console.error('Could not create checkout session.', error)
+      console.error('Critical failure in edge function:', error)
       return jsonResponse(500, {
         error: error instanceof Error ? error.message : 'Could not create checkout session.',
         details: error instanceof Error ? error.stack : undefined,
