@@ -13,11 +13,15 @@ describe('auth api', () => {
     mockedGetBrowserAuthSupabaseClient.mockReset()
   })
 
-  it('sends the current access token when invoking the checkout function', async () => {
+  it('ensures a fresh session and invokes the checkout function without manual header overrides', async () => {
     const invoke = vi.fn().mockResolvedValue({
       data: {
         checkoutUrl: 'https://checkout.stripe.test/session',
       },
+      error: null,
+    })
+    const getSession = vi.fn().mockResolvedValue({
+      data: { session: null },
       error: null,
     })
     const refreshSession = vi.fn().mockResolvedValue({
@@ -31,6 +35,7 @@ describe('auth api', () => {
 
     mockedGetBrowserAuthSupabaseClient.mockReturnValue({
       auth: {
+        getSession,
         refreshSession,
       },
       functions: {
@@ -47,13 +52,11 @@ describe('auth api', () => {
       'https://checkout.stripe.test/session',
     )
 
+    expect(refreshSession).toHaveBeenCalled()
     expect(invoke).toHaveBeenCalledWith('create-checkout-session', {
       body: {
         purchaseOption: 'installments_10',
         sourceSlug: 'nexora-hero',
-      },
-      headers: {
-        Authorization: 'Bearer token-123',
       },
     })
   })

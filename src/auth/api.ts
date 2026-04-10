@@ -7,23 +7,21 @@ type CreateCheckoutSessionResponse = {
   checkoutUrl: string
 }
 
-async function getAuthFunctionHeaders() {
+async function ensureAuthSession() {
   const authClient = getBrowserAuthSupabaseClient()
-  const { data, error } = await authClient.auth.refreshSession()
+  const { data: { session } } = await authClient.auth.getSession()
 
-  if (error) {
-    throw new Error(error.message || 'Could not refresh the auth session.')
+  const isNearlyExpired = session?.expires_at && session.expires_at < Math.floor(Date.now() / 1000) + 60
+
+  if (!session || isNearlyExpired) {
+    const { data: { session: refreshedSession }, error } = await authClient.auth.refreshSession()
+    if (error || !refreshedSession) {
+      throw new Error(error?.message || 'Authentication required.')
+    }
+    return refreshedSession
   }
 
-  const accessToken = data.session?.access_token?.trim()
-
-  if (!accessToken) {
-    throw new Error('Authentication required.')
-  }
-
-  return {
-    Authorization: `Bearer ${accessToken}`,
-  }
+  return session
 }
 
 export async function requestMagicLink(email: string, nextPath: string) {
@@ -83,7 +81,7 @@ export async function createPremiumCheckoutSession(options: {
   sourceSlug?: string | null
 }) {
   const authClient = getBrowserAuthSupabaseClient()
-  const headers = await getAuthFunctionHeaders()
+  await ensureAuthSession()
   const { data, error } = await authClient.functions.invoke<CreateCheckoutSessionResponse>(
     'create-checkout-session',
     {
@@ -91,7 +89,6 @@ export async function createPremiumCheckoutSession(options: {
         purchaseOption: options.purchaseOption,
         sourceSlug: options.sourceSlug?.trim() || null,
       },
-      headers,
     },
   )
 

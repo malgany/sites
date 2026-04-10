@@ -190,9 +190,6 @@ describe('catalog repository', () => {
       body: {
         slug: 'atelie-orbita',
       },
-      headers: {
-        Authorization: 'Bearer token-123',
-      },
     })
   })
 })
